@@ -1,0 +1,34 @@
+package com.serenemind.navigation
+
+
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
+
+
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.vector.ImageVector
+
+sealed class Screen(
+    val route: String,
+    val title: String = "",
+    val icon: ImageVector? = null
+) {
+
+    // Auth
+    object Login : Screen("login")
+
+    // Main container
+    object Main : Screen("main")
+
+    // Bottom Tabs
+    object Home : Screen("home", "Home", Icons.Default.Home)
+    object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
+    object Mood : Screen("mood", "Mood", Icons.Default.Face)
+    object Community : Screen("community", "Community", Icons.Default.Share)
+    object Profile : Screen("profile", "Profile", Icons.Default.Person)
+}
