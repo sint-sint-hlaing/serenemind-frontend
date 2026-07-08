@@ -25,4 +25,7 @@ object NetworkModule {
     fun provideApiService(): ApiService {
         return provideRetrofit().create(ApiService::class.java)
     }
+    fun provideGoalApiService(): GoalApiService{
+        return provideRetrofit().create(GoalApiService::class.java)
+    }
 }
