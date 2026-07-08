@@ -1,0 +1,40 @@
+package com.serenemind.ui.home
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.serenemind.repository.DashboardRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.launch
+
+class HomeViewModel(
+    private val dashboardRepository: DashboardRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    init {
+        fetchDashboardData()
+    }
+
+    fun fetchDashboardData() {
+        viewModelScope.launch {
+            _uiState.value = HomeUiState.Loading
+            dashboardRepository.getDashboardData()
+                .catch { e ->
+                    _uiState.value = HomeUiState.Error("Exception: ${e.message}")
+                }
+                .collect { response ->
+                    if (response.isSuccessful && response.body() != null) {
+                        _uiState.value = HomeUiState.Success(response.body()!!)
+                    } else {
+                        val errorDetail = response.errorBody()?.string() ?: "Unknown error"
+                        _uiState.value = HomeUiState.Error("Error ${response.code()}: $errorDetail")
+                    }
+                }
+        }
+    }
+}
