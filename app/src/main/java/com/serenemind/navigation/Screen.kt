@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Share
 
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
@@ -29,6 +30,7 @@ sealed class Screen(
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
+    object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
     object Community : Screen("community", "Community", Icons.Default.Share)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

@@ -14,8 +14,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
+import com.serenemind.repository.DashboardRepository
 import com.serenemind.repository.UserRepository
 import com.serenemind.ui.home.HomeScreen
+import com.serenemind.ui.home.HomeViewModel
+import com.serenemind.ui.home.HomeViewModelFactory
 import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
@@ -25,12 +28,26 @@ fun BottomNavGraph(
     navController: NavHostController,
     onLogout: () -> Unit
 ) {
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val apiService = remember { NetworkModule.provideApiService() }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            HomeScreen(onLogout = onLogout)
+            val dashboardRepository = remember {
+                DashboardRepository(apiService, tokenManager)
+            }
+            val homeViewModel: HomeViewModel = viewModel(
+                factory = HomeViewModelFactory(dashboardRepository)
+            )
+
+            HomeScreen(
+                viewModel = homeViewModel,
+                onLogout = onLogout
+            )
         }
 
         composable(Screen.Journal.route) {
@@ -46,18 +63,6 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Profile.route) {
-            val context = LocalContext.current
-
-            // 1. TokenManager ကို ဆောက်ပါ
-            val tokenManager = remember {
-                TokenManager(context)
-            }
-
-            // ပြင်ဆင်ရန်- NetworkModule ကြီးတစ်ခုလုံး မဟုတ်ဘဲ provideApiService() function ကို ခေါ်ယူပါ
-            val apiService = remember {
-                NetworkModule.provideApiService()
-            }
-
             // 2. ရလာတဲ့ ApiService ကို UserRepository ထဲ ထည့်ပေးပါ
             val userRepository = remember {
                 UserRepository(apiService, tokenManager)
