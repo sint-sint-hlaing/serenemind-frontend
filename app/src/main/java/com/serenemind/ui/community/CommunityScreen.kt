@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -18,12 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.tooling.preview.Preview
+import com.serenemind.R
 import com.serenemind.model.response.PostResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,6 +123,14 @@ fun CommunityScreen(
     }
 }
 
+fun getAvatarResource(avatarName: String?): Int {
+    return when (avatarName) {
+        "avatar-1" -> R.drawable.avatar_1
+        "avatar-2" -> R.drawable.avatar_2
+        else -> R.drawable.default_avatar
+    }
+}
+
 @Composable
 fun PostItem(post: PostResponse, onClick: () -> Unit) {
     Card(
@@ -131,8 +143,9 @@ fun PostItem(post: PostResponse, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = post.userProfilePicture ?: "https://via.placeholder.com/150",
+                val avatarRes = getAvatarResource(post.userProfilePicture)
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = avatarRes),
                     contentDescription = "Profile Picture",
                     modifier = Modifier
                         .size(40.dp)
@@ -169,7 +182,7 @@ fun PostItem(post: PostResponse, onClick: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
+                        imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Like",
                         tint = if (post.isLikedByMe) Color.Red else Color.Black,
                         modifier = Modifier.size(20.dp)

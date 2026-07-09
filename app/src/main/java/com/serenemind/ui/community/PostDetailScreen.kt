@@ -8,11 +8,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.ThumbUpOffAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.tooling.preview.Preview
+import com.serenemind.R
 import com.serenemind.model.response.CommentResponse
 import com.serenemind.model.response.PostResponse
 
@@ -163,8 +167,9 @@ fun PostHeader(
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = post.userProfilePicture ?: "https://via.placeholder.com/150",
+            val avatarRes = getAvatarResource(post.userProfilePicture)
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = avatarRes),
                 contentDescription = "Profile Picture",
                 modifier = Modifier
                     .size(48.dp)
@@ -202,7 +207,7 @@ fun PostHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onLikeClick) {
                     Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
+                        imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Like",
                         tint = if (post.isLikedByMe) Color.Red else Color.Black,
                         modifier = Modifier.size(24.dp)
@@ -225,7 +230,7 @@ fun PostHeader(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Divider(color = Color(0xFFF3F3F3), thickness = 1.dp)
+        HorizontalDivider(color = Color(0xFFF3F3F3), thickness = 1.dp)
     }
 }
 
@@ -236,8 +241,9 @@ fun CommentItem(comment: CommentResponse) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        AsyncImage(
-            model = comment.userProfilePicture ?: "https://via.placeholder.com/150",
+        val avatarRes = getAvatarResource(comment.userProfilePicture)
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = avatarRes),
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(36.dp)
@@ -260,15 +266,38 @@ fun CommentItem(comment: CommentResponse) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = comment.content, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                 Icon(
-                    imageVector = Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Like",
-                    modifier = Modifier.size(16.dp),
-                    tint = Color.Gray
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("8", color = Color.Gray, fontSize = 12.sp) // Dummy like count
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Like",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("2", color = Color.Gray, fontSize = 12.sp) // Dummy like count
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.ThumbUpOffAlt,
+                        contentDescription = "Thumbs Up",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("1", color = Color.Gray, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Heart",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
         }
     }
