@@ -14,8 +14,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
+import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
 import com.serenemind.repository.UserRepository
+import com.serenemind.ui.community.CommunityScreen
+import com.serenemind.ui.community.CommunityViewModel
+import com.serenemind.ui.community.CommunityViewModelFactory
+import com.serenemind.ui.community.PostDetailScreen
+import com.serenemind.ui.community.PostDetailViewModel
+import com.serenemind.ui.community.PostDetailViewModelFactory
 import com.serenemind.ui.home.HomeScreen
 import com.serenemind.ui.home.HomeViewModel
 import com.serenemind.ui.home.HomeViewModelFactory
@@ -59,7 +66,35 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Community.route) {
-            SampleScreen(title = "Community Screen")
+            val communityRepository = remember {
+                CommunityRepository(apiService, tokenManager)
+            }
+            val communityViewModel: CommunityViewModel = viewModel(
+                factory = CommunityViewModelFactory(communityRepository)
+            )
+            CommunityScreen(
+                viewModel = communityViewModel,
+                onPostClick = { post ->
+                    navController.navigate("post_detail/${post.id}")
+                }
+            )
+        }
+
+        composable("post_detail/{postId}") { backStackEntry ->
+            val postIdStr = backStackEntry.arguments?.getString("postId")
+            val postId = postIdStr?.toLongOrNull() ?: -1L
+            
+            val communityRepository = remember {
+                CommunityRepository(apiService, tokenManager)
+            }
+            val postDetailViewModel: PostDetailViewModel = viewModel(
+                factory = PostDetailViewModelFactory(communityRepository, postId)
+            )
+            
+            PostDetailScreen(
+                viewModel = postDetailViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Profile.route) {

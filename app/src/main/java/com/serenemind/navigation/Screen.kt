@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 
@@ -31,6 +32,6 @@ sealed class Screen(
     object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
-    object Community : Screen("community", "Community", Icons.Default.Share)
+    object Community : Screen("community", "Community", Icons.Default.People)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }
