@@ -3,11 +3,8 @@ package com.serenemind.network
 import com.serenemind.model.request.CommentRequest
 import com.serenemind.model.request.LoginRequest
 import com.serenemind.model.request.MoodRequest
-import com.serenemind.model.response.CommentResponse
-import com.serenemind.model.response.DashboardResponse
-import com.serenemind.model.response.LoginResponse
-import com.serenemind.model.response.PostResponse
-import com.serenemind.model.response.UserProfileResponse
+import com.serenemind.model.request.RegisterRequest
+import com.serenemind.model.response.*
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -17,6 +14,11 @@ interface ApiService {
     suspend fun login(
         @Body request: LoginRequest
     ): Response<LoginResponse>
+
+    @POST("api/auth/register")
+    suspend fun register(
+        @Body request: RegisterRequest
+    ): Response<Unit>
 
 
     @GET("api/users/me")

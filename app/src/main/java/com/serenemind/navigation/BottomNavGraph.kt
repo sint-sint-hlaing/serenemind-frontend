@@ -111,7 +111,8 @@ fun BottomNavGraph(
             // 4. Screen ဆီကို ViewModel ထည့်ပေးလိုက်ပါ
             ProfileScreen(
                 viewModel = profileViewModel,
-                onNavigateToSettings = { }
+                onNavigateToSettings = { },
+                onLogout = onLogout
             )
         }
     }

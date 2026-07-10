@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         val viewModel = LoginViewModel(repo, tokenManager)
 
         setContent {
-            AppNavigation(viewModel)
+            AppNavigation(viewModel, tokenManager)
         }
     }
 }

@@ -22,7 +22,9 @@ sealed class Screen(
 ) {
 
     // Auth
+    object Welcome : Screen("welcome")
     object Login : Screen("login")
+    object Register : Screen("register")
 
     // Main container
     object Main : Screen("main")

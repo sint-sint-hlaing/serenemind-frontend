@@ -9,37 +9,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit,
+    onRegisterSuccess: () -> Unit,
+    onLoginClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     val state by viewModel.uiState.collectAsState()
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(state) {
-        if (state is LoginUiState.Success) {
-            onLoginSuccess()
+        if (state is LoginUiState.RegisterSuccess) {
+            onRegisterSuccess()
             viewModel.reset()
         }
     }
@@ -60,24 +61,40 @@ fun LoginScreen(
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = "Welcome Back 👋",
+                text = "Create Account 🌱",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Log in to continue your\nSereneMind journey.",
+                text = "Start your mental wellness\njourney today.",
                 fontSize = 14.sp,
                 color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Full Name
+            Text("Full Name", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            TextField(
+                value = username,
+                onValueChange = { username = it },
+                placeholder = { Text("Enter your full name") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Email
-            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Email", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             TextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Enter your email or phone") },
+                placeholder = { Text("Enter your email") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 colors = TextFieldDefaults.colors(
@@ -93,7 +110,7 @@ fun LoginScreen(
             TextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Enter your password") },
+                placeholder = { Text("Create a password") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 trailingIcon = {
@@ -109,14 +126,30 @@ fun LoginScreen(
                 )
             )
 
-            TextButton(
-                onClick = { /* TODO */ },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Forgot Password?", color = Color(0xFF6750A4), fontSize = 12.sp)
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Confirm Password
+            Text("Confirm Password", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            TextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                placeholder = { Text("Confirm your password") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                trailingIcon = {
+                    val icon = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(icon, contentDescription = null)
+                    }
+                },
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             if (state is LoginUiState.Error) {
                 Text(
@@ -128,9 +161,12 @@ fun LoginScreen(
             }
 
             Button(
-                onClick = {
-                    focusManager.clearFocus()
-                    viewModel.login(email, password)
+                onClick = { 
+                    if (password == confirmPassword) {
+                        viewModel.register(username, email, password)
+                    } else {
+                        // Handle password mismatch
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -142,55 +178,26 @@ fun LoginScreen(
                 if (state is LoginUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
-                    Text("Login", fontSize = 16.sp)
+                    Text("Register", fontSize = 16.sp)
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "or continue with",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Social Buttons
-            OutlinedButton(
-                onClick = { /* TODO */ },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Continue with Google", color = Color.Black)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = { /* TODO */ },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Continue with Apple", color = Color.Black)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = "Don't have an account? ", color = Color.Gray)
+                Text(text = "Already have an account? ", color = Color.Gray)
                 Text(
-                    text = "Register",
+                    text = "Login",
                     color = Color(0xFF6750A4),
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onRegisterClick() }
+                    modifier = Modifier.clickable { onLoginClick() }
                 )
             }
+            
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -4,5 +4,6 @@ sealed class LoginUiState {
     object Idle : LoginUiState()
     object Loading : LoginUiState()
     object Success : LoginUiState()
+    object RegisterSuccess : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }

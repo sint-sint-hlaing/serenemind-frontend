@@ -36,7 +36,8 @@ import com.serenemind.R
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -151,7 +152,13 @@ fun ProfileScreen(
                                     badge = "Premium"
                                 )
                                 ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
-                                ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind", isLast = true)
+                                ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
+                                ProfileMenuItem(
+                                    icon = Icons.Default.Lock,
+                                    title = "Logout",
+                                    isLast = true,
+                                    onClick = onLogout
+                                )
                             }
                         }
                     }
