@@ -38,22 +38,12 @@ object ReminderScheduler {
             }
         }
 
-        // Simplistic scheduling - repeating alarms or single exact alarms
-        // For a real app, you'd handle repeatType (Daily, Weekly, etc.)
-        try {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        } catch (e: SecurityException) {
-            // Fallback for missing exact alarm permission on Android 12+
-            alarmManager.set(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        }
+        // For "reminder not alarm", we use standard notifications without exact timing
+        alarmManager.set(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            pendingIntent
+        )
     }
 
     fun cancelReminder(context: Context, reminderId: Long) {

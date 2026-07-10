@@ -14,10 +14,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
+import com.serenemind.repository.BreathingRepository
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
 import com.serenemind.repository.ReminderRepository
 import com.serenemind.repository.UserRepository
+import com.serenemind.ui.breathing.BreathingScreen
+import com.serenemind.ui.breathing.BreathingViewModel
+import com.serenemind.ui.breathing.BreathingViewModelFactory
 import com.serenemind.ui.community.CommunityScreen
 import com.serenemind.ui.community.CommunityViewModel
 import com.serenemind.ui.community.CommunityViewModelFactory
@@ -68,6 +72,13 @@ fun BottomNavGraph(
         factory = ReminderViewModelFactory(reminderRepository)
     )
 
+    val breathingRepository = remember {
+        BreathingRepository(apiService, tokenManager)
+    }
+    val breathingViewModel: BreathingViewModel = viewModel(
+        factory = BreathingViewModelFactory(breathingRepository)
+    )
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route
@@ -82,7 +93,17 @@ fun BottomNavGraph(
 
             HomeScreen(
                 viewModel = homeViewModel,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onNavigateToBreathing = {
+                    navController.navigate(Screen.Breathing.route)
+                }
+            )
+        }
+
+        composable(Screen.Breathing.route) {
+            BreathingScreen(
+                viewModel = breathingViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 

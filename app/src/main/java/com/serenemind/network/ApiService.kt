@@ -1,10 +1,6 @@
 package com.serenemind.network
 
-import com.serenemind.model.request.CommentRequest
-import com.serenemind.model.request.LoginRequest
-import com.serenemind.model.request.MoodRequest
-import com.serenemind.model.request.RegisterRequest
-import com.serenemind.model.request.ReminderRequest
+import com.serenemind.model.request.*
 import com.serenemind.model.response.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -101,4 +97,24 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Long
     ): Response<ReminderResponse>
+
+    // Breathing API
+    @POST("api/breathing/session/start")
+    suspend fun startBreathingSession(
+        @Header("Authorization") token: String,
+        @Body request: BreathingRequest
+    ): Response<BreathingStartResponse>
+
+    @POST("api/breathing/session/{sessionId}/round-complete")
+    suspend fun trackRoundComplete(
+        @Header("Authorization") token: String,
+        @Path("sessionId") sessionId: String,
+        @Query("roundNumber") roundNumber: Int
+    ): Response<Unit>
+
+    @POST("api/breathing/session/{sessionId}/complete")
+    suspend fun completeBreathingSession(
+        @Header("Authorization") token: String,
+        @Path("sessionId") sessionId: String
+    ): Response<BreathingSummaryResponse>
 }

@@ -14,9 +14,9 @@ class MoodViewModel(private val repository: MoodRepository): ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     // MoodViewModel.kt
-    fun saveMood(mood: MoodRequest, intensity: Int, note: String) {
+    fun saveMood(moodType: MoodType, intensity: Int, note: String) {
         // 1. Validation Logic
-        if (mood == null) {
+        if (moodType == null) {
             _uiState.value = MoodUiState.Error("Please select a mood first!")
             return
         }
@@ -25,7 +25,7 @@ class MoodViewModel(private val repository: MoodRepository): ViewModel() {
         viewModelScope.launch {
             _uiState.value = MoodUiState.Loading
             try {
-                val request = MoodRequest(mood as MoodType, intensity, note)
+                val request = MoodRequest(moodType, intensity, note)
                 val response = repository.saveMood(request)
 
                 if (response.isSuccessful) {

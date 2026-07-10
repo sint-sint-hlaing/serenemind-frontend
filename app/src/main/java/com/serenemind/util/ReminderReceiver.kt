@@ -28,10 +28,9 @@ class ReminderReceiver : BroadcastReceiver() {
             val channel = NotificationChannel(
                 channelId,
                 "Reminders",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "SereneMind Reminder Notifications"
-                enableVibration(true)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -44,14 +43,11 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.default_avatar) // Use app icon later
+            .setSmallIcon(R.drawable.default_avatar)
             .setContentTitle(title)
             .setContentText(content)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setSound(soundUri)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()

@@ -38,5 +38,6 @@ sealed class Screen(
     object CreatePost : Screen("create_post")
     object Reminders : Screen("reminders")
     object AddReminder : Screen("add_reminder")
+    object Breathing : Screen("breathing")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

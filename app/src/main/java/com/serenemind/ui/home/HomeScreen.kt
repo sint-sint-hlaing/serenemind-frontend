@@ -1,6 +1,7 @@
 package com.serenemind.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +32,8 @@ import com.serenemind.model.response.WeeklyData
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onNavigateToBreathing: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -50,64 +53,75 @@ fun HomeScreen(
                 }
             }
             is HomeUiState.Success -> {
-                DashboardContent(data = state.data)
+                DashboardContent(data = state.data, onNavigateToBreathing = onNavigateToBreathing)
             }
         }
     }
 }
 
 @Composable
-fun DashboardContent(data: DashboardResponse) {
+fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(Color(0xFFFBFBFF))
             .padding(16.dp)
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { /* Open drawer */ }) {
                 Icon(
                     imageVector = Icons.Default.Menu,
-                    contentDescription = "Menu"
+                    contentDescription = "Menu",
+                    tint = Color.Black
                 )
             }
             Text(
                 text = "Dashboard",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
             IconButton(onClick = { /* Notifications */ }) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications"
+                    contentDescription = "Notifications",
+                    tint = Color.Black
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Greeting
-        Text(
-            text = "May 12, 2024",
-            color = Color.Gray,
-            fontSize = 14.sp
-        )
-        Text(
-            text = "Good morning, ${data.userName ?: "User"}! 👋",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Date and Greeting
+        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+            Text(
+                text = "May 12, 2024",
+                color = Color.Gray,
+                fontSize = 13.sp
+            )
+            Text(
+                text = "Good morning, ${data.userName ?: "User"}! 👋",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Today's Mood Card
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -116,72 +130,91 @@ fun DashboardContent(data: DashboardResponse) {
                 Text(
                     text = "Today's Mood",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 15.sp,
+                    color = Color.Black
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "😊", // Large emoji
-                        fontSize = 60.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFECB3)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "😊",
+                            fontSize = 40.sp
+                        )
+                    }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = data.currentMood ?: "Steady",
+                            text = data.currentMood ?: "Happy",
                             fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
                         )
                         Text(
                             text = "Great! Keep shining ☀️",
                             color = Color.Gray,
-                            fontSize = 14.sp
+                            fontSize = 13.sp
                         )
                     }
                     Text(
                         text = "${data.moodPercentage ?: 0}%",
                         color = Color(0xFF4CAF50),
-                        fontSize = 24.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Weekly Overview
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Weekly Overview",
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                fontSize = 17.sp,
+                color = Color.Black
             )
-            TextButton(onClick = { /* View all */ }) {
-                Text(text = "View all", color = Color(0xFF673AB7))
-            }
+            Text(
+                text = "View all",
+                color = Color(0xFF673AB7),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { /* View all */ }
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         WeeklyChart(data.weeklyOverview)
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Quick Actions
         Text(
             text = "Quick Actions",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
+            fontSize = 17.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(horizontal = 8.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        QuickActionsRow(data.quickActions)
+        QuickActionsRow(data.quickActions, onNavigateToBreathing)
     }
 }
 
@@ -202,7 +235,8 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp),
+            .height(160.dp)
+            .padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {
@@ -213,13 +247,19 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
             ) {
                 Box(
                     modifier = Modifier
-                        .width(20.dp)
+                        .width(22.dp)
                         .height(100.dp * ((dayData.value ?: 0f) / 100f))
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(getBarColor(dayData.day ?: ""))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = dayData.day ?: "", fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    text = dayData.day ?: "",
+                    fontSize = 12.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(text = getEmojiForDay(dayData.day ?: ""), fontSize = 16.sp)
             }
         }
@@ -228,40 +268,51 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
 
 fun getBarColor(day: String): Color {
     return when (day) {
-        "Mon", "Wed" -> Color(0xFF81C784) // Green
-        "Tue" -> Color(0xFFFFD54F) // Yellow/Orange
-        else -> Color(0xFFB39DDB) // Purple
+        "Mon", "Wed", "Sun" -> Color(0xFFA5D6A7) // Light Green
+        "Tue", "Thu" -> Color(0xFFFFE082) // Light Orange/Yellow
+        else -> Color(0xFFC5CAE9) // Light Blue/Purple
     }
 }
 
 fun getEmojiForDay(day: String): String {
     return when (day) {
-        "Sat" -> "🟣" // Different emoji for Sat as in image
+        "Fri" -> "😊"
+        "Sat" -> "😴"
         else -> "😊"
     }
 }
 
 @Composable
-fun QuickActionsRow(actions: List<ActionItem>?) {
-    if (actions.isNullOrEmpty()) {
-        Text(text = "No quick actions available", color = Color.Gray)
-        return
+fun QuickActionsRow(actions: List<ActionItem>?, onNavigateToBreathing: () -> Unit) {
+    val displayActions = remember(actions) {
+        listOf(
+            ActionItem("Journal", ""),
+            ActionItem("Meditate", ""),
+            ActionItem("Goals", ""),
+            ActionItem("Breathing", "")
+        )
     }
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 16.dp)
     ) {
-        items(actions) { action ->
-            QuickActionItem(action)
+        items(displayActions) { action ->
+            QuickActionItem(action, onClick = {
+                if (action.name?.lowercase() == "breathing") {
+                    onNavigateToBreathing()
+                }
+            })
         }
     }
 }
 
 @Composable
-fun QuickActionItem(action: ActionItem) {
+fun QuickActionItem(action: ActionItem, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(85.dp),
+        modifier = Modifier
+            .width(85.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -348,6 +399,6 @@ fun DashboardPreview() {
         )
     )
     MaterialTheme {
-        DashboardContent(data = mockData)
+        DashboardContent(data = mockData, onNavigateToBreathing = {})
     }
 }

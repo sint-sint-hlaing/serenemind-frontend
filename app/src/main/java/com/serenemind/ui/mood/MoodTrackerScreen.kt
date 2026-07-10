@@ -8,7 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.serenemind.model.entity.enums.MoodType
-import com.serenemind.model.request.MoodRequest
 
 @Composable
 fun MoodTrackerScreen(viewModel: MoodViewModel) {
@@ -34,12 +33,8 @@ fun MoodTrackerScreen(viewModel: MoodViewModel) {
         OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note") })
 
         Button(onClick = {
-            if (selectedMood != null) {
-                viewModel.saveMood(
-                    MoodRequest(selectedMood!!, intensity.toInt(), note),
-                    intensity = TODO(),
-                    note = TODO()
-                )
+            selectedMood?.let {
+                viewModel.saveMood(it, intensity.toInt(), note)
             }
         }) {
             Text("Save")
