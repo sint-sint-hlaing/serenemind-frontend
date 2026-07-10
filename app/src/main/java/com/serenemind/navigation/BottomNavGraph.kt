@@ -49,6 +49,13 @@ fun BottomNavGraph(
         factory = CommunityViewModelFactory(communityRepository)
     )
 
+    val userRepository = remember {
+        UserRepository(apiService, tokenManager)
+    }
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModelFactory(userRepository)
+    )
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route
@@ -108,12 +115,6 @@ fun BottomNavGraph(
             val createPostViewModel: CreatePostViewModel = viewModel(
                 factory = CreatePostViewModelFactory(communityRepository)
             )
-            val userRepository = remember {
-                UserRepository(apiService, tokenManager)
-            }
-            val profileViewModel: ProfileViewModel = viewModel(
-                factory = ProfileViewModelFactory(userRepository)
-            )
 
             CreatePostScreen(
                 viewModel = createPostViewModel,
@@ -127,17 +128,6 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Profile.route) {
-            // 2. ရလာတဲ့ ApiService ကို UserRepository ထဲ ထည့်ပေးပါ
-            val userRepository = remember {
-                UserRepository(apiService, tokenManager)
-            }
-
-            // 3. Factory သုံးပြီး ViewModel Instance ကို ဆောက်ပါ
-            val profileViewModel: ProfileViewModel = viewModel(
-                factory = ProfileViewModelFactory(userRepository)
-            )
-
-            // 4. Screen ဆီကို ViewModel ထည့်ပေးလိုက်ပါ
             ProfileScreen(
                 viewModel = profileViewModel,
                 onNavigateToSettings = { },

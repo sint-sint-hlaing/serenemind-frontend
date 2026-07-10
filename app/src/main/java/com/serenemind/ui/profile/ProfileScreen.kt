@@ -98,7 +98,7 @@ fun ProfileScreen(
                             ) {
                                 // Dynamic Avatar
                                 Image(
-                                    painter = painterResource(id = getDrawableIdForAvatar(user.avatar)),
+                                    painter = painterResource(id = getDrawableIdForAvatar(user.avatar ?: "")),
                                     contentDescription = "User Avatar",
                                     modifier = Modifier
                                         .size(72.dp)
@@ -107,13 +107,13 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = user.fullname,
+                                        text = user.fullname ?: "User",
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.Black
                                     )
                                     Text(
-                                        text = user.email,
+                                        text = user.email ?: "",
                                         fontSize = 14.sp,
                                         color = Color.Gray
                                     )
