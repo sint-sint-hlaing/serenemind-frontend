@@ -197,12 +197,16 @@ fun PostItem(
                         Icon(
                             imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Like",
-                            tint = if (post.isLikedByMe) Color.Red else Color.Black,
+                            tint = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = post.likeCount.toString(), fontSize = 14.sp)
+                    Text(
+                        text = post.likeCount.toString(),
+                        fontSize = 14.sp,
+                        color = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
                         imageVector = Icons.Outlined.ChatBubbleOutline,

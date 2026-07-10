@@ -97,7 +97,10 @@ fun BottomNavGraph(
             
             PostDetailScreen(
                 viewModel = postDetailViewModel,
-                onBack = { navController.popBackStack() }
+                onBack = { 
+                    communityViewModel.refresh()
+                    navController.popBackStack() 
+                }
             )
         }
 
