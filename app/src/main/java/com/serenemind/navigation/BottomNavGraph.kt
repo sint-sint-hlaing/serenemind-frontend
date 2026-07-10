@@ -16,6 +16,7 @@ import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
+import com.serenemind.repository.ReminderRepository
 import com.serenemind.repository.UserRepository
 import com.serenemind.ui.community.CommunityScreen
 import com.serenemind.ui.community.CommunityViewModel
@@ -29,9 +30,13 @@ import com.serenemind.ui.community.PostDetailViewModelFactory
 import com.serenemind.ui.home.HomeScreen
 import com.serenemind.ui.home.HomeViewModel
 import com.serenemind.ui.home.HomeViewModelFactory
+import com.serenemind.ui.profile.AddReminderScreen
 import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
+import com.serenemind.ui.profile.ReminderViewModel
+import com.serenemind.ui.profile.ReminderViewModelFactory
+import com.serenemind.ui.profile.RemindersScreen
 
 @Composable
 fun BottomNavGraph(
@@ -54,6 +59,13 @@ fun BottomNavGraph(
     }
     val profileViewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(userRepository)
+    )
+
+    val reminderRepository = remember {
+        ReminderRepository(apiService, tokenManager)
+    }
+    val reminderViewModel: ReminderViewModel = viewModel(
+        factory = ReminderViewModelFactory(reminderRepository)
     )
 
     NavHost(
@@ -131,7 +143,26 @@ fun BottomNavGraph(
             ProfileScreen(
                 viewModel = profileViewModel,
                 onNavigateToSettings = { },
-                onLogout = onLogout
+                onLogout = onLogout,
+                onNavigateToReminders = {
+                    navController.navigate(Screen.Reminders.route)
+                }
+            )
+        }
+
+        composable(Screen.Reminders.route) {
+            RemindersScreen(
+                viewModel = reminderViewModel,
+                onBackClick = { navController.popBackStack() },
+                onAddClick = { navController.navigate(Screen.AddReminder.route) }
+            )
+        }
+
+        composable(Screen.AddReminder.route) {
+            AddReminderScreen(
+                viewModel = reminderViewModel,
+                onBackClick = { navController.popBackStack() },
+                onSaveSuccess = { navController.popBackStack() }
             )
         }
     }

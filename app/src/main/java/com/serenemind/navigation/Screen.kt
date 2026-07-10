@@ -36,5 +36,7 @@ sealed class Screen(
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
     object Community : Screen("community", "Community", Icons.Default.People)
     object CreatePost : Screen("create_post")
+    object Reminders : Screen("reminders")
+    object AddReminder : Screen("add_reminder")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

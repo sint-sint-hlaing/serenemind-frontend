@@ -4,6 +4,7 @@ import com.serenemind.model.request.CommentRequest
 import com.serenemind.model.request.LoginRequest
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.request.RegisterRequest
+import com.serenemind.model.request.ReminderRequest
 import com.serenemind.model.response.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -77,4 +78,27 @@ interface ApiService {
         @Part("post") post: RequestBody,
         @Part image: MultipartBody.Part? = null
     ): Response<PostResponse>
+
+    @GET("api/reminders")
+    suspend fun getReminders(
+        @Header("Authorization") token: String
+    ): Response<List<ReminderResponse>>
+
+    @POST("api/reminders")
+    suspend fun createReminder(
+        @Header("Authorization") token: String,
+        @Body request: ReminderRequest
+    ): Response<ReminderResponse>
+
+    @DELETE("api/reminders/{id}")
+    suspend fun deleteReminder(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    ): Response<Unit>
+
+    @PATCH("api/reminders/{id}/toggle")
+    suspend fun toggleReminder(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    ): Response<ReminderResponse>
 }
