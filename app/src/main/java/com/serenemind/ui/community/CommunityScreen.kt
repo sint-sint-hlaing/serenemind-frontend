@@ -34,7 +34,8 @@ import com.serenemind.model.response.PostResponse
 @Composable
 fun CommunityScreen(
     viewModel: CommunityViewModel,
-    onPostClick: (PostResponse) -> Unit
+    onPostClick: (PostResponse) -> Unit,
+    onCreatePostClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
@@ -53,7 +54,7 @@ fun CommunityScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO */ },
+                onClick = onCreatePostClick,
                 containerColor = Color(0xFF6750A4),
                 contentColor = Color.White,
                 shape = CircleShape
@@ -114,7 +115,11 @@ fun CommunityScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(state.posts) { post ->
-                            PostItem(post, onClick = { onPostClick(post) })
+                            PostItem(
+                                post = post,
+                                onClick = { onPostClick(post) },
+                                onLikeClick = { viewModel.likePost(post.id) }
+                            )
                         }
                     }
                 }
@@ -132,7 +137,11 @@ fun getAvatarResource(avatarName: String?): Int {
 }
 
 @Composable
-fun PostItem(post: PostResponse, onClick: () -> Unit) {
+fun PostItem(
+    post: PostResponse,
+    onClick: () -> Unit,
+    onLikeClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -181,12 +190,17 @@ fun PostItem(post: PostResponse, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Like",
-                        tint = if (post.isLikedByMe) Color.Red else Color.Black,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    IconButton(
+                        onClick = onLikeClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = "Like",
+                            tint = if (post.isLikedByMe) Color.Red else Color.Black,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = post.likeCount.toString(), fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(16.dp))
@@ -223,6 +237,7 @@ fun PostItemPreview() {
             isLikedByMe = true,
             createdAt = "2 hours ago"
         ),
-        onClick = {}
+        onClick = {},
+        onLikeClick = {}
     )
 }

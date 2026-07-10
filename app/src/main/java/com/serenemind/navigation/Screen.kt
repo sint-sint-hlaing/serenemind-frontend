@@ -35,5 +35,6 @@ sealed class Screen(
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
     object Community : Screen("community", "Community", Icons.Default.People)
+    object CreatePost : Screen("create_post")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

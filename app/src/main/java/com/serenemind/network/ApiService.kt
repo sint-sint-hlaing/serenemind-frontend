@@ -5,6 +5,8 @@ import com.serenemind.model.request.LoginRequest
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.request.RegisterRequest
 import com.serenemind.model.response.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -67,4 +69,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: CommentRequest
     ): Response<CommentResponse>
+
+    @Multipart
+    @POST("api/posts")
+    suspend fun createPost(
+        @Header("Authorization") token: String,
+        @Part("post") post: RequestBody,
+        @Part image: MultipartBody.Part? = null
+    ): Response<PostResponse>
 }

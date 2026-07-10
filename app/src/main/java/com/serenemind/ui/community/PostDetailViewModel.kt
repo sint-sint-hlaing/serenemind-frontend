@@ -19,22 +19,25 @@ class PostDetailViewModel(
     val uiState: StateFlow<PostDetailUiState> = _uiState.asStateFlow()
 
     init {
-        fetchPostAndComments()
+        fetchPostAndComments(isInitialLoad = true)
     }
 
-    fun fetchPostAndComments() {
+    fun fetchPostAndComments(isInitialLoad: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = PostDetailUiState.Loading
+            if (isInitialLoad) {
+                _uiState.value = PostDetailUiState.Loading
+            }
+            
             communityRepository.getPostById(postId)
                 .catch { e ->
-                    _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
+                    if (isInitialLoad) _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
                 }
                 .collect { postResponse ->
                     if (postResponse.isSuccessful && postResponse.body() != null) {
                         val post = postResponse.body()!!
                         communityRepository.getComments(postId)
                             .catch { e ->
-                                _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
+                                if (isInitialLoad) _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
                             }
                             .collect { commentResponse ->
                                 if (commentResponse.isSuccessful && commentResponse.body() != null) {
@@ -43,7 +46,7 @@ class PostDetailViewModel(
                                     _uiState.value = PostDetailUiState.Success(post, emptyList())
                                 }
                             }
-                    } else {
+                    } else if (isInitialLoad) {
                         _uiState.value = PostDetailUiState.Error("Failed to fetch post")
                     }
                 }
@@ -51,20 +54,35 @@ class PostDetailViewModel(
     }
 
     fun likePost() {
-        viewModelScope.launch {
-            val response = communityRepository.likePost(postId)
-            if (response.isSuccessful) {
-                // Refresh data to show updated like count
-                fetchPostAndComments()
+        val currentState = _uiState.value
+        if (currentState is PostDetailUiState.Success) {
+            // Optimistic UI update
+            val currentPost = currentState.post
+            val isLiked = !currentPost.isLikedByMe
+            val newLikeCount = if (isLiked) currentPost.likeCount + 1 else currentPost.likeCount - 1
+            val updatedPost = currentPost.copy(isLikedByMe = isLiked, likeCount = newLikeCount)
+            
+            _uiState.value = currentState.copy(post = updatedPost)
+
+            viewModelScope.launch {
+                val response = communityRepository.likePost(postId)
+                if (!response.isSuccessful) {
+                    // Rollback if failed
+                    _uiState.value = currentState
+                } else {
+                    // Fetch latest data to be sure
+                    fetchPostAndComments(isInitialLoad = false)
+                }
             }
         }
     }
 
     fun addComment(content: String) {
         viewModelScope.launch {
+            // We don't show loading here anymore, just perform the action
             val response = communityRepository.addComment(postId, content)
             if (response.isSuccessful) {
-                fetchPostAndComments() // Refresh data
+                fetchPostAndComments(isInitialLoad = false) // Silent refresh
             }
         }
     }

@@ -20,6 +20,9 @@ import com.serenemind.repository.UserRepository
 import com.serenemind.ui.community.CommunityScreen
 import com.serenemind.ui.community.CommunityViewModel
 import com.serenemind.ui.community.CommunityViewModelFactory
+import com.serenemind.ui.community.CreatePostScreen
+import com.serenemind.ui.community.CreatePostViewModel
+import com.serenemind.ui.community.CreatePostViewModelFactory
 import com.serenemind.ui.community.PostDetailScreen
 import com.serenemind.ui.community.PostDetailViewModel
 import com.serenemind.ui.community.PostDetailViewModelFactory
@@ -38,6 +41,13 @@ fun BottomNavGraph(
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val apiService = remember { NetworkModule.provideApiService() }
+    
+    val communityRepository = remember {
+        CommunityRepository(apiService, tokenManager)
+    }
+    val communityViewModel: CommunityViewModel = viewModel(
+        factory = CommunityViewModelFactory(communityRepository)
+    )
 
     NavHost(
         navController = navController,
@@ -66,16 +76,13 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Community.route) {
-            val communityRepository = remember {
-                CommunityRepository(apiService, tokenManager)
-            }
-            val communityViewModel: CommunityViewModel = viewModel(
-                factory = CommunityViewModelFactory(communityRepository)
-            )
             CommunityScreen(
                 viewModel = communityViewModel,
                 onPostClick = { post ->
                     navController.navigate("post_detail/${post.id}")
+                },
+                onCreatePostClick = {
+                    navController.navigate(Screen.CreatePost.route)
                 }
             )
         }
@@ -84,9 +91,6 @@ fun BottomNavGraph(
             val postIdStr = backStackEntry.arguments?.getString("postId")
             val postId = postIdStr?.toLongOrNull() ?: -1L
             
-            val communityRepository = remember {
-                CommunityRepository(apiService, tokenManager)
-            }
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
@@ -94,6 +98,28 @@ fun BottomNavGraph(
             PostDetailScreen(
                 viewModel = postDetailViewModel,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.CreatePost.route) {
+            val createPostViewModel: CreatePostViewModel = viewModel(
+                factory = CreatePostViewModelFactory(communityRepository)
+            )
+            val userRepository = remember {
+                UserRepository(apiService, tokenManager)
+            }
+            val profileViewModel: ProfileViewModel = viewModel(
+                factory = ProfileViewModelFactory(userRepository)
+            )
+
+            CreatePostScreen(
+                viewModel = createPostViewModel,
+                profileViewModel = profileViewModel,
+                onBackClick = { navController.popBackStack() },
+                onPostSuccess = {
+                    communityViewModel.refresh()
+                    navController.popBackStack()
+                }
             )
         }
 
