@@ -49,8 +49,10 @@ fun HomeScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is HomeUiState.Success) {
-            if ((uiState as HomeUiState.Success).data.isNewBest == true) {
+            val data = (uiState as HomeUiState.Success).data
+            if (viewModel.shouldShowCelebration(data.currentStreak, data.isNewBest)) {
                 showNewBest = true
+                viewModel.markCelebrationShown(data.currentStreak)
             }
         }
     }

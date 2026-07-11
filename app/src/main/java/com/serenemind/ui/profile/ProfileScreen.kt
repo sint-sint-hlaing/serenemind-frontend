@@ -202,11 +202,6 @@ fun ProfileScreen(
                                     title = "Reminders",
                                     onClick = onNavigateToReminders
                                 )
-                                ProfileMenuItem(
-                                    icon = Icons.Default.CardMembership,
-                                    title = "Subscription",
-                                    badge = "Premium"
-                                )
                                 ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
                                 ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
                                 ProfileMenuItem(

@@ -57,6 +57,8 @@ fun BottomNavGraph(
     val tokenManager = remember { TokenManager(context) }
     val apiService = remember { NetworkModule.provideApiService() }
     
+    val themeManager = remember { com.serenemind.datastore.ThemeManager(context) }
+    
     val communityRepository = remember {
         CommunityRepository(apiService, tokenManager)
     }
@@ -68,7 +70,7 @@ fun BottomNavGraph(
         DashboardRepository(apiService, tokenManager)
     }
     val homeViewModel: HomeViewModel = viewModel(
-        factory = HomeViewModelFactory(dashboardRepository)
+        factory = HomeViewModelFactory(dashboardRepository, themeManager)
     )
 
     val userRepository = remember {
