@@ -14,9 +14,12 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,39 +31,69 @@ import androidx.compose.ui.unit.sp
 import com.serenemind.model.response.ActionItem
 import com.serenemind.model.response.DashboardResponse
 import com.serenemind.model.response.WeeklyData
+import com.serenemind.ui.streak.NewBestCelebrationScreen
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
     onLogout: () -> Unit = {},
-    onNavigateToBreathing: () -> Unit = {}
+    onNavigateToBreathing: () -> Unit = {},
+    onNavigateToStreak: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showNewBest by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        when (val state = uiState) {
-            is HomeUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+    LaunchedEffect(Unit) {
+        viewModel.fetchDashboardData(isSilent = true)
+    }
+
+    LaunchedEffect(uiState) {
+        if (uiState is HomeUiState.Success) {
+            if ((uiState as HomeUiState.Success).data.isNewBest == true) {
+                showNewBest = true
             }
-            is HomeUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message, color = MaterialTheme.colorScheme.error)
+        }
+    }
+
+    if (showNewBest) {
+        NewBestCelebrationScreen(
+            streak = (uiState as? HomeUiState.Success)?.data?.currentStreak ?: 0,
+            onDismiss = { showNewBest = false }
+        )
+    } else {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            when (val state = uiState) {
+                is HomeUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
                 }
-            }
-            is HomeUiState.Success -> {
-                DashboardContent(data = state.data, onNavigateToBreathing = onNavigateToBreathing)
+                is HomeUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                is HomeUiState.Success -> {
+                    DashboardContent(
+                        data = state.data, 
+                        onNavigateToBreathing = onNavigateToBreathing,
+                        onNavigateToStreak = onNavigateToStreak
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit) {
+fun DashboardContent(
+    data: DashboardResponse, 
+    onNavigateToBreathing: () -> Unit,
+    onNavigateToStreak: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -83,12 +116,38 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
-            Text(
-                text = "Dashboard",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onNavigateToStreak() }
+            ) {
+                Text(
+                    text = "Dashboard",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "🔥", fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${data.currentStreak}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
             IconButton(onClick = { /* Notifications */ }) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
@@ -400,6 +459,10 @@ fun DashboardPreview() {
         )
     )
     MaterialTheme {
-        DashboardContent(data = mockData, onNavigateToBreathing = {})
+        DashboardContent(
+            data = mockData, 
+            onNavigateToBreathing = {},
+            onNavigateToStreak = {}
+        )
     }
 }

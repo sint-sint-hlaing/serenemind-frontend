@@ -15,7 +15,7 @@ fun BottomBar(navController: NavHostController) {
     val items = listOf(
         Screen.Home,
         Screen.Journal,
-        Screen.Mood,
+        Screen.Streak,
         Screen.Community,
         Screen.Profile
     )

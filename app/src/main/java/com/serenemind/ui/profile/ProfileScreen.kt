@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -41,7 +42,8 @@ fun ProfileScreen(
     onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
-    onNavigateToReminders: () -> Unit = {}
+    onNavigateToReminders: () -> Unit = {},
+    onNavigateToStreak: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -156,6 +158,11 @@ fun ProfileScreen(
                         ) {
                             Column {
                                 ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
+                                ProfileMenuItem(
+                                    icon = Icons.Default.Whatshot,
+                                    title = "My Streaks",
+                                    onClick = onNavigateToStreak
+                                )
                                 ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
                                 
                                 // Dark Mode Toggle

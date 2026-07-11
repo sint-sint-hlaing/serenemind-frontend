@@ -20,17 +20,19 @@ class HomeViewModel(
         fetchDashboardData()
     }
 
-    fun fetchDashboardData() {
+    fun fetchDashboardData(isSilent: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+            if (!isSilent) {
+                _uiState.value = HomeUiState.Loading
+            }
             dashboardRepository.getDashboardData()
                 .catch { e ->
-                    _uiState.value = HomeUiState.Error("Exception: ${e.message}")
+                    if (!isSilent) _uiState.value = HomeUiState.Error("Exception: ${e.message}")
                 }
                 .collect { response ->
                     if (response.isSuccessful && response.body() != null) {
                         _uiState.value = HomeUiState.Success(response.body()!!)
-                    } else {
+                    } else if (!isSilent) {
                         val errorDetail = response.errorBody()?.string() ?: "Unknown error"
                         _uiState.value = HomeUiState.Error("Error ${response.code()}: $errorDetail")
                     }

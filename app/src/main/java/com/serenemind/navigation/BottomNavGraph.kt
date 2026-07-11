@@ -18,6 +18,7 @@ import com.serenemind.repository.BreathingRepository
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
 import com.serenemind.repository.ReminderRepository
+import com.serenemind.repository.StreakRepository
 import com.serenemind.repository.UserRepository
 import com.serenemind.ui.breathing.BreathingScreen
 import com.serenemind.ui.breathing.BreathingViewModel
@@ -41,6 +42,9 @@ import com.serenemind.ui.profile.ProfileViewModelFactory
 import com.serenemind.ui.profile.ReminderViewModel
 import com.serenemind.ui.profile.ReminderViewModelFactory
 import com.serenemind.ui.profile.RemindersScreen
+import com.serenemind.ui.streak.StreakScreen
+import com.serenemind.ui.streak.StreakViewModel
+import com.serenemind.ui.streak.StreakViewModelFactory
 
 @Composable
 fun BottomNavGraph(
@@ -60,11 +64,25 @@ fun BottomNavGraph(
         factory = CommunityViewModelFactory(communityRepository)
     )
 
+    val dashboardRepository = remember {
+        DashboardRepository(apiService, tokenManager)
+    }
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(dashboardRepository)
+    )
+
     val userRepository = remember {
         UserRepository(apiService, tokenManager)
     }
     val profileViewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(userRepository)
+    )
+
+    val streakRepository = remember {
+        StreakRepository(apiService, tokenManager)
+    }
+    val streakViewModel: StreakViewModel = viewModel(
+        factory = StreakViewModelFactory(streakRepository)
     )
 
     val reminderRepository = remember {
@@ -86,18 +104,14 @@ fun BottomNavGraph(
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            val dashboardRepository = remember {
-                DashboardRepository(apiService, tokenManager)
-            }
-            val homeViewModel: HomeViewModel = viewModel(
-                factory = HomeViewModelFactory(dashboardRepository)
-            )
-
             HomeScreen(
                 viewModel = homeViewModel,
                 onLogout = onLogout,
                 onNavigateToBreathing = {
                     navController.navigate(Screen.Breathing.route)
+                },
+                onNavigateToStreak = {
+                    navController.navigate(Screen.Streak.route)
                 }
             )
         }
@@ -115,6 +129,13 @@ fun BottomNavGraph(
 
         composable(Screen.Mood.route) {
             SampleScreen(title = "Mood Screen")
+        }
+
+        composable(Screen.Streak.route) {
+            StreakScreen(
+                viewModel = streakViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Community.route) {
@@ -141,6 +162,8 @@ fun BottomNavGraph(
                 viewModel = postDetailViewModel,
                 onBack = { 
                     communityViewModel.refresh()
+                    homeViewModel.fetchDashboardData(isSilent = true)
+                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack() 
                 }
             )
@@ -157,6 +180,8 @@ fun BottomNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onPostSuccess = {
                     communityViewModel.refresh()
+                    homeViewModel.fetchDashboardData(isSilent = true)
+                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack()
                 }
             )
@@ -171,6 +196,9 @@ fun BottomNavGraph(
                 onLogout = onLogout,
                 onNavigateToReminders = {
                     navController.navigate(Screen.Reminders.route)
+                },
+                onNavigateToStreak = {
+                    navController.navigate(Screen.Streak.route)
                 }
             )
         }

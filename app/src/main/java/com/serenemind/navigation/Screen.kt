@@ -33,6 +33,7 @@ sealed class Screen(
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
+    object Streak : Screen("streak", "Streak", Icons.Default.Share) // Temporary icon
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
     object Community : Screen("community", "Community", Icons.Default.People)
     object CreatePost : Screen("create_post")
