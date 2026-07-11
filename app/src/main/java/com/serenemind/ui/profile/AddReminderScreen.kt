@@ -40,7 +40,7 @@ fun AddReminderScreen(
     var timeValue by remember { mutableStateOf("09:00:00") }
     
     val calendar = Calendar.getInstance()
-    val sdfDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val sdfDate = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
     val sdfTimeDisplay = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val sdfTimeValue = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
@@ -75,7 +75,9 @@ fun AddReminderScreen(
             timeDisplay = sdfTimeDisplay.format(selectedTime.time)
             timeValue = sdfTimeValue.format(selectedTime.time)
         },
-        9, 0, false
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        false
     )
 
     LaunchedEffect(uiState) {

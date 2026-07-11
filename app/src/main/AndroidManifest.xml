@@ -33,6 +33,13 @@
         </activity>
 
         <receiver android:name=".util.ReminderReceiver" android:exported="false" />
+
+        <activity
+            android:name=".ReminderAlarmActivity"
+            android:exported="false"
+            android:showForAllUsers="true"
+            android:showOnLockScreen="true"
+            android:theme="@style/Theme.Serenemindclient" />
     </application>
 
 </manifest>

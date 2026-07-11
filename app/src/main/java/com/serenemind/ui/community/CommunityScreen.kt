@@ -26,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.PostResponse
@@ -136,6 +140,33 @@ fun getAvatarResource(avatarName: String?): Int {
     }
 }
 
+fun formatPostDate(dateStr: String?): String {
+    if (dateStr == null) return ""
+    return try {
+        // Handle ISO 8601 format from server
+        val sdfInput = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val date = sdfInput.parse(dateStr)
+        if (date != null) {
+            val now = Date()
+            val diff = now.time - date.time
+            
+            when {
+                diff < 60 * 1000 -> "Just now"
+                diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)} mins ago"
+                diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)} hours ago"
+                else -> {
+                    val sdfOutput = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                    sdfOutput.format(date)
+                }
+            }
+        } else dateStr
+    } catch (e: Exception) {
+        dateStr
+    }
+}
+
 @Composable
 fun PostItem(
     post: PostResponse,
@@ -164,7 +195,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(text = post.username, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(text = post.createdAt, color = Color.Gray, fontSize = 12.sp)
+                    Text(text = formatPostDate(post.createdAt), color = Color.Gray, fontSize = 12.sp)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

@@ -13,6 +13,7 @@ import android.os.Build
 import java.util.Calendar
 import androidx.core.app.NotificationCompat
 import com.serenemind.MainActivity
+import com.serenemind.ReminderAlarmActivity
 import com.serenemind.R
 
 class ReminderReceiver : BroadcastReceiver() {
@@ -109,16 +110,27 @@ class ReminderReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val intent = Intent(context, MainActivity::class.java).apply {
+        // Intent for the full screen activity (Screen 11)
+        val fullScreenIntent = Intent(context, ReminderAlarmActivity::class.java).apply {
+            putExtra("title", title)
+            putExtra("note", content)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, 0, fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val mainIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+        val contentPendingIntent = PendingIntent.getActivity(
+            context, 0, mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.default_avatar)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setColor(0xFF6750A4.toInt())
             .setContentTitle(title)
             .setContentText(content)
@@ -129,9 +141,10 @@ class ReminderReceiver : BroadcastReceiver() {
             .setVibrate(longArrayOf(0, 1000, 500, 1000))
             .setAutoCancel(true)
             .setOngoing(true)
-            .setContentIntent(pendingIntent)
-            .setFullScreenIntent(pendingIntent, true)
-            .addAction(0, "Open App", pendingIntent)
+            .setContentIntent(contentPendingIntent)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .addAction(0, "Snooze", contentPendingIntent)
+            .addAction(0, "Mark as Done", contentPendingIntent)
             .build()
 
         notificationManager.notify(1001, notification)

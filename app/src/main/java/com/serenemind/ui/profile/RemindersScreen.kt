@@ -26,6 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Locale
 import com.serenemind.model.response.ReminderResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,8 +77,74 @@ fun RemindersScreen(
                             .fillMaxSize()
                             .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(vertical = 16.dp)
+                        contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFF3E5F5)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Notifications,
+                                        contentDescription = null,
+                                        tint = Color(0xFF6750A4),
+                                        modifier = Modifier.size(60.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "Never forget what matters to you",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    color = Color.Black
+                                )
+                                Text(
+                                    "Set reminders to stay on track\nwith your goals and habits.",
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = Color.Gray,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = onAddClick,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add Reminder")
+                                }
+                            }
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Upcoming",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+                                TextButton(onClick = { }) {
+                                    Text("View All", color = Color(0xFF6750A4))
+                                }
+                            }
+                        }
+
                         items(state.reminders, key = { it.id }) { reminder ->
                             SwipeToDeleteReminder(
                                 reminder = reminder,
@@ -168,6 +236,17 @@ fun SwipeToDeleteReminder(
     }
 }
 
+fun formatTimeDisplay(timeStr: String): String {
+    return try {
+        val sdfInput = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+        val sdfOutput = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val date = sdfInput.parse(timeStr)
+        if (date != null) sdfOutput.format(date) else timeStr
+    } catch (e: Exception) {
+        timeStr
+    }
+}
+
 @Composable
 fun ReminderItem(
     reminder: ReminderResponse,
@@ -212,7 +291,7 @@ fun ReminderItem(
                 fontSize = 16.sp
             )
             Text(
-                text = "${reminder.repeatType} • ${reminder.reminderTime}",
+                text = "${reminder.repeatType} • ${formatTimeDisplay(reminder.reminderTime)}",
                 color = Color.Gray,
                 fontSize = 14.sp
             )
