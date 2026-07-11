@@ -52,7 +52,6 @@ fun AddReminderScreen(
 
     val repeatOptions = listOf("Daily", "Weekly", "Monthly", "Mon, Wed, Fri")
 
-    // Date Picker Dialog
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
@@ -66,7 +65,6 @@ fun AddReminderScreen(
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    // Time Picker Dialog
     val timePickerDialog = TimePickerDialog(
         context,
         { _, hourOfDay, minute ->
@@ -188,6 +186,8 @@ fun AddReminderScreen(
                 )
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text("Note (optional)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
@@ -253,7 +253,6 @@ fun DropdownField(
                     focusedBorderColor = Color(0xFFEEEEEE)
                 )
             )
-            // Invisible box over field to trigger dropdown
             Box(modifier = Modifier.matchParentSize().clickable { expanded = true })
             
             DropdownMenu(

@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Build
 import java.util.Calendar
 import androidx.core.app.NotificationCompat
@@ -18,6 +17,11 @@ import com.serenemind.MainActivity
 import com.serenemind.R
 
 class ReminderReceiver : BroadcastReceiver() {
+
+    companion object {
+        const val REMINDER_CHANNEL_ID = "serenemind_gentle_reminders"
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getLongExtra("id", -1L)
         val title = intent.getStringExtra("title") ?: "Reminder"
@@ -25,12 +29,13 @@ class ReminderReceiver : BroadcastReceiver() {
         val repeatType = intent.getStringExtra("repeatType")
         val time = intent.getStringExtra("time")
         
-        // 1. Play sound manually using MediaPlayer
+        // 1. Play sound manually
         playNotiSound(context)
         
-        // 2. Show the notification
+        // 2. Show notification
         showNotification(context, title, note, id)
 
+        // 3. Reschedule if daily
         if (repeatType == "DAILY" && id != -1L && time != null) {
             rescheduleNext(context, id, title, note, repeatType, time)
         }
@@ -38,14 +43,15 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun playNotiSound(context: Context) {
         try {
-            val mediaPlayer = MediaPlayer.create(context, R.raw.noti_sound)
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            mediaPlayer.setAudioAttributes(audioAttributes)
-            mediaPlayer.setOnCompletionListener { it.release() }
-            mediaPlayer.start()
+            MediaPlayer.create(context, R.raw.noti_sound)?.apply {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setAudioAttributes(audioAttributes)
+                setOnCompletionListener { release() }
+                start()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -84,18 +90,17 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun showNotification(context: Context, title: String, content: String, id: Long) {
-        val channelId = "serenemind_manual_sound_v1"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
-                "SereneMind Reminders",
+                REMINDER_CHANNEL_ID,
+                "Mental Health Reminders",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Gentle reminders for your well-being"
+                description = "Gentle notifications for well-being"
                 enableVibration(false)
-                setSound(null, null) // Silent channel, we play sound manually
+                setSound(null, null)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
@@ -109,7 +114,7 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, channelId)
+        val notification = NotificationCompat.Builder(context, REMINDER_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setColor(0xFF6750A4.toInt())
             .setContentTitle(title)
