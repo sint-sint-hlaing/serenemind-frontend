@@ -12,6 +12,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,6 +42,7 @@ fun CreatePostScreen(
     onPostSuccess: () -> Unit
 ) {
     var content by remember { mutableStateOf("") }
+    var isAnonymous by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -76,7 +80,7 @@ fun CreatePostScreen(
                             val imagePart = selectedImageUri?.let { 
                                 FileUtils.uriToMultipartBodyPart(context, it, "image")
                             }
-                            viewModel.createPost(content, imagePart)
+                            viewModel.createPost(content, isAnonymous, imagePart)
                         },
                         enabled = content.isNotBlank() && uiState !is CreatePostUiState.Loading
                     ) {
@@ -111,8 +115,8 @@ fun CreatePostScreen(
                 // User Info
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val user = (profileState as? ProfileUiState.Success)?.user
-                    val avatar = user?.avatar
-                    val name = user?.fullname ?: user?.username ?: "User"
+                    val avatar = if (isAnonymous) null else user?.avatar
+                    val name = if (isAnonymous) "Anonymous" else (user?.fullname ?: user?.username ?: "User")
                     
                     val avatarRes = when (avatar) {
                         "avatar-1" -> R.drawable.avatar_1
@@ -129,7 +133,56 @@ fun CreatePostScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
+                        var expanded by remember { mutableStateOf(false) }
                         Text(text = name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        
+                        Box {
+                            Surface(
+                                modifier = Modifier.clickable { expanded = true },
+                                color = Color(0xFFF3F3F3),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = if (isAnonymous) Icons.Default.VisibilityOff else Icons.Default.Public,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = Color.Gray
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isAnonymous) "Anonymous" else "Public",
+                                        fontSize = 11.sp,
+                                        color = Color.Gray
+                                    )
+                                    Icon(
+                                        Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+                            
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Public") },
+                                    leadingIcon = { Icon(Icons.Default.Public, contentDescription = null) },
+                                    onClick = { isAnonymous = false; expanded = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Anonymous") },
+                                    leadingIcon = { Icon(Icons.Default.VisibilityOff, contentDescription = null) },
+                                    onClick = { isAnonymous = true; expanded = false }
+                                )
+                            }
+                        }
                     }
                 }
 

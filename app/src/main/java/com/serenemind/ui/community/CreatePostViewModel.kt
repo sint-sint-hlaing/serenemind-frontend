@@ -17,7 +17,7 @@ class CreatePostViewModel(
     private val _uiState = MutableStateFlow<CreatePostUiState>(CreatePostUiState.Idle)
     val uiState: StateFlow<CreatePostUiState> = _uiState.asStateFlow()
 
-    fun createPost(content: String, imagePart: MultipartBody.Part?) {
+    fun createPost(content: String, isAnonymous: Boolean, imagePart: MultipartBody.Part?) {
         if (content.isBlank()) {
             _uiState.value = CreatePostUiState.Error("Content cannot be empty")
             return
@@ -26,7 +26,7 @@ class CreatePostViewModel(
         viewModelScope.launch {
             _uiState.value = CreatePostUiState.Loading
             try {
-                val request = CreatePostRequest(content = content)
+                val request = CreatePostRequest(content = content, anonymous = isAnonymous)
                 val response = communityRepository.createPost(request, imagePart)
                 if (response.isSuccessful) {
                     _uiState.value = CreatePostUiState.Success

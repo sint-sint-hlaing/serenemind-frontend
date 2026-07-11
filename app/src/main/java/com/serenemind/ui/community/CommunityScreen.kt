@@ -183,7 +183,10 @@ fun PostItem(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val avatarRes = getAvatarResource(post.userProfilePicture)
+                val displayName = if (post.anonymous) "Anonymous" else post.username
+                val displayAvatar = if (post.anonymous) null else post.userProfilePicture
+                val avatarRes = getAvatarResource(displayAvatar)
+                
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = avatarRes),
                     contentDescription = "Profile Picture",
@@ -194,7 +197,7 @@ fun PostItem(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(text = post.username, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Text(text = formatPostDate(post.createdAt), color = Color.Gray, fontSize = 12.sp)
                 }
             }
@@ -270,7 +273,8 @@ fun PostItemPreview() {
             likeCount = 24,
             commentCount = 6,
             isLikedByMe = true,
-            createdAt = "2 hours ago"
+            createdAt = "2 hours ago",
+            anonymous = false
         ),
         onClick = {},
         onLikeClick = {}
