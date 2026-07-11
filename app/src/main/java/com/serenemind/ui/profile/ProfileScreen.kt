@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
@@ -36,7 +37,8 @@ import com.serenemind.R
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -151,7 +153,15 @@ fun ProfileScreen(
                                     badge = "Premium"
                                 )
                                 ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
-                                ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind", isLast = true)
+                                ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
+                                ProfileMenuItem(
+                                    icon = Icons.AutoMirrored.Filled.Logout,
+                                    title = "Logout",
+                                    isLast = true,
+                                    onClick = {
+                                        viewModel.logout { onLogout() }
+                                    }
+                                )
                             }
                         }
                     }

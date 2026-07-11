@@ -30,7 +30,11 @@ sealed class Screen(
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
+    object MoodHistory : Screen("mood_history")
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
+    object GoalDetail: Screen("goal_detail")
+    object Meditation: Screen("meditation")
+    object Breathing: Screen("breathing")
     object Community : Screen("community", "Community", Icons.Default.Share)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

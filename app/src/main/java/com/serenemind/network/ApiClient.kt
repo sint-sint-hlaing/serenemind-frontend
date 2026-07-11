@@ -13,4 +13,20 @@ object ApiClient {
             .build()
             .create(ApiService::class.java)
     }
+
+    val goalApiService: GoalApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GoalApiService::class.java)
+    }
+
+    val meditationApiService: MeditationApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(MeditationApiService::class.java)
+    }
 }

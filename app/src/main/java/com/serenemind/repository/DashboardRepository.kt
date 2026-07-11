@@ -12,14 +12,11 @@ class DashboardRepository(
     private val tokenManager: TokenManager
 ) {
 
-    // API မှ Dashboard အချက်အလက်များကို Flow အနေဖြင့် ရယူခြင်း
     fun getDashboardData(): Flow<Response<DashboardResponse>> = flow {
         try {
-            val token = tokenManager.getToken() ?: ""
-            val response = apiService.getDashboardData("Bearer $token")
+            val response = apiService.getDashboardData()
             emit(response)
         } catch (e: Exception) {
-            // Rethrow so ViewModel can catch it
             throw e
         }
     }

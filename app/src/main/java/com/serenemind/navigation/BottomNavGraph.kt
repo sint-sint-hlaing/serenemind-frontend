@@ -14,14 +14,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
-import com.serenemind.repository.DashboardRepository
-import com.serenemind.repository.UserRepository
-import com.serenemind.ui.home.HomeScreen
-import com.serenemind.ui.home.HomeViewModel
-import com.serenemind.ui.home.HomeViewModelFactory
-import com.serenemind.ui.profile.ProfileScreen
-import com.serenemind.ui.profile.ProfileViewModel
-import com.serenemind.ui.profile.ProfileViewModelFactory
+import com.serenemind.repository.*
+import com.serenemind.ui.home.*
+import com.serenemind.ui.profile.*
+import com.serenemind.ui.mood.*
+import com.serenemind.ui.goal.*
+import com.serenemind.ui.meditation.*
+import com.serenemind.ui.breathing.*
 
 @Composable
 fun BottomNavGraph(
@@ -30,24 +29,41 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    val apiService = remember { NetworkModule.provideApiService() }
+    val apiService = remember { NetworkModule.provideApiService(context) }
+    val goalApiService = remember { NetworkModule.provideGoalApiService(context) }
+    val meditationApiService = remember { NetworkModule.provideMeditationApiService(context) }
+    
+    // Repositories
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val moodRepository = remember { MoodRepository(apiService) }
+
+    // Shared ViewModels (for nested navigation if needed) or unique per destination
+    val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
 
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            val dashboardRepository = remember {
-                DashboardRepository(apiService, tokenManager)
-            }
-            val homeViewModel: HomeViewModel = viewModel(
-                factory = HomeViewModelFactory(dashboardRepository)
-            )
-
+            val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
+            val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository))
             HomeScreen(
                 viewModel = homeViewModel,
                 onLogout = onLogout
-            )
+            ) { action ->
+                when (action.lowercase()) {
+                    "meditate" -> navController.navigate(Screen.Meditation.route)
+                    "goals" -> navController.navigate(Screen.Goal.route)
+                    "journal" -> navController.navigate(Screen.Journal.route)
+                    "mood" -> navController.navigate(Screen.Mood.route)
+                    "breathing" -> navController.navigate(Screen.Breathing.route)
+                }
+            }
+        }
+
+        composable(Screen.Breathing.route) {
+            BreathingScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Journal.route) {
@@ -55,7 +71,47 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Mood.route) {
-            SampleScreen(title = "Mood Screen")
+            val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+            MoodTrackerScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() },
+                onViewHistory = { navController.navigate(Screen.MoodHistory.route) }
+            )
+        }
+
+        composable(Screen.MoodHistory.route) {
+            val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+            MoodHistoryScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Goal.route) {
+            GoalScreen(
+                viewModel = goalViewModel,
+                onGoalClick = { goal ->
+                    goalViewModel.selectGoal(goal)
+                    navController.navigate(Screen.GoalDetail.route)
+                }
+            )
+        }
+
+        composable(Screen.GoalDetail.route) {
+            GoalDetailScreen(
+                viewModel = goalViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Meditation.route) {
+            val meditationViewModel: MeditationViewModel = viewModel(
+                factory = MeditationViewModelFactory(meditationRepository)
+            )
+            MeditationScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Community.route) {
@@ -63,20 +119,12 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Profile.route) {
-            // 2. ရလာတဲ့ ApiService ကို UserRepository ထဲ ထည့်ပေးပါ
-            val userRepository = remember {
-                UserRepository(apiService, tokenManager)
-            }
-
-            // 3. Factory သုံးပြီး ViewModel Instance ကို ဆောက်ပါ
-            val profileViewModel: ProfileViewModel = viewModel(
-                factory = ProfileViewModelFactory(userRepository)
-            )
-
-            // 4. Screen ဆီကို ViewModel ထည့်ပေးလိုက်ပါ
+            val userRepository = remember { UserRepository(apiService, tokenManager) }
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
             ProfileScreen(
                 viewModel = profileViewModel,
-                onNavigateToSettings = { }
+                onNavigateToSettings = { },
+                onLogout = onLogout
             )
         }
     }

@@ -25,8 +25,12 @@ fun BottomBar(navController: NavHostController) {
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { screen ->
+            val isSelected = currentRoute == screen.route || 
+                (screen == Screen.Mood && currentRoute == Screen.MoodHistory.route) ||
+                (screen == Screen.Goal && currentRoute == Screen.GoalDetail.route)
+
             NavigationBarItem(
-                selected = currentRoute == screen.route,
+                selected = isSelected,
                 onClick = {
                     if (currentRoute != screen.route) {
                         navController.navigate(screen.route) {

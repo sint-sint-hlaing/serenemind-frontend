@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val api = NetworkModule.provideApiService()
+        val api = NetworkModule.provideApiService(this)
         val repo = AuthRepository(api)
         val tokenManager = TokenManager(this)
 
