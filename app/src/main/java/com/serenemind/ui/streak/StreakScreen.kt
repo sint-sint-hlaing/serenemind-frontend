@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.response.StreakResponse
@@ -69,25 +70,32 @@ fun StreakScreen(
                         val streak = (uiState as? StreakUiState.Success)?.streak
                         if (streak != null && streak.streakFreezeCount > 0) {
                             IconButton(onClick = { showMissedDay = true }) {
-                                Icon(Icons.Default.Shield, contentDescription = "Streak Protection", tint = Color(0xFF673AB7))
+                                Icon(Icons.Default.Shield, contentDescription = "Streak Protection", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         IconButton(onClick = { /* Info */ }) {
                             Icon(Icons.Default.Info, contentDescription = "Info")
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                    )
                 )
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
             when (val state = uiState) {
                 is StreakUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 is StreakUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = state.message, color = Color.Red)
+                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
                     }
                 }
                 is StreakUiState.Success -> {
@@ -111,100 +119,125 @@ fun StreakContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Main Streak Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Text(text = "🔥", fontSize = 48.sp)
+                Text(text = "🔥", fontSize = 56.sp)
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = streak.currentStreak.toString(),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 64.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Day Streak",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Amazing! 🔥",
-                    color = Color(0xFFF44336),
-                    fontWeight = FontWeight.Bold
+                    color = Color(0xFFFF5722), // Vibrant Fire Orange
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
         // Weekly Overview
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
             days.forEachIndexed { index, day ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = day, fontSize = 12.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = day, 
+                        fontSize = 12.sp, 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     val isChecked = streak.weeklyOverview.getOrElse(index) { false }
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
-                            .background(if (isChecked) Color(0xFF4CAF50) else Color(0xFFF5F5F5)),
+                            .background(
+                                if (isChecked) Color(0xFF4CAF50) 
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                            .then(
+                                if (!isChecked) Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                                else Modifier
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isChecked) {
-                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(
+                                imageVector = Icons.Default.Check, 
+                                contentDescription = null, 
+                                tint = Color.White, 
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Statistics
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 StreakStatItem("Current Streak", "${streak.currentStreak} days", Icons.Default.Timer)
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                Divider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 StreakStatItem("Longest Streak", "${streak.longestStreak} days", Icons.Default.Timeline)
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                Divider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 StreakStatItem("Total Completed", "${streak.totalCompletedDays} days", Icons.Default.CheckCircle)
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Banner
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Keep it up!", fontWeight = FontWeight.Bold)
-                    Text(text = "Consistency is the key to a better you.", fontSize = 12.sp)
+                    Text(text = "Keep it up!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "Consistency is the key to a better you.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(text = "🚩", fontSize = 32.sp)
             }
@@ -220,11 +253,19 @@ fun StreakStatItem(label: String, value: String, icon: androidx.compose.ui.graph
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = Color(0xFF673AB7))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            }
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = label, fontWeight = FontWeight.Medium)
+            Text(text = label, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         }
-        Text(text = value, fontWeight = FontWeight.Bold)
+        Text(text = value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -236,7 +277,7 @@ fun StreakProtectionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -245,10 +286,10 @@ fun StreakProtectionScreen(
             onClick = onDismiss,
             modifier = Modifier.align(Alignment.Start)
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Missed a Day?", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Missed a Day?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(32.dp))
         Text(text = "☁️", fontSize = 80.sp) // Cloud with rain icon
         Spacer(modifier = Modifier.height(32.dp))
@@ -256,20 +297,21 @@ fun StreakProtectionScreen(
             text = "It's okay, we all have\noff days.",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Don't break your steak!\nUse a Freeze or get right\nback on track tomorrow.",
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            color = Color.Gray
+            text = "Don't break your streak!\nUse a Freeze or get right\nback on track tomorrow.",
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onUseFreeze,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text("Use Freeze")
         }
@@ -277,9 +319,10 @@ fun StreakProtectionScreen(
         OutlinedButton(
             onClick = onDismiss,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
         ) {
-            Text("Maybe Later")
+            Text("Maybe Later", color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }
@@ -292,7 +335,7 @@ fun NewBestCelebrationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A2E))
+            .background(Color(0xFF0B0B1E)) // Specific Deep Dark Blue for celebration
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -319,15 +362,15 @@ fun NewBestCelebrationScreen(
         }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "$streak Days Steak! 🔥",
+            text = "$streak Days Streak! 🔥",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "You've achieved your\nlongest steak.",
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            text = "You've achieved your\nlongest streak.",
+            textAlign = TextAlign.Center,
             color = Color.White
         )
         Spacer(modifier = Modifier.height(24.dp))
