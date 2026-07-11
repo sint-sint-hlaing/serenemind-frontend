@@ -83,7 +83,7 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun showNotification(context: Context, title: String, content: String) {
-        val channelId = "serenemind_alarm_channel_v3"
+        val channelId = "serenemind_alarm_channel_v4"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
@@ -130,7 +130,7 @@ class ReminderReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setColor(0xFF6750A4.toInt())
             .setContentTitle(title)
             .setContentText(content)
@@ -140,7 +140,7 @@ class ReminderReceiver : BroadcastReceiver() {
             .setSound(alarmSound)
             .setVibrate(longArrayOf(0, 1000, 500, 1000))
             .setAutoCancel(true)
-            .setOngoing(true)
+            .setOngoing(false) // Swipeable now
             .setContentIntent(contentPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .addAction(0, "Snooze", contentPendingIntent)

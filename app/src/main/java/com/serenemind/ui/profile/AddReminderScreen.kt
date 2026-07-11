@@ -40,11 +40,13 @@ fun AddReminderScreen(
     var timeValue by remember { mutableStateOf("09:00:00") }
     
     val calendar = Calendar.getInstance()
-    val sdfDate = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    val sdfDateDisplay = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    val sdfDateValue = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val sdfTimeDisplay = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     val sdfTimeValue = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
-    var startDate by remember { mutableStateOf(sdfDate.format(calendar.time)) }
+    var startDateDisplay by remember { mutableStateOf(sdfDateDisplay.format(calendar.time)) }
+    var startDateValue by remember { mutableStateOf(sdfDateValue.format(calendar.time)) }
     var tone by remember { mutableStateOf("Gentle Bell") }
     var note by remember { mutableStateOf("") }
     var enabled by remember { mutableStateOf(true) }
@@ -58,7 +60,8 @@ fun AddReminderScreen(
         { _, year, month, dayOfMonth ->
             val selectedDate = Calendar.getInstance()
             selectedDate.set(year, month, dayOfMonth)
-            startDate = sdfDate.format(selectedDate.time)
+            startDateDisplay = sdfDateDisplay.format(selectedDate.time)
+            startDateValue = sdfDateValue.format(selectedDate.time)
         },
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
@@ -102,9 +105,9 @@ fun AddReminderScreen(
                             viewModel.createReminder(
                                 context = context,
                                 title = title,
-                                repeatType = repeatType,
+                                repeatType = repeatType.uppercase(),
                                 time = timeValue,
-                                startDate = startDate,
+                                startDate = startDateValue,
                                 tone = tone,
                                 note = note,
                                 enabled = enabled
@@ -173,7 +176,7 @@ fun AddReminderScreen(
             Text("Start Date", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = startDate,
+                value = startDateDisplay,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth().clickable { datePickerDialog.show() },
                 shape = RoundedCornerShape(12.dp),
