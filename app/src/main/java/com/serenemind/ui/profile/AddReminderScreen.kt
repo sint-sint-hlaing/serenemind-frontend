@@ -47,12 +47,10 @@ fun AddReminderScreen(
 
     var startDateDisplay by remember { mutableStateOf(sdfDateDisplay.format(calendar.time)) }
     var startDateValue by remember { mutableStateOf(sdfDateValue.format(calendar.time)) }
-    var tone by remember { mutableStateOf("Gentle Bell") }
     var note by remember { mutableStateOf("") }
     var enabled by remember { mutableStateOf(true) }
 
     val repeatOptions = listOf("Daily", "Weekly", "Monthly", "Mon, Wed, Fri")
-    val toneOptions = listOf("Gentle Bell", "Bird Chirping", "Zen Gong", "Soft Piano")
 
     // Date Picker Dialog
     val datePickerDialog = DatePickerDialog(
@@ -108,7 +106,7 @@ fun AddReminderScreen(
                                 repeatType = repeatType.uppercase(),
                                 time = timeValue,
                                 startDate = startDateValue,
-                                tone = tone,
+                                tone = "Default",
                                 note = note,
                                 enabled = enabled
                             )
@@ -189,12 +187,6 @@ fun AddReminderScreen(
                     disabledTrailingIconColor = Color.Gray
                 )
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            DropdownField(label = "Reminder Tone", options = toneOptions, selectedOption = tone) { tone = it }
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             Text("Note (optional)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
