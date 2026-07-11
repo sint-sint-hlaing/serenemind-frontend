@@ -77,10 +77,10 @@ class PostDetailViewModel(
         }
     }
 
-    fun addComment(content: String) {
+    fun addComment(content: String, isAnonymous: Boolean = false) {
         viewModelScope.launch {
             // We don't show loading here anymore, just perform the action
-            val response = communityRepository.addComment(postId, content)
+            val response = communityRepository.addComment(postId, content, isAnonymous)
             if (response.isSuccessful) {
                 fetchPostAndComments(isInitialLoad = false) // Silent refresh
             }

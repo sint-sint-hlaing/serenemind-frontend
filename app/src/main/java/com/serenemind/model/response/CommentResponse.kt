@@ -5,5 +5,6 @@ data class CommentResponse(
     val content: String,
     val username: String,
     val userProfilePicture: String?,
-    val createdAt: String
+    val createdAt: String,
+    val anonymous: Boolean = false
 )

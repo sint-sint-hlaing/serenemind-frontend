@@ -1,6 +1,7 @@
 package com.serenemind.ui.community
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,7 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -40,6 +43,7 @@ fun PostDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var commentText by remember { mutableStateOf("") }
+    var isAnonymous by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -62,37 +66,79 @@ fun PostDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .imePadding(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextField(
-                        value = commentText,
-                        onValueChange = { commentText = it },
-                        placeholder = { Text("Add a comment...") },
+                Column {
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(24.dp)),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFF3F3F3),
-                            unfocusedContainerColor = Color(0xFFF3F3F3),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (commentText.isNotBlank()) {
-                                viewModel.addComment(commentText)
-                                commentText = ""
-                            }
-                        },
-                        colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF6750A4))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Send, contentDescription = "Send")
+                        Text(
+                            text = "Comment as",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                        
+                        Surface(
+                            onClick = { isAnonymous = !isAnonymous },
+                            color = if (isAnonymous) Color(0xFFEADDFF) else Color(0xFFF3F3F3),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (isAnonymous) Icons.Default.VisibilityOff else Icons.Default.Public,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = if (isAnonymous) Color(0xFF6750A4) else Color.Gray
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isAnonymous) "Anonymous" else "Public",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isAnonymous) Color(0xFF6750A4) else Color.Gray
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                            .imePadding(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = commentText,
+                            onValueChange = { commentText = it },
+                            placeholder = { Text("Add a comment...") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(24.dp)),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFFF3F3F3),
+                                unfocusedContainerColor = Color(0xFFF3F3F3),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                if (commentText.isNotBlank()) {
+                                    viewModel.addComment(commentText, isAnonymous)
+                                    commentText = ""
+                                }
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF6750A4))
+                        ) {
+                            Icon(Icons.Default.Send, contentDescription = "Send")
+                        }
                     }
                 }
             }
@@ -168,7 +214,7 @@ fun PostHeader(
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val displayName = if (post.anonymous) "Anonymous" else post.username
+            val displayName = post.username
             val displayAvatar = if (post.anonymous) null else post.userProfilePicture
             val avatarRes = getAvatarResource(displayAvatar)
             
@@ -249,7 +295,10 @@ fun CommentItem(comment: CommentResponse) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val avatarRes = getAvatarResource(comment.userProfilePicture)
+        val displayName = comment.username
+        val displayAvatar = if (comment.anonymous) null else comment.userProfilePicture
+        val avatarRes = getAvatarResource(displayAvatar)
+        
         androidx.compose.foundation.Image(
             painter = painterResource(id = avatarRes),
             contentDescription = "Profile Picture",
@@ -266,10 +315,9 @@ fun CommentItem(comment: CommentResponse) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = comment.username, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(text = formatPostDate(comment.createdAt), color = Color.Gray, fontSize = 11.sp)
                 }
-                Text("03:15", color = Color.Gray, fontSize = 11.sp) // Dummy time from image
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = comment.content, fontSize = 14.sp)

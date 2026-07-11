@@ -183,7 +183,7 @@ fun PostItem(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val displayName = if (post.anonymous) "Anonymous" else post.username
+                val displayName = post.username
                 val displayAvatar = if (post.anonymous) null else post.userProfilePicture
                 val avatarRes = getAvatarResource(displayAvatar)
                 

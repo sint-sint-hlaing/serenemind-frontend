@@ -38,9 +38,9 @@ class CommunityRepository(
         return apiService.likePost(postId, "Bearer $token")
     }
 
-    suspend fun addComment(postId: Long, content: String): Response<CommentResponse> {
+    suspend fun addComment(postId: Long, content: String, isAnonymous: Boolean = false): Response<CommentResponse> {
         val token = tokenManager.getToken() ?: ""
-        return apiService.addComment(postId, "Bearer $token", CommentRequest(content))
+        return apiService.addComment(postId, "Bearer $token", CommentRequest(content, isAnonymous))
     }
 
     suspend fun createPost(request: CreatePostRequest, imagePart: MultipartBody.Part?): Response<PostResponse> {
