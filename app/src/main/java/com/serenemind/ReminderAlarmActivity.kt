@@ -5,14 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,13 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.serenemind.util.AlarmService
 import com.serenemind.util.ReminderReceiver
 import java.util.Calendar
 
 class ReminderAlarmActivity : ComponentActivity() {
-
-    private var mediaPlayer: MediaPlayer? = null
-    private var vibrator: Vibrator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,19 +53,17 @@ class ReminderAlarmActivity : ComponentActivity() {
         val title = intent.getStringExtra("title") ?: "Reminder"
         val note = intent.getStringExtra("note") ?: "Take a moment for yourself and enjoy the moment."
 
-        startAlarm()
-
         setContent {
             ReminderAlarmScreen(
                 title = title,
                 note = note,
                 onDismiss = {
-                    stopAlarm()
+                    stopAlarmService()
                     dismissNotification()
                     finish()
                 },
                 onSnooze = { minutes ->
-                    stopAlarm()
+                    stopAlarmService()
                     snoozeAlarm(id, title, note, minutes)
                     dismissNotification()
                     finish()
@@ -82,46 +72,8 @@ class ReminderAlarmActivity : ComponentActivity() {
         }
     }
 
-    private fun startAlarm() {
-        // 1. Start Sound
-        try {
-            val soundUri = Uri.parse("android.resource://" + packageName + "/" + R.raw.alarm_tone)
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(this@ReminderAlarmActivity, soundUri)
-                val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-                setAudioAttributes(audioAttributes)
-                isLooping = true
-                prepare()
-                start()
-            }
-        } catch (e: Exception) {
-            // Fallback to system alarm sound if file fails
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            mediaPlayer = MediaPlayer.create(this, alarmUri)
-            mediaPlayer?.isLooping = true
-            mediaPlayer?.start()
-        }
-
-        // 2. Start Vibration
-        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        val pattern = longArrayOf(0, 1000, 500, 1000)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(pattern, 0)
-        }
-    }
-
-    private fun stopAlarm() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
-        vibrator?.cancel()
+    private fun stopAlarmService() {
+        stopService(Intent(this, AlarmService::class.java))
     }
 
     private fun dismissNotification() {
@@ -154,11 +106,6 @@ class ReminderAlarmActivity : ComponentActivity() {
         } catch (e: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopAlarm()
     }
 }
 

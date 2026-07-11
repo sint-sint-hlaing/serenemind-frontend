@@ -1,5 +1,6 @@
 package com.serenemind.util
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,29 +9,45 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.media.RingtoneManager
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import java.util.Calendar
 import androidx.core.app.NotificationCompat
 import com.serenemind.MainActivity
-import com.serenemind.ReminderAlarmActivity
 import com.serenemind.R
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getLongExtra("id", -1L)
         val title = intent.getStringExtra("title") ?: "Reminder"
-        val note = intent.getStringExtra("note") ?: "It's time for your session."
+        val note = intent.getStringExtra("note") ?: "Take a moment for your mental health."
         val repeatType = intent.getStringExtra("repeatType")
         val time = intent.getStringExtra("time")
-        val tone = intent.getStringExtra("tone") ?: "Default"
         
-        showNotification(context, title, note, tone)
+        // 1. Play sound manually using MediaPlayer
+        playNotiSound(context)
+        
+        // 2. Show the notification
+        showNotification(context, title, note, id)
 
-        // Reschedule if daily
         if (repeatType == "DAILY" && id != -1L && time != null) {
             rescheduleNext(context, id, title, note, repeatType, time)
+        }
+    }
+
+    private fun playNotiSound(context: Context) {
+        try {
+            val mediaPlayer = MediaPlayer.create(context, R.raw.noti_sound)
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            mediaPlayer.setAudioAttributes(audioAttributes)
+            mediaPlayer.setOnCompletionListener { it.release() }
+            mediaPlayer.start()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -56,68 +73,39 @@ class ReminderReceiver : BroadcastReceiver() {
             set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
             set(Calendar.MINUTE, timeParts[1].toInt())
             set(Calendar.SECOND, 0)
-            add(Calendar.DATE, 1) // Schedule for tomorrow
+            add(Calendar.DATE, 1)
         }
 
-        try {
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(
-                calendar.timeInMillis,
-                pendingIntent
-            )
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-        } catch (e: SecurityException) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.set(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        } else {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
 
-    private fun showNotification(context: Context, title: String, content: String, tone: String) {
-        val channelId = "serenemind_alarm_channel_silent"
+    private fun showNotification(context: Context, title: String, content: String, id: Long) {
+        val channelId = "serenemind_manual_sound_v1"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "SereneMind Alarms",
+                "SereneMind Reminders",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Critical reminders and alarms"
-                setSound(null, null) // Silent notification, Activity plays the sound
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 1000, 500, 1000)
-                setBypassDnd(true)
-                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                description = "Gentle reminders for your well-being"
+                enableVibration(false)
+                setSound(null, null) // Silent channel, we play sound manually
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
         }
-
-        // Intent for the full screen activity (Screen 11)
-        val fullScreenIntent = Intent(context, ReminderAlarmActivity::class.java).apply {
-            putExtra("title", title)
-            putExtra("note", content)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
-        }
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            context, 0, fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
         val mainIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val contentPendingIntent = PendingIntent.getActivity(
-            context, 0, mainIntent,
+            context, id.toInt(), mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -128,16 +116,10 @@ class ReminderReceiver : BroadcastReceiver() {
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000))
             .setAutoCancel(true)
-            .setOngoing(false) // Swipeable now
             .setContentIntent(contentPendingIntent)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .addAction(0, "Snooze", contentPendingIntent)
-            .addAction(0, "Mark as Done", contentPendingIntent)
             .build()
 
-        notificationManager.notify(1001, notification)
+        notificationManager.notify(id.toInt(), notification)
     }
 }
