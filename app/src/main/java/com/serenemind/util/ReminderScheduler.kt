@@ -19,6 +19,7 @@ object ReminderScheduler {
             putExtra("note", reminder.note)
             putExtra("repeatType", reminder.repeatType)
             putExtra("time", reminder.reminderTime)
+            putExtra("tone", reminder.reminderTone)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

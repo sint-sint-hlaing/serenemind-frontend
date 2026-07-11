@@ -5,8 +5,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -33,41 +39,94 @@ import java.util.Calendar
 
 class ReminderAlarmActivity : ComponentActivity() {
 
+    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Show over lock screen and wake up screen
+        // Ensure screen wakes up and shows over lockscreen
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-        } else {
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-            )
         }
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+        )
 
         val id = intent.getLongExtra("id", -1L)
         val title = intent.getStringExtra("title") ?: "Reminder"
         val note = intent.getStringExtra("note") ?: "Take a moment for yourself and enjoy the moment."
+
+        startAlarm()
 
         setContent {
             ReminderAlarmScreen(
                 title = title,
                 note = note,
                 onDismiss = {
-                    dismissAlarm()
+                    stopAlarm()
+                    dismissNotification()
                     finish()
                 },
                 onSnooze = { minutes ->
+                    stopAlarm()
                     snoozeAlarm(id, title, note, minutes)
-                    dismissAlarm()
+                    dismissNotification()
                     finish()
                 }
             )
         }
+    }
+
+    private fun startAlarm() {
+        // 1. Start Sound
+        try {
+            val soundUri = Uri.parse("android.resource://" + packageName + "/" + R.raw.alarm_tone)
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(this@ReminderAlarmActivity, soundUri)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setAudioAttributes(audioAttributes)
+                isLooping = true
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            // Fallback to system alarm sound if file fails
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            mediaPlayer = MediaPlayer.create(this, alarmUri)
+            mediaPlayer?.isLooping = true
+            mediaPlayer?.start()
+        }
+
+        // 2. Start Vibration
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        val pattern = longArrayOf(0, 1000, 500, 1000)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(pattern, 0)
+        }
+    }
+
+    private fun stopAlarm() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        vibrator?.cancel()
+    }
+
+    private fun dismissNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(1001)
     }
 
     private fun snoozeAlarm(id: Long, title: String, note: String, minutes: Int) {
@@ -97,9 +156,9 @@ class ReminderAlarmActivity : ComponentActivity() {
         }
     }
 
-    private fun dismissAlarm() {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(1001)
+    override fun onDestroy() {
+        super.onDestroy()
+        stopAlarm()
     }
 }
 
@@ -139,7 +198,6 @@ fun ReminderAlarmScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Bell Icon inside Circle (Design Screen 11)
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -188,7 +246,6 @@ fun ReminderAlarmScreen(
 
                 Spacer(modifier = Modifier.height(60.dp))
 
-                // Snooze Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -207,7 +264,6 @@ fun ReminderAlarmScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Primary Action Button
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier

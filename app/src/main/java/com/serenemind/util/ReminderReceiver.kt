@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import java.util.Calendar
 import androidx.core.app.NotificationCompat
@@ -23,8 +24,9 @@ class ReminderReceiver : BroadcastReceiver() {
         val note = intent.getStringExtra("note") ?: "It's time for your session."
         val repeatType = intent.getStringExtra("repeatType")
         val time = intent.getStringExtra("time")
+        val tone = intent.getStringExtra("tone") ?: "Default"
         
-        showNotification(context, title, note)
+        showNotification(context, title, note, tone)
 
         // Reschedule if daily
         if (repeatType == "DAILY" && id != -1L && time != null) {
@@ -33,8 +35,6 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun rescheduleNext(context: Context, id: Long, title: String, note: String?, repeatType: String, time: String) {
-        // We can't easily use ReminderScheduler here because it takes ReminderResponse
-        // But we can recreate the logic for the next day
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             putExtra("id", id)
@@ -82,26 +82,18 @@ class ReminderReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun showNotification(context: Context, title: String, content: String) {
-        val channelId = "serenemind_alarm_channel_v4"
+    private fun showNotification(context: Context, title: String, content: String, tone: String) {
+        val channelId = "serenemind_alarm_channel_silent"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-
             val channel = NotificationChannel(
                 channelId,
                 "SereneMind Alarms",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Critical reminders and alarms"
-                setSound(alarmSound, audioAttributes)
+                setSound(null, null) // Silent notification, Activity plays the sound
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 1000, 500, 1000)
                 setBypassDnd(true)
@@ -137,7 +129,6 @@ class ReminderReceiver : BroadcastReceiver() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setSound(alarmSound)
             .setVibrate(longArrayOf(0, 1000, 500, 1000))
             .setAutoCancel(true)
             .setOngoing(false) // Swipeable now
