@@ -4,8 +4,8 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.serenemind.model.response.ReminderResponse
-import java.text.SimpleDateFormat
 import java.util.*
 
 object ReminderScheduler {
@@ -14,8 +14,11 @@ object ReminderScheduler {
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("id", reminder.id)
             putExtra("title", reminder.title)
             putExtra("note", reminder.note)
+            putExtra("repeatType", reminder.repeatType)
+            putExtra("time", reminder.reminderTime)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -38,12 +41,31 @@ object ReminderScheduler {
             }
         }
 
-        // For "reminder not alarm", we use standard notifications without exact timing
-        alarmManager.set(
-            AlarmManager.RTC_WAKEUP,
+        // Use setAlarmClock for the most "real" alarm behavior
+        // This shows the alarm icon in status bar and system clock
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(
             calendar.timeInMillis,
             pendingIntent
         )
+        
+        try {
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        } catch (e: SecurityException) {
+            // Fallback if permission is missing
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            }
+        }
     }
 
     fun cancelReminder(context: Context, reminderId: Long) {
