@@ -1,17 +1,12 @@
 package com.serenemind.navigation
 
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Share
-
-
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
@@ -19,9 +14,10 @@ sealed class Screen(
     val title: String = "",
     val icon: ImageVector? = null
 ) {
-
     // Auth
+    object Welcome : Screen("welcome")
     object Login : Screen("login")
+    object Register : Screen("register")
 
     // Main container
     object Main : Screen("main")
@@ -31,10 +27,13 @@ sealed class Screen(
     object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
     object MoodHistory : Screen("mood_history")
-    object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
+    object Goal: Screen(route="goal", title="Goal", icon = Icons.Default.Attribution)
     object GoalDetail: Screen("goal_detail")
+    object Community : Screen("community", "Community", icon = Icons.Default.People)
+    object CreatePost : Screen("create_post")
+    object Reminders : Screen("reminders")
+    object AddReminder : Screen("add_reminder")
+    object Breathing : Screen("breathing")
     object Meditation: Screen("meditation")
-    object Breathing: Screen("breathing")
-    object Community : Screen("community", "Community", Icons.Default.Share)
-    object Profile : Screen("profile", "Profile", Icons.Default.Person)
+    object Profile : Screen("profile", "Profile", icon = Icons.Default.Person)
 }

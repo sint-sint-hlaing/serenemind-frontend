@@ -71,7 +71,7 @@ fun MoodTrackerScreen(
                 modifier = Modifier.padding(horizontal = 24.dp)
             ) {
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
                     "How are you feeling today?",
                     fontSize = 20.sp,
@@ -112,7 +112,7 @@ fun MoodTrackerScreen(
                     Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     Text("${intensity.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
-                
+
                 Slider(
                     value = intensity,
                     onValueChange = { intensity = it },
@@ -178,7 +178,7 @@ fun MoodTrackerScreen(
                         Text("Save", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -219,4 +219,14 @@ fun MoodType.toEmoji(): String = when(this) {
     MoodType.SAD -> "☹️"
     MoodType.ANXIOUS -> "😰"
     MoodType.ANGRY -> "😡"
+}
+
+        Button(onClick = {
+            selectedMood?.let {
+                viewModel.saveMood(it, intensity.toInt(), note)
+            }
+        }) {
+            Text("Save")
+        }
+    }
 }

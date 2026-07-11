@@ -38,7 +38,8 @@ import com.serenemind.R
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateToSettings: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onNavigateToReminders: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -146,7 +147,11 @@ fun ProfileScreen(
                             Column {
                                 ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
                                 ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
-                                ProfileMenuItem(icon = Icons.Default.Notifications, title = "Reminders")
+                                ProfileMenuItem(
+                                    icon = Icons.Default.Notifications,
+                                    title = "Reminders",
+                                    onClick = onNavigateToReminders
+                                )
                                 ProfileMenuItem(
                                     icon = Icons.Default.CardMembership,
                                     title = "Subscription",
@@ -154,6 +159,7 @@ fun ProfileScreen(
                                 )
                                 ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
                                 ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
+                                HorizontalDivider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
                                 ProfileMenuItem(
                                     icon = Icons.AutoMirrored.Filled.Logout,
                                     title = "Logout",
@@ -206,17 +212,15 @@ fun ProfileMenuItem(
             Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = Color.LightGray, modifier = Modifier.size(14.dp))
         }
         if (!isLast) {
-            Divider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
         }
     }
 }
 
-// Backend ကလာမယ့် Avatar string အလိုက် Drawable resource ပြောင်းပေးတဲ့ helper function
-fun getDrawableIdForAvatar(avatarName: String): Int {
+fun getDrawableIdForAvatar(avatarName: String?): Int {
     return when (avatarName) {
         "avatar-1" -> R.drawable.avatar_1
         "avatar-2" -> R.drawable.avatar_2
-//        "avatar-3" -> R.drawable.avatar_3
         else -> R.drawable.default_avatar
     }
 }

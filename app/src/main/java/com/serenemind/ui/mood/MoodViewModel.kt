@@ -17,6 +17,32 @@ class MoodViewModel(private val repository: MoodRepository): ViewModel() {
     private val _uiState = MutableStateFlow<MoodUiState>(MoodUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
+    // MoodViewModel.kt
+    fun saveMood(moodType: MoodType, intensity: Int, note: String) {
+        // 1. Validation Logic
+        if (moodType == null) {
+            _uiState.value = MoodUiState.Error("Please select a mood first!")
+            return
+        }
+
+        // 2. Network Call
+        viewModelScope.launch {
+            _uiState.value = MoodUiState.Loading
+            try {
+                val request = MoodRequest(moodType, intensity, note)
+                val response = repository.saveMood(request)
+
+                if (response.isSuccessful) {
+                    _uiState.value = MoodUiState.Success
+                } else {
+                    _uiState.value = MoodUiState.Error("Server error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _uiState.value = MoodUiState.Error("Network error: ${e.localizedMessage}")
+            }
+        }
+    }
+    // Add this line to define the StateFlow
     private val _summaryState = MutableStateFlow<Map<String, Double>>(emptyMap())
     val summaryState = _summaryState.asStateFlow()
 
@@ -50,7 +76,7 @@ class MoodViewModel(private val repository: MoodRepository): ViewModel() {
                 if (response.isSuccessful) {
                     val history = response.body() ?: emptyList()
                     _historyState.value = history
-                    
+
                     // Set today as selected by default if exists
                     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val today = sdf.format(Date())

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.datastore.TokenManager
 import com.serenemind.model.request.LoginRequest
+import com.serenemind.model.request.RegisterRequest
 import com.serenemind.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,29 +19,38 @@ class LoginViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun login(email: String, password: String) {
-
         if (email.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState.Error("Empty fields")
             return
         }
 
         viewModelScope.launch {
-
             _uiState.value = LoginUiState.Loading
-
-            val result = repository.login(
-                LoginRequest(email, password)
-            )
-
+            val result = repository.login(LoginRequest(email, password))
             result.onSuccess { response ->
-
                 tokenManager.saveToken(response.accessToken)
-
                 _uiState.value = LoginUiState.Success
             }
-
             result.onFailure {
                 _uiState.value = LoginUiState.Error(it.message ?: "Login failed")
+            }
+        }
+    }
+
+    fun register(username: String, email: String, password: String) {
+        if (username.isBlank() || email.isBlank() || password.isBlank()) {
+            _uiState.value = LoginUiState.Error("Empty fields")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = LoginUiState.Loading
+            val result = repository.register(RegisterRequest(username, email, password))
+            result.onSuccess {
+                _uiState.value = LoginUiState.RegisterSuccess
+            }
+            result.onFailure {
+                _uiState.value = LoginUiState.Error(it.message ?: "Registration failed")
             }
         }
     }

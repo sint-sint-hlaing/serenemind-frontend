@@ -10,11 +10,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object NetworkModule {
 
+    private const val BASE_URL = "http://192.168.1.11:8080/"
     private const val BASE_URL = "http://192.168.1.9:8080/"
 
     fun provideOkHttpClient(context: Context): OkHttpClient {
         val tokenManager = TokenManager(context)
-        
+
         val authInterceptor = Interceptor { chain ->
             val token = runBlocking { tokenManager.getToken() }
             val requestBuilder = chain.request().newBuilder()
@@ -40,7 +41,7 @@ object NetworkModule {
     fun provideApiService(context: Context): ApiService {
         return provideRetrofit(context).create(ApiService::class.java)
     }
-    
+
     fun provideGoalApiService(context: Context): GoalApiService{
         return provideRetrofit(context).create(GoalApiService::class.java)
     }

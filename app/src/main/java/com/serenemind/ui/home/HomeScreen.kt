@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.model.response.ActionItem
 import com.serenemind.model.response.DashboardResponse
 import com.serenemind.model.response.WeeklyData
@@ -30,7 +32,7 @@ import java.util.*
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onLogout: () -> Unit = {},
+    onNavigateToBreathing: () -> Unit = {},
     onActionClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -52,9 +54,9 @@ fun HomeScreen(
             }
             is HomeUiState.Success -> {
                 DashboardContent(
-                    data = state.data, 
-                    onActionClick = onActionClick,
-                    onMoodClick = { onActionClick("mood") }
+                    data = state.data,
+                    onNavigateToBreathing = onNavigateToBreathing,
+                    onActionClick = onActionClick
                 )
             }
         }
@@ -63,9 +65,9 @@ fun HomeScreen(
 
 @Composable
 fun DashboardContent(
-    data: DashboardResponse, 
-    onActionClick: (String) -> Unit = {},
-    onMoodClick: () -> Unit = {}
+    data: DashboardResponse,
+    onNavigateToBreathing: () -> Unit = {},
+    onActionClick: (String) -> Unit = {}
 ) {
     val currentDate = remember {
         val sdf = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
@@ -79,7 +81,7 @@ fun DashboardContent(
             ActionItem("Goals", ""),
             ActionItem("Breathing", "")
         )
-        
+
         if (data.quickActions.isNullOrEmpty()) {
             baseActions
         } else {
@@ -107,146 +109,168 @@ fun DashboardContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(Color(0xFFFBFBFF))
+            .padding(16.dp)
     ) {
-        Column(
+        // Top Bar
+        Row(
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { /* Open drawer */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu"
-                    )
-                }
-                Text(
-                    text = "Dashboard",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+            IconButton(onClick = { /* Open drawer */ }) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.Black
                 )
-                IconButton(onClick = { /* Notifications */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications"
-                    )
-                }
             }
+            Text(
+                text = "Dashboard",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            IconButton(onClick = { /* Notifications */ }) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = Color.Black
+                )
+            }
+        }
 
-            // Greeting
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Date and Greeting
+        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
             Text(
                 text = currentDate,
                 color = Color.Gray,
-                fontSize = 12.sp
+                fontSize = 13.sp
             )
             Text(
                 text = "Good morning, ${data.userName ?: "User"}! 👋",
                 fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
+        }
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            // Today's Mood Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onMoodClick() },
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Today's Mood",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+        // Today's Mood Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
+                .clickable { onActionClick("mood") },
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Today's Mood",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFECB3)),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = getEmojiForMood(data.currentMood),
-                            fontSize = 48.sp
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (data.currentMood.isNullOrEmpty()) "Steady" else data.currentMood,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Great! Keep shining ☀️",
-                                color = Color.Gray,
-                                fontSize = 13.sp
-                            )
-                        }
-                        Text(
-                            text = "${data.moodPercentage ?: 0}%",
-                            color = Color(0xFF4CAF50),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 40.sp
                         )
                     }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = data.currentMood ?: "Steady",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "Great! Keep shining ☀️",
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+                    }
+                    Text(
+                        text = "${data.moodPercentage ?: 0}%",
+                        color = Color(0xFF4CAF50),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Weekly Overview Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Weekly Overview",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
-                )
-                TextButton(
-                    onClick = { onMoodClick() },
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(text = "View all", color = Color(0xFF673AB7), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    WeeklyChart(displayWeekly)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Quick Actions Header
-            Text(
-                text = "Quick Actions",
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            QuickActionsRow(displayActions, onActionClick)
-            
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Weekly Overview
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Weekly Overview",
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                color = Color.Black
+            )
+            Text(
+                text = "View all",
+                color = Color(0xFF673AB7),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { onActionClick("mood_history") }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                WeeklyChart(displayWeekly)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Quick Actions
+        Text(
+            text = "Quick Actions",
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        QuickActionsRow(displayActions, onNavigateToBreathing, onActionClick)
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -263,23 +287,12 @@ fun getEmojiForMood(mood: String?): String {
 }
 
 @Composable
-fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
-    if (weeklyOverview.isNullOrEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "No overview data available", color = Color.Gray)
-        }
-        return
-    }
-
+fun WeeklyChart(weeklyOverview: List<WeeklyData>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .height(160.dp)
+            .padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {
@@ -290,14 +303,19 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
             ) {
                 Box(
                     modifier = Modifier
-                        .width(16.dp)
-                        .height(80.dp * ((dayData.value ?: 0f) / 100f))
-                        .clip(RoundedCornerShape(8.dp))
+                        .width(22.dp)
+                        .height(100.dp * ((dayData.value ?: 0f) / 100f))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(getBarColor(dayData.day ?: ""))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = dayData.day ?: "", fontSize = 11.sp, color = Color.Gray)
-                Text(text = getEmojiForDay(dayData.day ?: ""), fontSize = 14.sp)
+                Text(
+                    text = dayData.day ?: "",
+                    fontSize = 12.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(text = getEmojiForDay(dayData.day ?: ""), fontSize = 16.sp)
             }
         }
     }
@@ -305,10 +323,9 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
 
 fun getBarColor(day: String): Color {
     return when (day) {
-        "Mon", "Wed" -> Color(0xFF81C784) // Green
-        "Tue" -> Color(0xFFFFD54F) // Yellow/Orange
-        "Thu", "Fri" -> Color(0xFFB39DDB) // Purple
-        else -> Color(0xFFB0BEC5) // Blue Grey
+        "Mon", "Wed", "Sun" -> Color(0xFFA5D6A7) // Light Green
+        "Tue", "Thu" -> Color(0xFFFFE082) // Light Orange/Yellow
+        else -> Color(0xFFC5CAE9) // Light Blue/Purple
     }
 }
 
@@ -319,20 +336,30 @@ fun getEmojiForDay(day: String): String {
         "Wed" -> "😊"
         "Thu" -> "😰"
         "Fri" -> "😌"
-        "Sat" -> "🟣"
+        "Sat" -> "😴"
         "Sun" -> "😊"
         else -> "😊"
     }
 }
 
 @Composable
-fun QuickActionsRow(actions: List<ActionItem>?, onActionClick: (String) -> Unit) {
+fun QuickActionsRow(
+    actions: List<ActionItem>,
+    onNavigateToBreathing: () -> Unit,
+    onActionClick: (String) -> Unit
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        actions?.take(4)?.forEach { action ->
-            QuickActionItem(action, onClick = { onActionClick(action.name ?: "") })
+        actions.take(4).forEach { action ->
+            QuickActionItem(action, onClick = {
+                if (action.name?.lowercase() == "breathing") {
+                    onNavigateToBreathing()
+                } else {
+                    onActionClick(action.name ?: "")
+                }
+            })
         }
     }
 }
@@ -389,5 +416,33 @@ fun getBackgroundColorForAction(name: String): Color {
         "goals" -> Color(0xFFE8F5E9)
         "breathing" -> Color(0xFFFFF3E0)
         else -> Color(0xFFF5F5F5)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DashboardPreview() {
+    val mockData = DashboardResponse(
+        userName = "Aye",
+        currentMood = "Happy",
+        moodPercentage = 80,
+        weeklyOverview = listOf(
+            WeeklyData("Mon", 60f),
+            WeeklyData("Tue", 40f),
+            WeeklyData("Wed", 80f),
+            WeeklyData("Thu", 50f),
+            WeeklyData("Fri", 65f),
+            WeeklyData("Sat", 45f),
+            WeeklyData("Sun", 35f)
+        ),
+        quickActions = listOf(
+            ActionItem("Journal", ""),
+            ActionItem("Meditate", ""),
+            ActionItem("Goals", ""),
+            ActionItem("Breathing", "")
+        )
+    )
+    MaterialTheme {
+        DashboardContent(data = mockData, onNavigateToBreathing = {}, onActionClick = {})
     }
 }
