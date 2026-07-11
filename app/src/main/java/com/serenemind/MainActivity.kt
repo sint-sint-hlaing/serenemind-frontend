@@ -8,11 +8,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.serenemind.datastore.ThemeManager
 import com.serenemind.datastore.TokenManager
 import com.serenemind.navigation.AppNavigation
 import com.serenemind.network.NetworkModule
 import com.serenemind.repository.AuthRepository
 import com.serenemind.ui.login.LoginViewModel
+import com.serenemind.ui.theme.SerenemindclientTheme
+import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -30,11 +35,27 @@ class MainActivity : ComponentActivity() {
         val api = NetworkModule.provideApiService()
         val repo = AuthRepository(api)
         val tokenManager = TokenManager(this)
+        val themeManager = ThemeManager(this)
 
         val viewModel = LoginViewModel(repo, tokenManager)
 
         setContent {
-            AppNavigation(viewModel, tokenManager)
+            val systemTheme = isSystemInDarkTheme()
+            val themePreference by themeManager.isDarkMode.collectAsState(initial = null)
+            val scope = rememberCoroutineScope()
+            
+            val isDarkMode = themePreference ?: systemTheme
+
+            SerenemindclientTheme(darkTheme = isDarkMode) {
+                AppNavigation(
+                    loginViewModel = viewModel, 
+                    tokenManager = tokenManager,
+                    isDarkMode = isDarkMode,
+                    onDarkModeToggle = { enabled ->
+                        scope.launch { themeManager.setDarkMode(enabled) }
+                    }
+                )
+            }
         }
     }
 

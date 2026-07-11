@@ -22,79 +22,84 @@ fun WelcomeScreen(
     onGetStarted: () -> Unit,
     onLoginClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        // Logo and Title
-        Icon(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with actual logo
-            contentDescription = "Logo",
-            modifier = Modifier.size(100.dp),
-            tint = Color(0xFF6750A4)
-        )
-        Text(
-            text = "SereneMind",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2B2B2B)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Take care of your mind.\nEvery day.",
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center,
-            color = Color.Gray
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Illustration placeholder
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            // Replace with actual illustration if available
-            Text("🧘", fontSize = 120.sp)
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Get Started Button
-        Button(
-            onClick = onGetStarted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text("Get Started", fontSize = 18.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Default.ArrowForward, contentDescription = null)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Already have an account? Login
-        Row {
-            Text(text = "Already have an account? ", color = Color.Gray)
-            Text(
-                text = "Login",
-                color = Color(0xFF6750A4),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onLoginClick() }
+            // Logo and Title
+            Icon(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with actual logo
+                contentDescription = "Logo",
+                modifier = Modifier.size(100.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
+            Text(
+                text = "SereneMind",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Take care of your mind.\nEvery day.",
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Illustration placeholder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Replace with actual illustration if available
+                Text("🧘", fontSize = 120.sp)
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Get Started Button
+            Button(
+                onClick = onGetStarted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text("Get Started", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.ArrowForward, contentDescription = null)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Already have an account? Login
+            Row {
+                Text(text = "Already have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = "Login",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onLoginClick() }
+                )
+            }
         }
     }
 }

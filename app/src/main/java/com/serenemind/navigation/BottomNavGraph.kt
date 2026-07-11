@@ -45,6 +45,8 @@ import com.serenemind.ui.profile.RemindersScreen
 @Composable
 fun BottomNavGraph(
     navController: NavHostController,
+    isDarkMode: Boolean,
+    onDarkModeToggle: (Boolean) -> Unit,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -163,6 +165,8 @@ fun BottomNavGraph(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 viewModel = profileViewModel,
+                isDarkMode = isDarkMode,
+                onDarkModeToggle = onDarkModeToggle,
                 onNavigateToSettings = { },
                 onLogout = onLogout,
                 onNavigateToReminders = {

@@ -11,6 +11,8 @@ import com.serenemind.navigation.BottomNavGraph
 
 @Composable
 fun MainScreen(
+    isDarkMode: Boolean,
+    onDarkModeToggle: (Boolean) -> Unit,
     onLogout: () -> Unit = {}
 ) {
 
@@ -24,6 +26,8 @@ fun MainScreen(
         Box(modifier = Modifier.padding(padding)) {
             BottomNavGraph(
                 navController = navController,
+                isDarkMode = isDarkMode,
+                onDarkModeToggle = onDarkModeToggle,
                 onLogout = onLogout
             )
         }

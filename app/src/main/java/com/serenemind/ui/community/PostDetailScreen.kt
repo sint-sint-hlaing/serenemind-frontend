@@ -83,7 +83,7 @@ fun PostDetailScreen(
                         
                         Surface(
                             onClick = { isAnonymous = !isAnonymous },
-                            color = if (isAnonymous) Color(0xFFEADDFF) else Color(0xFFF3F3F3),
+                            color = if (isAnonymous) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Row(
@@ -94,14 +94,14 @@ fun PostDetailScreen(
                                     imageVector = if (isAnonymous) Icons.Default.VisibilityOff else Icons.Default.Public,
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
-                                    tint = if (isAnonymous) Color(0xFF6750A4) else Color.Gray
+                                    tint = if (isAnonymous) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (isAnonymous) "Anonymous" else "Public",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isAnonymous) Color(0xFF6750A4) else Color.Gray
+                                    color = if (isAnonymous) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -121,8 +121,8 @@ fun PostDetailScreen(
                                 .weight(1f)
                                 .clip(RoundedCornerShape(24.dp)),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFFF3F3F3),
-                                unfocusedContainerColor = Color(0xFFF3F3F3),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent
                             )
@@ -135,7 +135,7 @@ fun PostDetailScreen(
                                     commentText = ""
                                 }
                             },
-                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF6750A4))
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Icon(Icons.Default.Send, contentDescription = "Send")
                         }
@@ -228,8 +228,8 @@ fun PostHeader(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(text = formatPostDate(post.createdAt), color = Color.Gray, fontSize = 12.sp)
+                Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -259,32 +259,38 @@ fun PostHeader(
                     Icon(
                         imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Like",
-                        tint = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black,
+                        tint = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Text(
                     text = post.likeCount.toString(),
                     fontSize = 14.sp,
-                    color = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black
+                    color = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 Icon(
                     imageVector = Icons.Outlined.ChatBubbleOutline,
                     contentDescription = "Comment",
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = post.commentCount.toString(), fontSize = 14.sp)
+                Text(
+                    text = post.commentCount.toString(), 
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
             Icon(
                 imageVector = Icons.Outlined.BookmarkBorder,
                 contentDescription = "Bookmark",
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = Color(0xFFF3F3F3), thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp)
     }
 }
 
@@ -315,12 +321,12 @@ fun CommentItem(comment: CommentResponse) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(text = formatPostDate(comment.createdAt), color = Color.Gray, fontSize = 11.sp)
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = formatPostDate(comment.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = comment.content, fontSize = 14.sp)
+            Text(text = comment.content, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -332,26 +338,26 @@ fun CommentItem(comment: CommentResponse) {
                         imageVector = Icons.Outlined.FavoriteBorder,
                         contentDescription = "Like",
                         modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("2", color = Color.Gray, fontSize = 12.sp) // Dummy like count
+                    Text("2", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp) // Dummy like count
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.ThumbUpOffAlt,
                         contentDescription = "Thumbs Up",
                         modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("1", color = Color.Gray, fontSize = 12.sp)
+                    Text("1", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
                         contentDescription = "Heart",
                         modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

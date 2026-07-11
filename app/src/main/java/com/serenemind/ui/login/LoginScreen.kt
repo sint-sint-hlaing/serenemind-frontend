@@ -62,18 +62,19 @@ fun LoginScreen(
             Text(
                 text = "Welcome Back 👋",
                 fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Log in to continue your\nSereneMind journey.",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Email
-            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = email,
                 onValueChange = { email = it },
@@ -82,14 +83,18 @@ fun LoginScreen(
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password
-            Text("Password", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Password", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = password,
                 onValueChange = { password = it },
@@ -99,13 +104,17 @@ fun LoginScreen(
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(icon, contentDescription = null)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
@@ -113,7 +122,7 @@ fun LoginScreen(
                 onClick = { /* TODO */ },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Forgot Password?", color = Color(0xFF6750A4), fontSize = 12.sp)
+                Text("Forgot Password?", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -121,7 +130,7 @@ fun LoginScreen(
             if (state is LoginUiState.Error) {
                 Text(
                     text = (state as LoginUiState.Error).message,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -136,11 +145,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 enabled = state !is LoginUiState.Loading
             ) {
                 if (state is LoginUiState.Loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Text("Login", fontSize = 16.sp)
                 }
@@ -152,7 +161,7 @@ fun LoginScreen(
                 text = "or continue with",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
 
@@ -162,9 +171,10 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = { /* TODO */ },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             ) {
-                Text("Continue with Google", color = Color.Black)
+                Text("Continue with Google")
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -172,9 +182,10 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = { /* TODO */ },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             ) {
-                Text("Continue with Apple", color = Color.Black)
+                Text("Continue with Apple")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -183,10 +194,10 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = "Don't have an account? ", color = Color.Gray)
+                Text(text = "Don't have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
                     text = "Register",
-                    color = Color(0xFF6750A4),
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onRegisterClick() }
                 )

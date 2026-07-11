@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
@@ -36,6 +37,8 @@ import com.serenemind.R
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
+    isDarkMode: Boolean,
+    onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToReminders: () -> Unit = {}
@@ -51,10 +54,14 @@ fun ProfileScreen(
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                )
             )
         },
-        containerColor = Color(0xFFFAFAFA)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -63,10 +70,10 @@ fun ProfileScreen(
             contentAlignment = Alignment.Center
         ) {
             when (val state = uiState) {
-                is ProfileUiState.Loading -> CircularProgressIndicator(color = Color(0xFF9C27B0))
+                is ProfileUiState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 is ProfileUiState.Error -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.message, color = Color.Red)
+                        Text(state.message, color = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = { viewModel.fetchUserProfile() }) {
                             Text("Retry")
@@ -88,7 +95,11 @@ fun ProfileScreen(
                                 .clip(RoundedCornerShape(24.dp))
                                 .background(
                                     Brush.linearGradient(
-                                        colors = listOf(Color(0xFFE3F2FD), Color(0xFFEDE7F6))
+                                        colors = if (isDarkMode) {
+                                            listOf(Color(0xFF1A1A2E), Color(0xFF2A2A4E))
+                                        } else {
+                                            listOf(Color(0xFFE3F2FD), Color(0xFFEDE7F6))
+                                        }
                                     )
                                 )
                                 .padding(16.dp)
@@ -111,24 +122,24 @@ fun ProfileScreen(
                                         text = user.fullname ?: "User",
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Black
+                                        color = if (isDarkMode) Color.White else Color.Black
                                     )
                                     Text(
                                         text = user.email ?: "",
                                         fontSize = 14.sp,
-                                        color = Color.Gray
+                                        color = if (isDarkMode) Color.LightGray else Color.Gray
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = "\"Be kind to your mind.\"",
                                         fontSize = 13.sp,
-                                        color = Color(0xFF673AB7)
+                                        color = if (isDarkMode) MaterialTheme.colorScheme.primary else Color(0xFF673AB7)
                                     )
                                 }
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit Profile",
-                                    tint = Color.Gray,
+                                    tint = if (isDarkMode) Color.LightGray else Color.Gray,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -140,12 +151,45 @@ fun ProfileScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
                             Column {
                                 ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
                                 ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
+                                
+                                // Dark Mode Toggle
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.DarkMode,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Text(
+                                            text = "Dark Mode",
+                                            fontSize = 15.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    Switch(
+                                        checked = isDarkMode,
+                                        onCheckedChange = onDarkModeToggle,
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                }
+                                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+
                                 ProfileMenuItem(
                                     icon = Icons.Default.Notifications,
                                     title = "Reminders",
@@ -189,26 +233,26 @@ fun ProfileMenuItem(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = icon, contentDescription = title, tint = Color(0xFF455A64), modifier = Modifier.size(24.dp))
+            Icon(imageVector = icon, contentDescription = title, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = title, fontSize = 15.sp, color = Color.Black, modifier = Modifier.weight(1f))
+            Text(text = title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
 
             if (badge != null) {
                 Box(
                     modifier = Modifier
                         .padding(end = 8.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF3E5F5))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
-                    Text(text = badge, color = Color(0xFF7B1FA2), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(text = badge, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
 
-            Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = Color.LightGray, modifier = Modifier.size(14.dp))
+            Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
         }
         if (!isLast) {
-            Divider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
         }
     }
 }

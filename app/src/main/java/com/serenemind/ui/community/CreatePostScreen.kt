@@ -89,7 +89,7 @@ fun CreatePostScreen(
                         } else {
                             Text(
                                 text = "Post", 
-                                color = if (content.isNotBlank()) Color(0xFF6750A4) else Color.Gray, 
+                                color = if (content.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, 
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -106,8 +106,8 @@ fun CreatePostScreen(
             if (uiState is CreatePostUiState.Loading) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFF6750A4),
-                    trackColor = Color(0xFFEADDFF)
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.primaryContainer
                 )
             }
 
@@ -134,12 +134,12 @@ fun CreatePostScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         var expanded by remember { mutableStateOf(false) }
-                        Text(text = name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(text = name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                         
                         Box {
                             Surface(
                                 modifier = Modifier.clickable { expanded = true },
-                                color = Color(0xFFF3F3F3),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(16.dp)
                             ) {
                                 Row(
@@ -150,19 +150,19 @@ fun CreatePostScreen(
                                         imageVector = if (isAnonymous) Icons.Default.VisibilityOff else Icons.Default.Public,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp),
-                                        tint = Color.Gray
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = if (isAnonymous) "Anonymous" else "Public",
                                         fontSize = 11.sp,
-                                        color = Color.Gray
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Icon(
                                         Icons.Default.ExpandMore,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp),
-                                        tint = Color.Gray
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -192,7 +192,7 @@ fun CreatePostScreen(
                 TextField(
                     value = content,
                     onValueChange = { content = it },
-                    placeholder = { Text("What's on your mind?", fontSize = 18.sp, color = Color.Gray) },
+                    placeholder = { Text("What's on your mind?", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
@@ -201,7 +201,9 @@ fun CreatePostScreen(
                         unfocusedContainerColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
 
@@ -245,7 +247,7 @@ fun CreatePostScreen(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFFF3F3F3),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier.clickable { launcher.launch("image/*") }
                     ) {
                         Row(
@@ -255,11 +257,11 @@ fun CreatePostScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Image,
                                 contentDescription = "Photo",
-                                tint = Color(0xFF6750A4),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Photo", fontSize = 14.sp)
+                            Text("Photo", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
@@ -267,7 +269,7 @@ fun CreatePostScreen(
                 if (uiState is CreatePostUiState.Error) {
                     Text(
                         text = (uiState as CreatePostUiState.Error).message,
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.error,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 8.dp)
                     )

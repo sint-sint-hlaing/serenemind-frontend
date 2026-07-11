@@ -20,7 +20,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavigation(
     loginViewModel: LoginViewModel,
-    tokenManager: TokenManager
+    tokenManager: TokenManager,
+    isDarkMode: Boolean,
+    onDarkModeToggle: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
     var startDestination by remember { mutableStateOf<String?>(null) }
@@ -91,6 +93,8 @@ fun AppNavigation(
             composable(Screen.Main.route) {
                 val scope = rememberCoroutineScope()
                 MainScreen(
+                    isDarkMode = isDarkMode,
+                    onDarkModeToggle = onDarkModeToggle,
                     onLogout = {
                         scope.launch {
                             tokenManager.clearToken()

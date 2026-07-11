@@ -63,18 +63,19 @@ fun RegisterScreen(
             Text(
                 text = "Create Account 🌱",
                 fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Start your mental wellness\njourney today.",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Full Name
-            Text("Full Name", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Full Name", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = username,
                 onValueChange = { username = it },
@@ -83,14 +84,18 @@ fun RegisterScreen(
                 leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Email
-            Text("Email", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Email", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = email,
                 onValueChange = { email = it },
@@ -99,14 +104,18 @@ fun RegisterScreen(
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password
-            Text("Password", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Password", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = password,
                 onValueChange = { password = it },
@@ -116,20 +125,24 @@ fun RegisterScreen(
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(icon, contentDescription = null)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Confirm Password
-            Text("Confirm Password", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Confirm Password", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             TextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -139,13 +152,17 @@ fun RegisterScreen(
                 trailingIcon = {
                     val icon = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                        Icon(icon, contentDescription = null)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
@@ -154,7 +171,7 @@ fun RegisterScreen(
             if (state is LoginUiState.Error) {
                 Text(
                     text = (state as LoginUiState.Error).message,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -172,11 +189,11 @@ fun RegisterScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 enabled = state !is LoginUiState.Loading
             ) {
                 if (state is LoginUiState.Loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Text("Register", fontSize = 16.sp)
                 }
@@ -188,10 +205,10 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = "Already have an account? ", color = Color.Gray)
+                Text(text = "Already have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
                     text = "Login",
-                    color = Color(0xFF6750A4),
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onLoginClick() }
                 )

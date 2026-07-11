@@ -59,8 +59,8 @@ fun CommunityScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreatePostClick,
-                containerColor = Color(0xFF6750A4),
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Post")
@@ -85,14 +85,14 @@ fun CommunityScreen(
                         onClick = { selectedTab = index },
                         text = {
                             Surface(
-                                color = if (selectedTab == index) Color(0xFF6750A4) else Color(0xFFF3F3F3),
+                                color = if (selectedTab == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(20.dp),
                                 modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
                             ) {
                                 Text(
                                     text = title,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    color = if (selectedTab == index) Color.White else Color.Black,
+                                    color = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                                     fontSize = 14.sp
                                 )
                             }
@@ -178,7 +178,7 @@ fun PostItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -198,7 +198,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(text = formatPostDate(post.createdAt), color = Color.Gray, fontSize = 12.sp)
+                    Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -231,7 +231,7 @@ fun PostItem(
                         Icon(
                             imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Like",
-                            tint = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black,
+                            tint = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -239,20 +239,26 @@ fun PostItem(
                     Text(
                         text = post.likeCount.toString(),
                         fontSize = 14.sp,
-                        color = if (post.isLikedByMe) Color(0xFFFF4081) else Color.Black
+                        color = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
                         imageVector = Icons.Outlined.ChatBubbleOutline,
                         contentDescription = "Comment",
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = post.commentCount.toString(), fontSize = 14.sp)
+                    Text(
+                        text = post.commentCount.toString(), 
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
                 Icon(
                     imageVector = Icons.Outlined.BookmarkBorder,
                     contentDescription = "Bookmark",
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(20.dp)
                 )
             }

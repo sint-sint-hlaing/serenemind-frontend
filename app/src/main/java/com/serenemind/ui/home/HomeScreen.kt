@@ -39,17 +39,17 @@ fun HomeScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFFBFBFF)
+        color = MaterialTheme.colorScheme.background
     ) {
         when (val state = uiState) {
             is HomeUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
             is HomeUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message, color = Color.Red)
+                    Text(text = state.message, color = MaterialTheme.colorScheme.error)
                 }
             }
             is HomeUiState.Success -> {
@@ -65,7 +65,7 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .background(Color(0xFFFBFBFF))
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         // Top Bar
@@ -80,20 +80,20 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             Text(
                 text = "Dashboard",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onBackground
             )
             IconButton(onClick = { /* Notifications */ }) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
@@ -104,14 +104,14 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
         Column(modifier = Modifier.padding(horizontal = 8.dp)) {
             Text(
                 text = "May 12, 2024",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp
             )
             Text(
                 text = "Good morning, ${data.userName ?: "User"}! 👋",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -123,7 +123,7 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -131,7 +131,7 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                     text = "Today's Mood",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
@@ -142,7 +142,7 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                         modifier = Modifier
                             .size(70.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFECB3)),
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -156,11 +156,11 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                             text = data.currentMood ?: "Happy",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "Great! Keep shining ☀️",
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp
                         )
                     }
@@ -188,11 +188,11 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
                 text = "Weekly Overview",
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "View all",
-                color = Color(0xFF673AB7),
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { /* View all */ }
@@ -210,7 +210,7 @@ fun DashboardContent(data: DashboardResponse, onNavigateToBreathing: () -> Unit)
             text = "Quick Actions",
             fontWeight = FontWeight.Bold,
             fontSize = 17.sp,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -256,7 +256,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyData>?) {
                 Text(
                     text = dayData.day ?: "",
                     fontSize = 12.sp,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -314,7 +314,7 @@ fun QuickActionItem(action: ActionItem, onClick: () -> Unit) {
             .width(85.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -327,7 +327,7 @@ fun QuickActionItem(action: ActionItem, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(getBackgroundColorForAction(action.name ?: "")),
+                    .background(getBackgroundColorForAction(action.name ?: "").copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -339,7 +339,8 @@ fun QuickActionItem(action: ActionItem, onClick: () -> Unit) {
             Text(
                 text = action.name ?: "",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
