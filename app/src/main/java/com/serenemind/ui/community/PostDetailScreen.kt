@@ -41,6 +41,7 @@ import com.serenemind.model.response.PostResponse
 @Composable
 fun PostDetailScreen(
     viewModel: PostDetailViewModel,
+    focusComments: Boolean = false,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -48,15 +49,26 @@ fun PostDetailScreen(
     var isAnonymous by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
+    
+    // Initial scroll to comments if requested
+    var initialScrollDone by remember { mutableStateOf(false) }
+    if (focusComments && !initialScrollDone && uiState is PostDetailUiState.Success) {
+        LaunchedEffect(Unit) {
+            listState.scrollToItem(1) // Immediate scroll to "Comments" header
+            initialScrollDone = true
+        }
+    }
 
-    // Scroll to the newest comment (top of the list) when comments change
+    // Scroll to the newest comment (top of the list) when a NEW comment is added
+    var prevCommentCount by remember { mutableStateOf(0) }
     LaunchedEffect(uiState) {
         if (uiState is PostDetailUiState.Success) {
-            val comments = (uiState as PostDetailUiState.Success).comments
-            if (comments.isNotEmpty()) {
-                // Scroll to index 1 (the "Comments" header) so the newest comment is visible at the top
+            val currentComments = (uiState as PostDetailUiState.Success).comments
+            if (currentComments.size > prevCommentCount && prevCommentCount > 0) {
+                // New comment added, scroll to top of comments
                 listState.animateScrollToItem(1)
             }
+            prevCommentCount = currentComments.size
         }
     }
 

@@ -38,7 +38,7 @@ import com.serenemind.model.response.PostResponse
 @Composable
 fun CommunityScreen(
     viewModel: CommunityViewModel,
-    onPostClick: (PostResponse) -> Unit,
+    onPostClick: (PostResponse, Boolean) -> Unit,
     onCreatePostClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -121,7 +121,8 @@ fun CommunityScreen(
                         items(state.posts) { post ->
                             PostItem(
                                 post = post,
-                                onClick = { onPostClick(post) },
+                                onClick = { onPostClick(post, false) },
+                                onCommentClick = { onPostClick(post, true) },
                                 onLikeClick = { viewModel.likePost(post.id) }
                             )
                         }
@@ -186,6 +187,7 @@ fun formatPostDate(dateStr: String?): String {
 fun PostItem(
     post: PostResponse,
     onClick: () -> Unit,
+    onCommentClick: () -> Unit,
     onLikeClick: () -> Unit
 ) {
     Card(
@@ -239,6 +241,7 @@ fun PostItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Like
                     IconButton(
                         onClick = onLikeClick,
                         modifier = Modifier.size(24.dp)
@@ -256,13 +259,21 @@ fun PostItem(
                         fontSize = 14.sp,
                         color = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurface
                     )
+
                     Spacer(modifier = Modifier.width(16.dp))
-                    Icon(
-                        imageVector = Icons.Outlined.ChatBubbleOutline,
-                        contentDescription = "Comment",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(20.dp)
-                    )
+
+                    // Comment
+                    IconButton(
+                        onClick = onCommentClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ChatBubbleOutline,
+                            contentDescription = "Comment",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = post.commentCount.toString(), 
@@ -270,12 +281,15 @@ fun PostItem(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Icon(
-                    imageVector = Icons.Outlined.BookmarkBorder,
-                    contentDescription = "Bookmark",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(20.dp)
-                )
+                
+                IconButton(onClick = { /* TODO: Bookmark */ }) {
+                    Icon(
+                        imageVector = Icons.Outlined.BookmarkBorder,
+                        contentDescription = "Bookmark",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -298,6 +312,7 @@ fun PostItemPreview() {
             anonymous = false
         ),
         onClick = {},
+        onCommentClick = {},
         onLikeClick = {}
     )
 }

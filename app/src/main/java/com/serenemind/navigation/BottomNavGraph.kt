@@ -169,8 +169,8 @@ fun BottomNavGraph(
         composable(Screen.Community.route) {
             CommunityScreen(
                 viewModel = communityViewModel,
-                onPostClick = { post ->
-                    navController.navigate("post_detail/${post.id}")
+                onPostClick = { post, focusComments ->
+                    navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
                 },
                 onCreatePostClick = {
                     navController.navigate(Screen.CreatePost.route)
@@ -178,9 +178,18 @@ fun BottomNavGraph(
             )
         }
 
-        composable("post_detail/{postId}") { backStackEntry ->
+        composable(
+            route = "post_detail/{postId}?focusComments={focusComments}",
+            arguments = listOf(
+                androidx.navigation.navArgument("focusComments") {
+                    type = androidx.navigation.NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
             val postIdStr = backStackEntry.arguments?.getString("postId")
             val postId = postIdStr?.toLongOrNull() ?: -1L
+            val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
             
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
@@ -188,6 +197,7 @@ fun BottomNavGraph(
             
             PostDetailScreen(
                 viewModel = postDetailViewModel,
+                focusComments = focusComments,
                 onBack = { 
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
