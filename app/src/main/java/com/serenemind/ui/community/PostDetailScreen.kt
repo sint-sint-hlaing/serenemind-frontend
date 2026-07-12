@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -44,6 +46,19 @@ fun PostDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     var commentText by remember { mutableStateOf("") }
     var isAnonymous by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
+
+    // Scroll to the newest comment (top of the list) when comments change
+    LaunchedEffect(uiState) {
+        if (uiState is PostDetailUiState.Success) {
+            val comments = (uiState as PostDetailUiState.Success).comments
+            if (comments.isNotEmpty()) {
+                // Scroll to index 1 (the "Comments" header) so the newest comment is visible at the top
+                listState.animateScrollToItem(1)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -157,6 +172,7 @@ fun PostDetailScreen(
             }
             is PostDetailUiState.Success -> {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
@@ -296,10 +312,13 @@ fun PostHeader(
 
 @Composable
 fun CommentItem(comment: CommentResponse) {
+    val isPending = comment.id == -1L // Local pending state
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .alpha(if (isPending) 0.6f else 1f) // Grey out while sending
     ) {
         val displayName = comment.username
         val displayAvatar = if (comment.anonymous) null else comment.userProfilePicture

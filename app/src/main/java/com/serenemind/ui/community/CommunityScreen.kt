@@ -142,23 +142,38 @@ fun getAvatarResource(avatarName: String?): Int {
 
 fun formatPostDate(dateStr: String?): String {
     if (dateStr == null) return ""
+    val dateFormats = listOf(
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault()),
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    )
+
+    var parsedDate: Date? = null
+    for (format in dateFormats) {
+        try {
+            parsedDate = format.parse(dateStr)
+            if (parsedDate != null) break
+        } catch (e: Exception) { }
+    }
+
     return try {
-        // Handle ISO 8601 format from server
-        val sdfInput = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-        val date = sdfInput.parse(dateStr)
-        if (date != null) {
+        if (parsedDate != null) {
             val now = Date()
-            val diff = now.time - date.time
+            val diff = now.time - parsedDate.time
             
+            val seconds = diff / 1000
+            val minutes = seconds / 60
+            val hours = minutes / 60
+            val days = hours / 24
+
             when {
-                diff < 60 * 1000 -> "Just now"
-                diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)} mins ago"
-                diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)} hours ago"
+                diff < 0 -> "Just now" // Future date (likely clock sync issue)
+                seconds < 60 -> "Just now"
+                minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
+                hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
+                days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
                 else -> {
                     val sdfOutput = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                    sdfOutput.format(date)
+                    sdfOutput.format(parsedDate)
                 }
             }
         } else dateStr

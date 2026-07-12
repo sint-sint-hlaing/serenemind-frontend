@@ -191,7 +191,10 @@ fun ProfileScreen(
                                         checked = isDarkMode,
                                         onCheckedChange = onDarkModeToggle,
                                         colors = SwitchDefaults.colors(
-                                            checkedThumbColor = MaterialTheme.colorScheme.primary
+                                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                                         )
                                     )
                                 }
