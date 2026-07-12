@@ -1,15 +1,14 @@
 package com.serenemind.ui.login
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -22,84 +21,76 @@ fun WelcomeScreen(
     onGetStarted: () -> Unit,
     onLoginClick: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background Image
+        Image(
+            painter = painterResource(id = R.drawable.bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo and Title
+            Spacer(modifier = Modifier.height(50.dp)) // Reduced from 80.dp to move content up
+
+            // Logo
             Icon(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with actual logo
+                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder for the tree/leaf logo
                 contentDescription = "Logo",
                 modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color(0xFF6750A4)
             )
+
             Text(
                 text = "SereneMind",
-                fontSize = 32.sp,
+                fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color(0xFF6750A4)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "Take care of your mind.\nEvery day.",
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color(0xFF6750A4).copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Illustration placeholder
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Replace with actual illustration if available
-                Text("🧘", fontSize = 120.sp)
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Get Started Button
+            // Buttons
             Button(
                 onClick = onGetStarted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text("Get Started", fontSize = 18.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
-                }
+                Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Already have an account? Login
-            Row {
-                Text(text = "Already have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(
-                    text = "Login",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onLoginClick() }
-                )
+            OutlinedButton(
+                onClick = onLoginClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF6750A4))
+            ) {
+                Text("Login", fontSize = 16.sp, color = Color(0xFF6750A4), fontWeight = FontWeight.Bold)
             }
+
+            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }

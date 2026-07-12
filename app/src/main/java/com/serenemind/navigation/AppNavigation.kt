@@ -44,7 +44,7 @@ fun AppNavigation(
             composable(Screen.Welcome.route) {
                 WelcomeScreen(
                     onGetStarted = {
-                        navController.navigate(Screen.Login.route)
+                        navController.navigate(Screen.Register.route)
                     },
                     onLoginClick = {
                         navController.navigate(Screen.Login.route)
