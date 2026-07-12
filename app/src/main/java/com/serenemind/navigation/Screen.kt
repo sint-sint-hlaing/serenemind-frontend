@@ -36,6 +36,7 @@ sealed class Screen(
     object Streak : Screen("streak", "Streak", Icons.Default.Share) // Temporary icon
     object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
     object Community : Screen("community", "Community", Icons.Default.People)
+    object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
     object Reminders : Screen("reminders")
     object AddReminder : Screen("add_reminder")

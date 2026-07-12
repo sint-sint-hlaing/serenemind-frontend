@@ -35,6 +35,9 @@ import com.serenemind.ui.community.PostDetailViewModelFactory
 import com.serenemind.ui.home.HomeScreen
 import com.serenemind.ui.home.HomeViewModel
 import com.serenemind.ui.home.HomeViewModelFactory
+import com.serenemind.ui.notification.NotificationViewModel
+import com.serenemind.ui.notification.NotificationViewModelFactory
+import com.serenemind.ui.notification.NotificationsScreen
 import com.serenemind.ui.profile.AddReminderScreen
 import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
@@ -64,6 +67,13 @@ fun BottomNavGraph(
     }
     val communityViewModel: CommunityViewModel = viewModel(
         factory = CommunityViewModelFactory(communityRepository)
+    )
+
+    val notificationRepository = remember {
+        com.serenemind.repository.NotificationRepository(apiService, tokenManager)
+    }
+    val notificationViewModel: NotificationViewModel = viewModel(
+        factory = NotificationViewModelFactory(notificationRepository)
     )
 
     val dashboardRepository = remember {
@@ -114,7 +124,23 @@ fun BottomNavGraph(
                 },
                 onNavigateToStreak = {
                     navController.navigate(Screen.Streak.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications.route)
                 }
+            )
+        }
+
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(
+                viewModel = notificationViewModel,
+                onNavigateToPost = { postId ->
+                    navController.navigate("post_detail/$postId")
+                },
+                onNavigateToReminder = {
+                    navController.navigate(Screen.Reminders.route)
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 

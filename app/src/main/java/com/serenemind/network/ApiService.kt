@@ -78,6 +78,30 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<StreakResponse>
 
+    // Notification API
+    @GET("api/notifications")
+    suspend fun getNotifications(
+        @Header("Authorization") token: String,
+        @Query("filter") filter: String? = null
+    ): Response<List<NotificationResponse>>
+
+    @PATCH("api/notifications/{id}/read")
+    suspend fun markAsRead(
+        @Path("id") id: Long,
+        @Header("Authorization") token: String
+    ): Response<Unit>
+
+    @GET("api/notifications/{id}/click")
+    suspend fun clickNotification(
+        @Path("id") id: Long,
+        @Header("Authorization") token: String
+    ): Response<NotificationResponse>
+
+    @POST("api/notifications/read-all")
+    suspend fun markAllAsRead(
+        @Header("Authorization") token: String
+    ): Response<Unit>
+
     @Multipart
     @POST("api/posts")
     suspend fun createPost(

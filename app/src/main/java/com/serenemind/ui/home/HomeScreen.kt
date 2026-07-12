@@ -38,7 +38,8 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onLogout: () -> Unit = {},
     onNavigateToBreathing: () -> Unit = {},
-    onNavigateToStreak: () -> Unit = {}
+    onNavigateToStreak: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showNewBest by remember { mutableStateOf(false) }
@@ -79,12 +80,13 @@ fun HomeScreen(
                     }
                 }
                 is HomeUiState.Success -> {
-                    DashboardContent(
-                        data = state.data, 
-                        onNavigateToBreathing = onNavigateToBreathing,
-                        onNavigateToStreak = onNavigateToStreak
-                    )
-                }
+                DashboardContent(
+                    data = state.data, 
+                    onNavigateToBreathing = onNavigateToBreathing,
+                    onNavigateToStreak = onNavigateToStreak,
+                    onNavigateToNotifications = onNavigateToNotifications
+                )
+            }
             }
         }
     }
@@ -94,7 +96,8 @@ fun HomeScreen(
 fun DashboardContent(
     data: DashboardResponse, 
     onNavigateToBreathing: () -> Unit,
-    onNavigateToStreak: () -> Unit
+    onNavigateToStreak: () -> Unit,
+    onNavigateToNotifications: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -150,7 +153,7 @@ fun DashboardContent(
                 }
             }
 
-            IconButton(onClick = { /* Notifications */ }) {
+            IconButton(onClick = onNavigateToNotifications) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
@@ -464,7 +467,8 @@ fun DashboardPreview() {
         DashboardContent(
             data = mockData, 
             onNavigateToBreathing = {},
-            onNavigateToStreak = {}
+            onNavigateToStreak = {},
+            onNavigateToNotifications = {}
         )
     }
 }
