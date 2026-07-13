@@ -4,7 +4,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,19 +16,17 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.R
@@ -102,7 +99,7 @@ fun BreathingSelectionContent(
     var selectedDuration by remember { mutableStateOf(3) }
 
     val exercises = listOf(
-        BreathingType("BOX_BREATHING", "Box Breathing", "4 steps - 4 seconds each", R.drawable.ic_launcher_foreground), // Replace with proper icons
+        BreathingType("BOX_BREATHING", "Box Breathing", "4 steps - 4 seconds each", R.drawable.ic_launcher_foreground),
         BreathingType("BREATH_478", "4-7-8 Breathing", "Relaxing - Sleep support", R.drawable.ic_launcher_foreground),
         BreathingType("CALM_BREATH", "Calm Breathing", "Natural - Stress relief", R.drawable.ic_launcher_foreground)
     )
@@ -137,7 +134,6 @@ fun BreathingSelectionContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Illustration placeholder
             Box(
                 modifier = Modifier
                     .size(200.dp)
@@ -145,7 +141,6 @@ fun BreathingSelectionContent(
                     .background(Color(0xFFF3E5F5)),
                 contentAlignment = Alignment.Center
             ) {
-                // Image(painter = painterResource(id = R.drawable.breathing_illus), contentDescription = null)
                 Text("🧘‍♀️", fontSize = 80.sp)
             }
 
@@ -228,7 +223,6 @@ fun ExerciseItem(type: BreathingType, isSelected: Boolean, onClick: () -> Unit) 
                     .background(Color(0xFFF3E5F5)),
                 contentAlignment = Alignment.Center
             ) {
-                // Icon(painter = painterResource(id = type.icon), contentDescription = null)
                 Text(if (type.id == "BOX_BREATHING") "🔲" else if (type.id == "BREATH_478") "〰️" else "🍃")
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -275,8 +269,8 @@ fun BreathingExerciseContent(
     var isPaused by remember { mutableStateOf(false) }
     var currentRound by remember { mutableStateOf(1) }
     var currentPhase by remember { mutableStateOf(BreathingPhase.INHALE) }
-    var timeLeftInPhase by remember { mutableStateOf(4) }
-    var totalSecondsElapsed by remember { mutableStateOf(0) }
+    var timeLeftInPhase by remember { mutableIntStateOf(4) }
+    var totalSecondsElapsed by remember { mutableIntStateOf(0) }
 
     val exerciseName = when (sessionData.exerciseType) {
         "BOX_BREATHING" -> "Box Breathing"
@@ -284,19 +278,13 @@ fun BreathingExerciseContent(
         else -> "Calm Breathing"
     }
 
-    // Animation for the circle
-    val infiniteTransition = rememberInfiniteTransition()
-fun BreathingScreen(onBack: () -> Unit) {
-    var text by remember { mutableStateOf("Breathe In") }
     val infiniteTransition = rememberInfiniteTransition(label = "breathing")
-
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.8f,
         targetValue = 1.2f,
         animationSpec = infiniteRepeatable(
             animation = tween(4000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
-        )
         ),
         label = "scale"
     )
@@ -308,7 +296,6 @@ fun BreathingScreen(onBack: () -> Unit) {
             totalSecondsElapsed++
 
             if (timeLeftInPhase <= 0) {
-                // Switch phase
                 when (sessionData.exerciseType) {
                     "BOX_BREATHING" -> {
                         when (currentPhase) {
@@ -335,7 +322,7 @@ fun BreathingScreen(onBack: () -> Unit) {
                         }
                     }
                     else -> { // Calm
-                         when (currentPhase) {
+                        when (currentPhase) {
                             BreathingPhase.INHALE -> { currentPhase = BreathingPhase.EXHALE; timeLeftInPhase = 6 }
                             BreathingPhase.EXHALE -> {
                                 currentPhase = BreathingPhase.INHALE; timeLeftInPhase = 4
@@ -351,30 +338,18 @@ fun BreathingScreen(onBack: () -> Unit) {
         if (totalSecondsElapsed >= sessionData.totalDurationSeconds) {
             onComplete()
         }
-    LaunchedEffect(scale) {
-        text = if (scale > 1f) "Breathe Out" else "Breathe In"
     }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(exerciseName, fontWeight = FontWeight.Bold) },
-            TopAppBar(
-                title = { Text("Breathing Exercise", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onExit) {
                         Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Exit", modifier = Modifier.size(20.dp))
                     }
-                },
-                actions = {
-                    IconButton(onClick = { /* Info */ }) {
-                        Icon(Icons.Default.Info, contentDescription = "Info")
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
                 }
             )
-        }
         },
         containerColor = Color(0xFFFBFBFF)
     ) { padding ->
@@ -385,9 +360,6 @@ fun BreathingScreen(onBack: () -> Unit) {
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Round $currentRound of ${sessionData.estimatedRounds}", color = Color.Gray, fontSize = 14.sp)
@@ -404,9 +376,7 @@ fun BreathingScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Breathing Animation
             Box(contentAlignment = Alignment.Center) {
-                // Outer circle (Stroke)
                 Canvas(modifier = Modifier.size(250.dp)) {
                     drawCircle(
                         color = Color(0xFFEADDFF),
@@ -414,17 +384,10 @@ fun BreathingScreen(onBack: () -> Unit) {
                     )
                 }
 
-                // Pulsing inner circle
-            Box(
-                modifier = Modifier
-                    .size(200.dp)
-                    .scale(scale)
-                    .background(Color(0xFFE1F5FE), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
                 Box(
                     modifier = Modifier
-                        .size(180.dp * (if (currentPhase == BreathingPhase.INHALE) scale else 1.0f))
+                        .size(200.dp)
+                        .scale(if (!isPaused) scale else 1.0f)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
@@ -449,41 +412,24 @@ fun BreathingScreen(onBack: () -> Unit) {
                 }
             }
 
-                        .size(140.dp)
-                        .background(Color(0xFF03A9F4).copy(alpha = 0.3f), CircleShape)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = currentPhase.instruction,
+                    textAlign = TextAlign.Center,
+                    fontSize = 16.sp,
+                    color = Color.Gray
                 )
-            }
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            Text(
-                text = text,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0288D1)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = currentPhase.instruction,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                fontSize = 16.sp,
-                color = Color.Gray
-                text = "Follow the circle to relax",
-                color = Color.Gray,
-                fontSize = 16.sp
-            )
-
-            Button(
-                onClick = { isPaused = !isPaused },
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3E5F5), contentColor = Color(0xFF6750A4)),
-                modifier = Modifier.width(120.dp)
-            ) {
-                Icon(if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (isPaused) "Resume" else "Pause", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { isPaused = !isPaused },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3E5F5), contentColor = Color(0xFF6750A4)),
+                    modifier = Modifier.width(150.dp)
+                ) {
+                    Icon(if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isPaused) "Resume" else "Pause", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
@@ -538,7 +484,7 @@ fun BreathingSummaryContent(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     SummaryItem(label = "Duration", value = summary.duration, icon = "⏱️")
                     SummaryItem(label = "Rounds", value = "${summary.rounds}", icon = "🔄")
-                    SummaryItem(label = "Total breaths", value = "${summary.totalBreaths}", icon = "🍃")
+                    SummaryItem(label = "Breaths", value = "${summary.totalBreaths}", icon = "🍃")
                 }
             }
         }
@@ -561,5 +507,15 @@ fun BreathingSummaryContent(
         TextButton(onClick = onDoAgain) {
             Text("Do Again", color = Color(0xFF6750A4), fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Composable
+fun SummaryItem(label: String, value: String, icon: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = icon, fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = value, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(text = label, color = Color.Gray, fontSize = 12.sp)
     }
 }

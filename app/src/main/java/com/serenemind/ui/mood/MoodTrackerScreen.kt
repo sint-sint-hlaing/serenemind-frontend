@@ -39,6 +39,7 @@ fun MoodTrackerScreen(
     LaunchedEffect(uiState) {
         if (uiState is MoodUiState.Success) {
             onViewHistory()
+            viewModel.reset()
         }
     }
 
@@ -85,7 +86,6 @@ fun MoodTrackerScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Mood Selection Grid - Reduced height for responsiveness
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -219,14 +219,4 @@ fun MoodType.toEmoji(): String = when(this) {
     MoodType.SAD -> "☹️"
     MoodType.ANXIOUS -> "😰"
     MoodType.ANGRY -> "😡"
-}
-
-        Button(onClick = {
-            selectedMood?.let {
-                viewModel.saveMood(it, intensity.toInt(), note)
-            }
-        }) {
-            Text("Save")
-        }
-    }
 }

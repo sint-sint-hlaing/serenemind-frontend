@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -135,9 +134,8 @@ fun MoodHistoryScreen(
                             val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
                             val dateString = dayFormat.format(cellDate.time)
                             val moodData = history.find { it.date == dateString }
-                            
                             CalendarDayItem(
-                                day = day, 
+                                day = day,
                                 moodEmoji = moodData?.mood?.let { getEmojiForMood(it) },
                                 isSelected = selectedMood?.date == dateString,
                                 onClick = { viewModel.selectDateMood(dateString) }
@@ -170,8 +168,11 @@ fun MoodHistoryScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = mood.mood.lowercase().replaceFirstChar { it.uppercase() },
-                                        fontWeight = FontWeight.Bold, 
+                                        text = mood.mood.name
+                                            .replaceFirstChar { firstChar ->
+                                                firstChar.uppercase()
+                                            },
+                                        fontWeight = FontWeight.Bold,
                                         fontSize = 17.sp
                                     )
                                     Text(
@@ -232,15 +233,14 @@ fun MoodHistoryScreen(
     }
 }
 
-fun getEmojiForMood(mood: String): String {
-    return when (mood.lowercase()) {
-        "happy" -> "😊"
-        "sad" -> "☹️"
-        "anxious" -> "😰"
-        "angry" -> "😡"
-        "calm" -> "😌"
-        "neutral" -> "😐"
-        else -> "😊"
+fun getEmojiForMood(mood: MoodType): String {
+    return when (mood) {
+        MoodType.HAPPY -> "😊"
+        MoodType.SAD -> "☹️"
+        MoodType.ANXIOUS -> "😰"
+        MoodType.ANGRY -> "😡"
+        MoodType.CALM -> "😌"
+        MoodType.NEUTRAL -> "😐"
     }
 }
 

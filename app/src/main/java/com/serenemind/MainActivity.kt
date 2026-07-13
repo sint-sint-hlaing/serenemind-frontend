@@ -27,7 +27,6 @@ class MainActivity : ComponentActivity() {
 
         askNotificationPermission()
 
-        
         val api = NetworkModule.provideApiService(this)
         val repo = AuthRepository(api)
         val tokenManager = TokenManager(this)

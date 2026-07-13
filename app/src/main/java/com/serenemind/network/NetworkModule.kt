@@ -5,48 +5,78 @@ import com.serenemind.datastore.TokenManager
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    private const val BASE_URL = "http://192.168.1.11:8080/"
-    private const val BASE_URL = "http://192.168.1.9:8080/"
+    private const val BASE_URL = "http://192.168.1.7:8080/"
 
-    fun provideOkHttpClient(context: Context): OkHttpClient {
-        val tokenManager = TokenManager(context)
+    private var retrofit: Retrofit? = null
+    private var okHttpClient: OkHttpClient? = null
 
-        val authInterceptor = Interceptor { chain ->
-            val token = runBlocking { tokenManager.getToken() }
-            val requestBuilder = chain.request().newBuilder()
-            if (!token.isNullOrEmpty()) {
-                requestBuilder.addHeader("Authorization", "Bearer $token")
+    private fun getOkHttpClient(context: Context): OkHttpClient {
+        return okHttpClient ?: synchronized(this) {
+            okHttpClient ?: run {
+                val tokenManager = TokenManager(context.applicationContext)
+                
+                val loggingInterceptor = HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                }
+
+                val authInterceptor = Interceptor { chain ->
+                    val token = runBlocking { tokenManager.getToken() }
+                    val originalRequest = chain.request()
+                    
+                    val path = originalRequest.url.encodedPath
+                    // Skip auth header for login and register
+                    if (path.contains("api/auth/login") || path.contains("api/auth/register")) {
+                        return@Interceptor chain.proceed(originalRequest)
+                    }
+
+                    val requestBuilder = originalRequest.newBuilder()
+                    if (!token.isNullOrEmpty()) {
+                        // Ensure we use header() to replace any existing Authorization headers
+                        requestBuilder.header("Authorization", "Bearer $token")
+                    }
+                    
+                    chain.proceed(requestBuilder.build())
+                }
+
+                OkHttpClient.Builder()
+                    .addInterceptor(loggingInterceptor)
+                    .addInterceptor(authInterceptor)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .build().also { okHttpClient = it }
             }
-            chain.proceed(requestBuilder.build())
         }
-
-        return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
-            .build()
     }
 
-    fun provideRetrofit(context: Context): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(provideOkHttpClient(context))
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+    private fun getRetrofit(context: Context): Retrofit {
+        return retrofit ?: synchronized(this) {
+            retrofit ?: run {
+                Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .client(getOkHttpClient(context))
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build().also { retrofit = it }
+            }
+        }
     }
 
     fun provideApiService(context: Context): ApiService {
-        return provideRetrofit(context).create(ApiService::class.java)
+        return getRetrofit(context).create(ApiService::class.java)
     }
 
-    fun provideGoalApiService(context: Context): GoalApiService{
-        return provideRetrofit(context).create(GoalApiService::class.java)
+    fun provideGoalApiService(context: Context): GoalApiService {
+        return getRetrofit(context).create(GoalApiService::class.java)
     }
 
     fun provideMeditationApiService(context: Context): MeditationApiService {
-        return provideRetrofit(context).create(MeditationApiService::class.java)
+        return getRetrofit(context).create(MeditationApiService::class.java)
     }
 }

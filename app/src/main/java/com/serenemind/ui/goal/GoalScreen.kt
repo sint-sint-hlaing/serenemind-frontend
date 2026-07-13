@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.serenemind.model.request.GoalRequest
 import com.serenemind.model.response.UserGoal
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +90,7 @@ fun GoalScreen(
         }
     }
 }
+
 
 @Composable
 fun GoalTab(title: String, isSelected: Boolean, onClick: () -> Unit) {

@@ -6,43 +6,16 @@ import com.serenemind.model.entity.enums.MoodType
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.repository.MoodRepository
-import retrofit2.Response
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MoodViewModel(private val repository: MoodRepository): ViewModel() {
+class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<MoodUiState>(MoodUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    // MoodViewModel.kt
-    fun saveMood(moodType: MoodType, intensity: Int, note: String) {
-        // 1. Validation Logic
-        if (moodType == null) {
-            _uiState.value = MoodUiState.Error("Please select a mood first!")
-            return
-        }
-
-        // 2. Network Call
-        viewModelScope.launch {
-            _uiState.value = MoodUiState.Loading
-            try {
-                val request = MoodRequest(moodType, intensity, note)
-                val response = repository.saveMood(request)
-
-                if (response.isSuccessful) {
-                    _uiState.value = MoodUiState.Success
-                } else {
-                    _uiState.value = MoodUiState.Error("Server error: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                _uiState.value = MoodUiState.Error("Network error: ${e.localizedMessage}")
-            }
-        }
-    }
-    // Add this line to define the StateFlow
     private val _summaryState = MutableStateFlow<Map<String, Double>>(emptyMap())
     val summaryState = _summaryState.asStateFlow()
 
@@ -113,5 +86,9 @@ class MoodViewModel(private val repository: MoodRepository): ViewModel() {
                 _uiState.value = MoodUiState.Error("Network error: ${e.localizedMessage}")
             }
         }
+    }
+
+    fun reset() {
+        _uiState.value = MoodUiState.Idle
     }
 }

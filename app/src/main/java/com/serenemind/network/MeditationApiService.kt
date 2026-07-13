@@ -10,15 +10,16 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface MeditationApiService {
-    @GET("api/meditation/dashboard")
+    @GET("api/meditations/dashboard")
     suspend fun getMeditationDashboard(): Response<MeditationDashboardResponse>
 
-    @GET("api/meditation/{id}")
-    suspend fun getMeditationById(@Path("id") id: Long): Response<Meditation>
-
-    @POST("api/meditation-sessions")
+    @GET("api/meditations/{id}")
+    suspend fun getMeditationById(
+        @Path("id") id: Long
+    ): Response<Meditation>
+    @POST("api/meditations/complete")
     suspend fun completeSession(@Body request: MeditationSessionRequest): Response<String>
 
-    @GET("api/meditation-sessions/history")
+    @GET("api/meditations/history")
     suspend fun getHistory(): Response<List<Meditation>> // Assuming history returns list of meditation or similar
 }

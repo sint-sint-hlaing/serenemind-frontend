@@ -41,7 +41,7 @@ interface ApiService {
     suspend fun saveMood(@Body request: MoodRequest): Response<Unit>
 
     @GET("api/mood/summary")
-    suspend fun getMoodSummary(): Map<String, Double>
+    suspend fun getMoodSummary(): Response<Map<String, Double>>
 
     @GET("api/posts")
     suspend fun getPosts(
@@ -123,7 +123,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("sessionId") sessionId: String
     ): Response<BreathingSummaryResponse>
-    suspend fun getMoodSummary(): Response<Map<String, Double>>
 
     @GET("api/mood/history/{year}/{month}")
     suspend fun getMoodHistory(

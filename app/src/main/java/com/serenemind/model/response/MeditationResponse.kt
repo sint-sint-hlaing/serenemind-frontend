@@ -6,6 +6,7 @@ data class Meditation(
     val id: Long,
     val title: String,
     val duration: String,
+    val description: String,
     val category: String,
     val audioUrl: String,
     val imageUrl: String? = null
