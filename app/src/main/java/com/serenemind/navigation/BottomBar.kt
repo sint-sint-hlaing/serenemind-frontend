@@ -31,10 +31,12 @@ fun BottomBar(navController: NavHostController) {
                     if (currentRoute != screen.route) {
                         navController.navigate(screen.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                                // We don't save state here to ensure that switching tabs 
+                                // always brings the user back to the root of that tab.
+                                saveState = false 
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = false
                         }
                     }
                 },

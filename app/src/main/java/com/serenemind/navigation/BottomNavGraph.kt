@@ -17,6 +17,8 @@ import com.serenemind.network.NetworkModule
 import com.serenemind.repository.BreathingRepository
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
+import com.serenemind.repository.MoodRepository
+import com.serenemind.repository.NotificationRepository
 import com.serenemind.repository.ReminderRepository
 import com.serenemind.repository.StreakRepository
 import com.serenemind.repository.UserRepository
@@ -35,6 +37,10 @@ import com.serenemind.ui.community.PostDetailViewModelFactory
 import com.serenemind.ui.home.HomeScreen
 import com.serenemind.ui.home.HomeViewModel
 import com.serenemind.ui.home.HomeViewModelFactory
+import com.serenemind.ui.journal.JournalScreen
+import com.serenemind.ui.mood.MoodTrackerScreen
+import com.serenemind.ui.mood.MoodViewModel
+import com.serenemind.ui.mood.MoodViewModelFactory
 import com.serenemind.ui.notification.NotificationViewModel
 import com.serenemind.ui.notification.NotificationViewModelFactory
 import com.serenemind.ui.notification.NotificationsScreen
@@ -70,7 +76,7 @@ fun BottomNavGraph(
     )
 
     val notificationRepository = remember {
-        com.serenemind.repository.NotificationRepository(apiService, tokenManager)
+        NotificationRepository(apiService, tokenManager)
     }
     val notificationViewModel: NotificationViewModel = viewModel(
         factory = NotificationViewModelFactory(notificationRepository)
@@ -109,6 +115,13 @@ fun BottomNavGraph(
     }
     val breathingViewModel: BreathingViewModel = viewModel(
         factory = BreathingViewModelFactory(breathingRepository)
+    )
+
+    val moodRepository = remember {
+        MoodRepository(apiService, tokenManager)
+    }
+    val moodViewModel: MoodViewModel = viewModel(
+        factory = MoodViewModelFactory(moodRepository)
     )
 
     NavHost(
@@ -152,11 +165,11 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Journal.route) {
-            SampleScreen(title = "Journal Screen")
+            JournalScreen()
         }
 
         composable(Screen.Mood.route) {
-            SampleScreen(title = "Mood Screen")
+            MoodTrackerScreen(viewModel = moodViewModel)
         }
 
         composable(Screen.Streak.route) {
