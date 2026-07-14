@@ -196,7 +196,7 @@ fun ProfileMenuItem(
             Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = Color.LightGray, modifier = Modifier.size(14.dp))
         }
         if (!isLast) {
-            Divider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(color = Color(0xFFF5F5F5), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
         }
     }
 }

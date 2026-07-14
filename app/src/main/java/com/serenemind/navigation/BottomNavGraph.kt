@@ -11,14 +11,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
 import com.serenemind.repository.DashboardRepository
+import com.serenemind.repository.JournalRepository
 import com.serenemind.repository.UserRepository
 import com.serenemind.ui.home.HomeScreen
 import com.serenemind.ui.home.HomeViewModel
 import com.serenemind.ui.home.HomeViewModelFactory
+import com.serenemind.ui.journal.*
 import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
@@ -31,6 +35,11 @@ fun BottomNavGraph(
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val apiService = remember { NetworkModule.provideApiService() }
+    val journalApiService = remember { NetworkModule.provideJournalApiService() }
+
+    val journalRepository = remember {
+        JournalRepository(journalApiService, tokenManager)
+    }
 
     NavHost(
         navController = navController,
@@ -51,7 +60,51 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Journal.route) {
-            SampleScreen(title = "Journal Screen")
+            val journalListViewModel: JournalListViewModel = viewModel(
+                factory = JournalListViewModelFactory(journalRepository)
+            )
+            JournalListScreen(
+                viewModel = journalListViewModel,
+                onNavigateToEditor = { id ->
+                    navController.navigate(Screen.JournalEditor.createRoute(id, id != null))
+                },
+                onNavigateToAnalysis = { id ->
+                    navController.navigate(Screen.JournalAnalysis.createRoute(id))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.JournalEditor.route,
+            arguments = listOf(
+                navArgument("id") { type = NavType.IntType },
+                navArgument("isEdit") { type = NavType.BoolType }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("id")?.takeIf { it != -1 }
+            val journalEditorViewModel: JournalEditorViewModel = viewModel(
+                factory = JournalEditorViewModelFactory(journalRepository)
+            )
+            JournalEditorScreen(
+                id = id,
+                viewModel = journalEditorViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.JournalAnalysis.route,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("id") ?: -1
+            val journalAnalysisViewModel: JournalAnalysisViewModel = viewModel(
+                factory = JournalAnalysisViewModelFactory(journalRepository)
+            )
+            JournalAnalysisScreen(
+                id = id,
+                viewModel = journalAnalysisViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Mood.route) {

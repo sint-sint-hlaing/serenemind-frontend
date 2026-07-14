@@ -4,5 +4,4 @@ enum class GoalStatus {
     ACTIVE,
     COMPLETED,
     PAUSED
-
 }
