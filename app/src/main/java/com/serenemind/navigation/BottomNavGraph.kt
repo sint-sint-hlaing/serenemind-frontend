@@ -14,6 +14,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
+import com.serenemind.repository.*
+import com.serenemind.ui.breathing.*
+import com.serenemind.ui.community.*
+import com.serenemind.ui.home.*
+import com.serenemind.ui.profile.*
+import com.serenemind.ui.mood.*
+import com.serenemind.ui.goal.*
+import com.serenemind.ui.meditation.*
+import com.serenemind.ui.journal.*
 import com.serenemind.repository.BreathingRepository
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
@@ -58,10 +67,13 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val apiService = remember { NetworkModule.provideApiService(context) }
+    val goalApiService = remember { NetworkModule.provideGoalApiService(context) }
+    val meditationApiService = remember { NetworkModule.provideMeditationApiService(context) }
     val apiService = remember { NetworkModule.provideApiService() }
-    
+
     val themeManager = remember { com.serenemind.datastore.ThemeManager(context) }
-    
+
     val communityRepository = remember {
         CommunityRepository(apiService, tokenManager)
     }
@@ -69,6 +81,15 @@ fun BottomNavGraph(
         factory = CommunityViewModelFactory(communityRepository)
     )
 
+    // Repositories
+    val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val moodRepository = remember { MoodRepository(apiService) }
+    val userRepository = remember { UserRepository(apiService, tokenManager) }
+    val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
+    val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
+    val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val notificationRepository = remember {
         com.serenemind.repository.NotificationRepository(apiService, tokenManager)
     }
@@ -90,6 +111,12 @@ fun BottomNavGraph(
         factory = ProfileViewModelFactory(userRepository)
     )
 
+    // ViewModels
+    val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
+    val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
+    val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
+    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
+    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
     val streakRepository = remember {
         StreakRepository(apiService, tokenManager)
     }
@@ -116,11 +143,23 @@ fun BottomNavGraph(
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
+            val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository))
             HomeScreen(
                 viewModel = homeViewModel,
                 onLogout = onLogout,
                 onNavigateToBreathing = {
                     navController.navigate(Screen.Breathing.route)
+                },
+                onLogout = onLogout,
+                onActionClick = { action ->
+                    when (action.lowercase()) {
+                        "meditate", "meditation" -> navController.navigate(Screen.Meditation.route)
+                        "goals", "goal" -> navController.navigate(Screen.Goal.route)
+                        "journal" -> navController.navigate(Screen.Journal.route)
+                        "mood" -> navController.navigate(Screen.Mood.route)
+                        "breathing" -> navController.navigate(Screen.Breathing.route)
+                        "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
+                    }
                 },
                 onNavigateToStreak = {
                     navController.navigate(Screen.Streak.route)
@@ -152,11 +191,54 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Journal.route) {
-            SampleScreen(title = "Journal Screen")
+            JournalScreen(
+                onAddClick = { /* Navigate to New Journal */ },
+                onJournalClick = { /* Navigate to Detail */ }
+            )
         }
 
         composable(Screen.Mood.route) {
-            SampleScreen(title = "Mood Screen")
+            val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+            MoodTrackerScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() },
+                onViewHistory = { navController.navigate(Screen.MoodHistory.route) }
+            )
+        }
+
+        composable(Screen.MoodHistory.route) {
+            val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+            MoodHistoryScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Goal.route) {
+            GoalScreen(
+                viewModel = goalViewModel,
+                onGoalClick = { goal ->
+                    goalViewModel.selectGoal(goal)
+                    navController.navigate(Screen.GoalDetail.route)
+                }
+            )
+        }
+
+        composable(Screen.GoalDetail.route) {
+            GoalDetailScreen(
+                viewModel = goalViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Meditation.route) {
+            val meditationViewModel: MeditationViewModel = viewModel(
+                factory = MeditationViewModelFactory(meditationRepository)
+            )
+            MeditationScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Streak.route) {
@@ -190,19 +272,22 @@ fun BottomNavGraph(
             val postIdStr = backStackEntry.arguments?.getString("postId")
             val postId = postIdStr?.toLongOrNull() ?: -1L
             val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
-            
+
+
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
-            
+
             PostDetailScreen(
                 viewModel = postDetailViewModel,
+                onBack = {
                 focusComments = focusComments,
-                onBack = { 
+                onBack = {
                     communityViewModel.refresh()
+                    navController.popBackStack()
                     homeViewModel.fetchDashboardData(isSilent = true)
                     streakViewModel.fetchStreak(isSilent = true)
-                    navController.popBackStack() 
+                    navController.popBackStack()
                 }
             )
         }

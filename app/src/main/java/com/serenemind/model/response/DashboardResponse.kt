@@ -1,23 +1,28 @@
 package com.serenemind.model.response
 
-import com.google.gson.annotations.SerializedName
-
 data class DashboardResponse(
-    @SerializedName("username") val userName: String? = null,
-    @SerializedName("currentMood") val currentMood: String? = null,
-    @SerializedName("moodPercentage") val moodPercentage: Int = 0,
-    @SerializedName("currentStreak") val currentStreak: Int = 0,
-    @SerializedName("isNewBest") val isNewBest: Boolean = false,
-    @SerializedName("weeklyDataList") val weeklyOverview: List<WeeklyData>? = null, // Changed from weeklyOverview
-    @SerializedName("quickActions") val quickActions: List<ActionItem>? = null
+    val username: String,
+    val greeting: String,
+    val date: String,
+    val todayMood: TodayMoodResponse,
+    val weeklyOverview: List<WeeklyMoodResponse>,
+    val quickActions: List<QuickActionResponse>
 )
 
-data class WeeklyData(
-    @SerializedName("day") val day: String? = null,
-    @SerializedName("value") val value: Float? = null
+data class TodayMoodResponse(
+    val mood: String,
+    val percentage: Int,
+    val message: String
 )
 
-data class ActionItem(
-    @SerializedName("name") val name: String? = null,
-    @SerializedName("iconUrl") val iconUrl: String? = null
+data class WeeklyMoodResponse(
+    val day: String,
+    val mood: String,
+    val percentage: Int
+)
+
+data class QuickActionResponse(
+    val title: String,
+    val route: String,
+    val icon: String
 )
