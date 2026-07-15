@@ -12,17 +12,26 @@ class BreathingRepository(
     private val tokenManager: TokenManager
 ) {
     suspend fun startSession(request: BreathingRequest): Response<BreathingStartResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.startBreathingSession("Bearer $token", request)
+        return try {
+            apiService.startBreathingSession(request)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun trackRoundComplete(sessionId: String, roundNumber: Int): Response<Unit> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.trackRoundComplete("Bearer $token", sessionId, roundNumber)
+        return try {
+            apiService.trackRoundComplete(sessionId, roundNumber)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun completeSession(sessionId: String): Response<BreathingSummaryResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.completeBreathingSession("Bearer $token", sessionId)
+        return try {
+            apiService.completeBreathingSession(sessionId)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 }

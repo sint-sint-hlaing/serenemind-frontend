@@ -4,32 +4,16 @@ import com.serenemind.model.request.*
 import com.serenemind.model.response.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import com.serenemind.model.request.LoginRequest
-import com.serenemind.model.request.MoodRequest
-import com.serenemind.model.response.DailyMoodResponse
-import com.serenemind.model.response.DashboardResponse
-import com.serenemind.model.response.LoginResponse
-import com.serenemind.model.response.UserProfileResponse
 import retrofit2.Response
 import retrofit2.http.*
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.POST
-import retrofit2.http.Path
 
 interface ApiService {
 
     @POST("api/auth/login")
-    suspend fun login(
-        @Body request: LoginRequest
-    ): Response<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("api/auth/register")
-    suspend fun register(
-        @Body request: RegisterRequest
-    ): Response<Unit>
-
+    suspend fun register(@Body request: RegisterRequest): Response<Unit>
 
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
@@ -44,85 +28,53 @@ interface ApiService {
     suspend fun getMoodSummary(): Response<Map<String, Double>>
 
     @GET("api/posts")
-    suspend fun getPosts(
-        @Header("Authorization") token: String? = null
-    ): Response<List<PostResponse>>
+    suspend fun getPosts(): Response<List<PostResponse>>
 
     @GET("api/posts/{id}")
-    suspend fun getPostById(
-        @Path("id") postId: Long,
-        @Header("Authorization") token: String
-    ): Response<PostResponse>
+    suspend fun getPostById(@Path("id") postId: Long): Response<PostResponse>
 
     @GET("api/posts/{id}/comments")
-    suspend fun getComments(
-        @Path("id") postId: Long,
-        @Header("Authorization") token: String
-    ): Response<List<CommentResponse>>
+    suspend fun getComments(@Path("id") postId: Long): Response<List<CommentResponse>>
 
     @POST("api/posts/{id}/like")
-    suspend fun likePost(
-        @Path("id") postId: Long,
-        @Header("Authorization") token: String
-    ): Response<Unit>
+    suspend fun likePost(@Path("id") postId: Long): Response<Unit>
 
     @POST("api/posts/{id}/comments")
     suspend fun addComment(
         @Path("id") postId: Long,
-        @Header("Authorization") token: String,
         @Body request: CommentRequest
     ): Response<CommentResponse>
 
     @Multipart
     @POST("api/posts")
     suspend fun createPost(
-        @Header("Authorization") token: String,
         @Part("post") post: RequestBody,
         @Part image: MultipartBody.Part? = null
     ): Response<PostResponse>
 
     @GET("api/reminders")
-    suspend fun getReminders(
-        @Header("Authorization") token: String
-    ): Response<List<ReminderResponse>>
+    suspend fun getReminders(): Response<List<ReminderResponse>>
 
     @POST("api/reminders")
-    suspend fun createReminder(
-        @Header("Authorization") token: String,
-        @Body request: ReminderRequest
-    ): Response<ReminderResponse>
+    suspend fun createReminder(@Body request: ReminderRequest): Response<ReminderResponse>
 
     @DELETE("api/reminders/{id}")
-    suspend fun deleteReminder(
-        @Header("Authorization") token: String,
-        @Path("id") id: Long
-    ): Response<Unit>
+    suspend fun deleteReminder(@Path("id") id: Long): Response<Unit>
 
     @PATCH("api/reminders/{id}/toggle")
-    suspend fun toggleReminder(
-        @Header("Authorization") token: String,
-        @Path("id") id: Long
-    ): Response<ReminderResponse>
+    suspend fun toggleReminder(@Path("id") id: Long): Response<ReminderResponse>
 
-    // Breathing API
     @POST("api/breathing/session/start")
-    suspend fun startBreathingSession(
-        @Header("Authorization") token: String,
-        @Body request: BreathingRequest
-    ): Response<BreathingStartResponse>
+    suspend fun startBreathingSession(@Body request: BreathingRequest): Response<BreathingStartResponse>
 
     @POST("api/breathing/session/{sessionId}/round-complete")
     suspend fun trackRoundComplete(
-        @Header("Authorization") token: String,
         @Path("sessionId") sessionId: String,
         @Query("roundNumber") roundNumber: Int
     ): Response<Unit>
 
     @POST("api/breathing/session/{sessionId}/complete")
-    suspend fun completeBreathingSession(
-        @Header("Authorization") token: String,
-        @Path("sessionId") sessionId: String
-    ): Response<BreathingSummaryResponse>
+    suspend fun completeBreathingSession(@Path("sessionId") sessionId: String): Response<BreathingSummaryResponse>
 
     @GET("api/mood/history/{year}/{month}")
     suspend fun getMoodHistory(
@@ -130,6 +82,3 @@ interface ApiService {
         @Path("month") month: Int
     ): Response<List<DailyMoodResponse>>
 }
-
-    // network/ApiService.kt
-

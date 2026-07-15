@@ -17,7 +17,7 @@ class DashboardRepository(
             val response = apiService.getDashboardData()
             emit(response)
         } catch (e: Exception) {
-            throw e
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
 }

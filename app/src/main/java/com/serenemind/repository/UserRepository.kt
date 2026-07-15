@@ -15,7 +15,8 @@ class UserRepository(
             val response = apiService.getUserProfile()
             emit(response)
         } catch (e: Exception) {
-            emit(Response.error<UserProfileResponse>(500, okhttp3.ResponseBody.create(null, "")))
+            // Rethrow or emit specific error response. Emitting error response to keep Flow alive.
+            emit(Response.error<UserProfileResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
 

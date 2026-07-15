@@ -19,34 +19,52 @@ class CommunityRepository(
     private val tokenManager: TokenManager
 ) {
     fun getPosts(): Flow<Response<List<PostResponse>>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getPosts("Bearer $token"))
+        try {
+            emit(apiService.getPosts())
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
     }
 
     fun getPostById(postId: Long): Flow<Response<PostResponse>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getPostById(postId, "Bearer $token"))
+        try {
+            emit(apiService.getPostById(postId))
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
     }
 
     fun getComments(postId: Long): Flow<Response<List<CommentResponse>>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getComments(postId, "Bearer $token"))
+        try {
+            emit(apiService.getComments(postId))
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
     }
 
     suspend fun likePost(postId: Long): Response<Unit> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.likePost(postId, "Bearer $token")
+        return try {
+            apiService.likePost(postId)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun addComment(postId: Long, content: String): Response<CommentResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.addComment(postId, "Bearer $token", CommentRequest(content))
+        return try {
+            apiService.addComment(postId, CommentRequest(content))
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun createPost(request: CreatePostRequest, imagePart: MultipartBody.Part?): Response<PostResponse> {
-        val token = tokenManager.getToken() ?: ""
-        val json = Gson().toJson(request)
-        val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())
-        return apiService.createPost("Bearer $token", postPart, imagePart)
+        return try {
+            val json = Gson().toJson(request)
+            val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())
+            apiService.createPost(postPart, imagePart)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 }

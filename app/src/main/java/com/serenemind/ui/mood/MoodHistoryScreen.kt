@@ -61,7 +61,7 @@ fun MoodHistoryScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         },
         containerColor = Color(0xFFFBFBFF)
@@ -75,10 +75,11 @@ fun MoodHistoryScreen(
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp)
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
                 // Calendar Month Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { 
@@ -91,7 +92,8 @@ fun MoodHistoryScreen(
                     Text(
                         text = monthYearFormat.format(calendar.time), 
                         fontWeight = FontWeight.Bold, 
-                        fontSize = 16.sp
+                        fontSize = 17.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                     IconButton(onClick = { 
                         val newCal = calendar.clone() as Calendar
@@ -125,7 +127,7 @@ fun MoodHistoryScreen(
                 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(7),
-                    modifier = Modifier.height(240.dp), // Reduced height
+                    modifier = Modifier.height(300.dp), // Increased height for better spacing
                     userScrollEnabled = false
                 ) {
                     items(totalCells) { index ->
@@ -206,12 +208,12 @@ fun MoodHistoryScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 val moodColors = mapOf(
-                    "Happy" to Color(0xFFFF9800),
-                    "Calm" to Color(0xFF03A9F4),
-                    "Neutral" to Color(0xFFFFEB3B),
-                    "Sad" to Color(0xFF9C27B0),
-                    "Anxious" to Color(0xFF80DEEA),
-                    "Angry" to Color(0xFFF44336)
+                    "HAPPY" to Color(0xFFFF9800),
+                    "CALM" to Color(0xFF03A9F4),
+                    "NEUTRAL" to Color(0xFFFFEB3B),
+                    "SAD" to Color(0xFF9C27B0),
+                    "ANXIOUS" to Color(0xFF80DEEA),
+                    "ANGRY" to Color(0xFFF44336)
                 )
 
                 Row(
@@ -224,7 +226,9 @@ fun MoodHistoryScreen(
                     
                     Column(modifier = Modifier.padding(start = 24.dp).weight(1f)) {
                         summary.forEach { (mood, percentage) ->
-                            SummaryItem(mood, percentage.toInt(), moodColors[mood] ?: Color.Gray)
+                            val moodKey = mood.uppercase()
+                            val displayLabel = mood.lowercase().replaceFirstChar { it.uppercase() }
+                            SummaryItem(displayLabel, percentage.toInt(), moodColors[moodKey] ?: Color.Gray)
                         }
                     }
                 }
@@ -265,7 +269,7 @@ fun CalendarDayItem(
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(4.dp)
+            .padding(2.dp)
             .clip(CircleShape)
             .background(if (isSelected) Color(0xFF673AB7) else Color.Transparent)
             .clickable { onClick() },
@@ -279,7 +283,9 @@ fun CalendarDayItem(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
             if (moodEmoji != null) {
-                Text(text = moodEmoji, fontSize = 12.sp)
+                Text(text = moodEmoji, fontSize = 14.sp)
+            } else {
+                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }

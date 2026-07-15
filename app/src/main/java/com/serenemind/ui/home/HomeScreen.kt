@@ -22,9 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.entity.enums.MoodType
 import com.serenemind.model.response.DashboardResponse
-import com.serenemind.model.response.QuickAction
-import com.serenemind.model.response.WeeklyMood
-import java.util.*
+import com.serenemind.model.response.QuickActionResponse
+import com.serenemind.model.response.WeeklyMoodResponse
 
 @Composable
 fun HomeScreen(
@@ -147,8 +146,8 @@ fun DashboardContent(
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val moodType = remember(data.todayMood) {
-                    MoodType.entries.find { it.name.equals(data.todayMood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                val moodType = remember(data.todayMood.mood) {
+                    MoodType.entries.find { it.name.equals(data.todayMood.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
                 }
                 
                 Box(
@@ -167,7 +166,7 @@ fun DashboardContent(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 Column(modifier = Modifier.weight(1f)) {
-                    val moodDisplay = data.todayMood.lowercase().replaceFirstChar { it.uppercase() }
+                    val moodDisplay = data.todayMood.mood.lowercase().replaceFirstChar { it.uppercase() }
                     Text(
                         text = moodDisplay,
                         fontSize = 18.sp,
@@ -175,14 +174,14 @@ fun DashboardContent(
                         color = Color.Black
                     )
                     Text(
-                        text = "Great! Keep shining ☀️",
+                        text = data.todayMood.message,
                         color = Color.Gray,
                         fontSize = 13.sp
                     )
                 }
                 
                 Text(
-                    text = "80%", // Mock or from data if available
+                    text = "${data.todayMood.percentage}%",
                     color = Color(0xFF4CAF50),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -248,7 +247,7 @@ fun DashboardContent(
 }
 
 @Composable
-fun WeeklyChart(weeklyOverview: List<WeeklyMood>) {
+fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,6 +256,9 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMood>) {
         verticalAlignment = Alignment.Bottom
     ) {
         weeklyOverview.take(7).forEach { item ->
+            val moodType = remember(item.mood) {
+                MoodType.entries.find { it.name.equals(item.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+            }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
@@ -266,16 +268,16 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMood>) {
                         .width(20.dp)
                         .height((item.percentage.coerceAtLeast(10) * 1.0f).dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(getBarColor(item.mood))
+                        .background(getBarColor(moodType))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = item.day.name.take(3).lowercase().replaceFirstChar { it.uppercase() },
+                    text = item.day.take(3).lowercase().replaceFirstChar { it.uppercase() },
                     fontSize = 11.sp,
                     color = Color.Gray
                 )
                 Text(
-                    text = getEmojiForMood(item.mood),
+                    text = getEmojiForMood(moodType),
                     fontSize = 14.sp
                 )
             }
@@ -307,7 +309,7 @@ fun getBarColor(mood: MoodType): Color {
 
 @Composable
 fun QuickActionsRow(
-    actions: List<QuickAction>,
+    actions: List<QuickActionResponse>,
     onNavigateToBreathing: () -> Unit,
     onActionClick: (String) -> Unit
 ) {
@@ -333,7 +335,7 @@ fun QuickActionsRow(
 
 @Composable
 fun QuickActionItem(
-    action: QuickAction,
+    action: QuickActionResponse,
     onClick: () -> Unit
 ) {
     Column(

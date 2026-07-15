@@ -5,35 +5,28 @@ import com.serenemind.model.entity.enums.MoodType
 import java.time.DayOfWeek
 
 data class DashboardResponse(
-    @SerializedName("username") val username: String,
-    @SerializedName("todayMood") val todayMood: String,
-    @SerializedName("greeting") val greeting: String,
-    @SerializedName("date") val date: String,
-    @SerializedName("weeklyOverview") val weeklyOverview: List<WeeklyMood>,
-    @SerializedName("quickActions") val quickActions: List<QuickAction>
+    val username: String,
+    val todayMood: TodayMoodResponse,
+    val greeting: String,
+    val date: String,
+    val weeklyOverview: List<WeeklyMoodResponse>,
+    val quickActions: List<QuickActionResponse>
 )
 
-data class WeeklyMood(
-
-    val day: DayOfWeek,
-
-    val mood: MoodType,
-
-    val percentage: Int
-
-)
-data class TodayMood(
+data class TodayMoodResponse(
     val mood: String,
     val percentage: Int,
     val message: String
 )
 
-data class QuickAction(
+data class WeeklyMoodResponse(
+    val day: String, // String to handle DayOfWeek name from backend
+    val mood: String, // String to handle MoodType name
+    val percentage: Int
+)
 
+data class QuickActionResponse(
     val title: String,
-
     val route: String,
-
     val icon: String
-
 )

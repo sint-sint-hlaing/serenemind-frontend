@@ -1,6 +1,8 @@
 package com.serenemind.ui.meditation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,9 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.serenemind.R
 import com.serenemind.model.response.Meditation
 import com.serenemind.model.response.MeditationCategory
 import com.serenemind.model.response.MeditationDashboardResponse
@@ -34,6 +40,12 @@ fun MeditationScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(Unit) {
+        if (uiState is MeditationUiState.Idle) {
+            viewModel.fetchMeditationDashboard()
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -43,20 +55,26 @@ fun MeditationScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         },
         containerColor = Color(0xFFFBFBFF)
     ) { padding ->
         when (val state = uiState) {
-            is MeditationUiState.Loading -> {
+            is MeditationUiState.Loading, MeditationUiState.Idle -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color(0xFF673AB7))
                 }
             }
             is MeditationUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message, color = Color.Red)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = state.message, color = Color.Red)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.fetchMeditationDashboard() }) {
+                            Text("Retry")
+                        }
+                    }
                 }
             }
             is MeditationUiState.Success -> {
@@ -98,7 +116,7 @@ fun MeditationContent(padding: PaddingValues, data: MeditationDashboardResponse)
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
@@ -130,22 +148,40 @@ fun FeaturedMeditationCard(meditation: Meditation) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),
+            .height(200.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box {
-            // Gradient placeholder for landscapes
+            // Background Image or Gradient
+            if (meditation.imageUrl != null) {
+                AsyncImage(
+                    model = meditation.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(R.drawable.ic_launcher_background), // Fallback image
+                    placeholder = painterResource(R.drawable.ic_launcher_background)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color(0xFF9575CD), Color(0xFF311B92))
+                            )
+                        )
+                )
+            }
+            
+            // Dark overlay for text readability
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color(0xFF9575CD), Color(0xFF311B92))
-                        )
-                    )
-            ) 
-            
+                    .background(Color.Black.copy(alpha = 0.2f))
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -158,8 +194,15 @@ fun FeaturedMeditationCard(meditation: Meditation) {
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
+                val durationDisplay = try {
+                    val seconds = meditation.duration.toInt()
+                    "${seconds / 60} min"
+                } catch (e: Exception) {
+                    meditation.duration
+                }
+                val categoryDisplay = meditation.category.lowercase().replaceFirstChar { it.uppercase() }
                 Text(
-                    text = "${meditation.duration} • ${meditation.category}",
+                    text = "$durationDisplay • $categoryDisplay",
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp
                 )
@@ -170,11 +213,12 @@ fun FeaturedMeditationCard(meditation: Meditation) {
 
 @Composable
 fun CategoryItem(category: MeditationCategory) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(72.dp)) {
         Card(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier.border(1.dp, Color(0xFFF0F0F0), RoundedCornerShape(20.dp))
         ) {
             Box(
                 modifier = Modifier
@@ -183,11 +227,24 @@ fun CategoryItem(category: MeditationCategory) {
                     .clickable { /* Select category */ },
                 contentAlignment = Alignment.Center
             ) {
-                Text(category.emoji, fontSize = 26.sp)
+                // Mapping emoji or icon based on category
+                val emoji = when(category.name.lowercase()) {
+                    "sleep" -> "🌙"
+                    "anxiety" -> "⚙️"
+                    "focus" -> "🎯"
+                    "morning" -> "☀️"
+                    else -> category.emoji.ifEmpty { "🧘" }
+                }
+                Text(emoji, fontSize = 28.sp)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(category.name, fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+        Text(
+            text = category.name.lowercase().replaceFirstChar { it.uppercase() },
+            fontSize = 12.sp, 
+            color = Color.Black, 
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -207,17 +264,40 @@ fun RecommendedItem(meditation: Meditation) {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFE0E0E0))
-        )
+        // Square Image
+        if (meditation.imageUrl != null) {
+            AsyncImage(
+                model = meditation.imageUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Crop,
+                error = painterResource(R.drawable.ic_launcher_background),
+                placeholder = painterResource(R.drawable.ic_launcher_background)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFEADDFF))
+            )
+        }
+
         Spacer(modifier = Modifier.width(16.dp))
+        
         Column(modifier = Modifier.weight(1f)) {
             Text(meditation.title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(meditation.duration, color = Color.Gray, fontSize = 14.sp)
+            val durationDisplay = try {
+                val seconds = meditation.duration.toInt()
+                "${seconds / 60} min"
+            } catch (e: Exception) {
+                meditation.duration
+            }
+            Text(durationDisplay, color = Color.Gray, fontSize = 14.sp)
         }
+
         IconButton(
             onClick = { /* Play */ },
             modifier = Modifier

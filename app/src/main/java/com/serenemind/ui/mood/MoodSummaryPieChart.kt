@@ -12,35 +12,36 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MoodSummaryPieChart(summary: Map<String, Double>) {
     val moodColors = mapOf(
-        "Happy" to Color(0xFFFF9800),
-        "Calm" to Color(0xFF03A9F4),
-        "Neutral" to Color(0xFFFFEB3B),
-        "Sad" to Color(0xFF9C27B0),
-        "Anxious" to Color(0xFF80DEEA),
-        "Angry" to Color(0xFFF44336)
+        "HAPPY" to Color(0xFFFF9800),
+        "CALM" to Color(0xFF03A9F4),
+        "NEUTRAL" to Color(0xFFFFEB3B),
+        "SAD" to Color(0xFF9C27B0),
+        "ANXIOUS" to Color(0xFF80DEEA),
+        "ANGRY" to Color(0xFFF44336)
     )
     
     var startAngle = -90f // Start from the top
 
-    Canvas(modifier = Modifier.size(150.dp)) {
+    Canvas(modifier = Modifier.size(130.dp)) {
         if (summary.isEmpty()) {
             drawArc(
                 color = Color.LightGray,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
-                style = Stroke(width = 25.dp.toPx())
+                style = Stroke(width = 30f)
             )
         } else {
-            summary.forEach { (mood, percentage) ->
-                val sweepAngle = (percentage.toFloat() / 100f) * 360f
+            val total = summary.values.sum().toFloat()
+            summary.forEach { (mood, value) ->
+                val sweepAngle = (value.toFloat() / total) * 360f
                 
                 drawArc(
-                    color = moodColors[mood] ?: Color.Gray,
+                    color = moodColors[mood.uppercase()] ?: Color.Gray,
                     startAngle = startAngle,
                     sweepAngle = sweepAngle,
                     useCenter = false,
-                    style = Stroke(width = 25.dp.toPx(), cap = StrokeCap.Round)
+                    style = Stroke(width = 30f, cap = StrokeCap.Round)
                 )
                 startAngle += sweepAngle
             }
