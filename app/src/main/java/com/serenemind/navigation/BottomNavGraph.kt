@@ -64,7 +64,7 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    val apiService = remember { NetworkModule.provideApiService() }
+    val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
     
     val themeManager = remember { com.serenemind.datastore.ThemeManager(context) }
     

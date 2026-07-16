@@ -32,9 +32,9 @@ class MainActivity : ComponentActivity() {
 
         askNotificationPermission()
 
-        val api = NetworkModule.provideApiService()
-        val repo = AuthRepository(api)
         val tokenManager = TokenManager(this)
+        val api = NetworkModule.provideApiService(this, tokenManager)
+        val repo = AuthRepository(api)
         val themeManager = ThemeManager(this)
 
         val viewModel = LoginViewModel(repo, tokenManager)
