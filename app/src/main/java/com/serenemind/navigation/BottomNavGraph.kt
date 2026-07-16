@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+
 import androidx.navigation.navArgument
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
@@ -59,6 +60,21 @@ import com.serenemind.ui.streak.StreakScreen
 import com.serenemind.ui.streak.StreakViewModel
 import com.serenemind.ui.streak.StreakViewModelFactory
 
+import com.serenemind.datastore.ThemeManager
+
+import com.serenemind.repository.*
+import com.serenemind.ui.breathing.*
+import com.serenemind.ui.community.*
+import com.serenemind.ui.home.*
+import com.serenemind.ui.profile.*
+import com.serenemind.ui.mood.*
+import com.serenemind.ui.goal.*
+import com.serenemind.ui.meditation.*
+import com.serenemind.ui.journal.*
+import com.serenemind.ui.notification.*
+import com.serenemind.ui.streak.*
+
+
 @Composable
 fun BottomNavGraph(
     navController: NavHostController,
@@ -68,66 +84,36 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    val apiService = remember { NetworkModule.provideApiService() }
-
     
-    val themeManager = remember { com.serenemind.datastore.ThemeManager(context) }
+    val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
+    val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
+    val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
+    val journalApiService = remember { NetworkModule.provideJournalApiService(context, tokenManager) }
+    val themeManager = remember { ThemeManager(context) }
+
+    // Repositories
+    val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
+    val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
+    val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
+    val userRepository = remember { UserRepository(apiService, tokenManager) }
+    val streakRepository = remember { StreakRepository(apiService, tokenManager) }
+    val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
+    val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
+    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val journalRepository = remember { JournalRepository(journalApiService, tokenManager) }
     
-    val communityRepository = remember {
-        CommunityRepository(apiService, tokenManager)
-    }
-    val communityViewModel: CommunityViewModel = viewModel(
-        factory = CommunityViewModelFactory(communityRepository)
-    )
-
-    val notificationRepository = remember {
-        com.serenemind.repository.NotificationRepository(apiService, tokenManager)
-    }
-    val notificationViewModel: NotificationViewModel = viewModel(
-        factory = NotificationViewModelFactory(notificationRepository)
-    )
-
-    val dashboardRepository = remember {
-        DashboardRepository(apiService, tokenManager)
-    }
-    val homeViewModel: HomeViewModel = viewModel(
-        factory = HomeViewModelFactory(dashboardRepository, themeManager)
-    )
-
-    val userRepository = remember {
-        UserRepository(apiService, tokenManager)
-    }
-    val profileViewModel: ProfileViewModel = viewModel(
-        factory = ProfileViewModelFactory(userRepository)
-    )
-
-    val streakRepository = remember {
-        StreakRepository(apiService, tokenManager)
-    }
-    val streakViewModel: StreakViewModel = viewModel(
-        factory = StreakViewModelFactory(streakRepository)
-    )
-
-    val reminderRepository = remember {
-        ReminderRepository(apiService, tokenManager)
-    }
-    val reminderViewModel: ReminderViewModel = viewModel(
-        factory = ReminderViewModelFactory(reminderRepository)
-    )
-
-    val breathingRepository = remember {
-        BreathingRepository(apiService, tokenManager)
-    }
-    val breathingViewModel: BreathingViewModel = viewModel(
-        factory = BreathingViewModelFactory(breathingRepository)
-    )
-
-    val journalApiService = remember { NetworkModule.provideJournalApiService() }
-
-    val journalRepository = remember {
-        JournalRepository(journalApiService, tokenManager)
-    }
-
+    // ViewModels
+    val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
+    val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
+    val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
+    val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
+    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
+    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
+    val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+    val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
 
     NavHost(
         navController = navController,
@@ -145,6 +131,16 @@ fun BottomNavGraph(
                 },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications.route)
+                },
+                onActionClick = { action ->
+                    when (action.lowercase()) {
+                        "meditate", "meditation" -> navController.navigate(Screen.Meditation.route)
+                        "goals", "goal" -> navController.navigate(Screen.Goal.route)
+                        "journal" -> navController.navigate(Screen.Journal.route)
+                        "mood" -> navController.navigate(Screen.Mood.route)
+                        "breathing" -> navController.navigate(Screen.Breathing.route)
+                        "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
+                    }
                 }
             )
         }
@@ -218,7 +214,45 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Mood.route) {
-            SampleScreen(title = "Mood Screen")
+            MoodTrackerScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() },
+                onViewHistory = { navController.navigate(Screen.MoodHistory.route) }
+            )
+        }
+
+        composable(Screen.MoodHistory.route) {
+            MoodHistoryScreen(
+                viewModel = moodViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Goal.route) {
+            GoalScreen(
+                viewModel = goalViewModel,
+                onGoalClick = { goal ->
+                    goalViewModel.selectGoal(goal)
+                    navController.navigate(Screen.GoalDetail.route)
+                }
+            )
+        }
+
+        composable(Screen.GoalDetail.route) {
+            GoalDetailScreen(
+                viewModel = goalViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Meditation.route) {
+            val meditationViewModel: MeditationViewModel = viewModel(
+                factory = MeditationViewModelFactory(meditationRepository)
+            )
+            MeditationScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Streak.route) {
@@ -256,15 +290,15 @@ fun BottomNavGraph(
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
-            
+
             PostDetailScreen(
                 viewModel = postDetailViewModel,
                 focusComments = focusComments,
-                onBack = { 
+                onBack = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
                     streakViewModel.fetchStreak(isSilent = true)
-                    navController.popBackStack() 
+                    navController.popBackStack()
                 }
             )
         }

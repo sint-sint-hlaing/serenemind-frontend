@@ -12,22 +12,18 @@ class NotificationRepository(
     private val tokenManager: TokenManager
 ) {
     fun getNotifications(filter: String? = null): Flow<Response<List<NotificationResponse>>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getNotifications("Bearer $token", filter))
+        emit(apiService.getNotifications(filter))
     }
 
     suspend fun markAsRead(id: Long): Response<Unit> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.markAsRead(id, "Bearer $token")
+        return apiService.markAsRead(id)
     }
 
     suspend fun clickNotification(id: Long): Response<NotificationResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.clickNotification(id, "Bearer $token")
+        return apiService.clickNotification(id)
     }
 
     suspend fun markAllAsRead(): Response<Unit> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.markAllAsRead("Bearer $token")
+        return apiService.markAllAsRead()
     }
 }

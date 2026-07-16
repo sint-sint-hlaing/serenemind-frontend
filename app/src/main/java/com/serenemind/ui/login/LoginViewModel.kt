@@ -28,7 +28,7 @@ class LoginViewModel(
             _uiState.value = LoginUiState.Loading
             val result = repository.login(LoginRequest(email, password))
             result.onSuccess { response ->
-                tokenManager.saveToken(response.accessToken)
+                tokenManager.saveTokens(response.accessToken, response.refreshToken)
                 _uiState.value = LoginUiState.Success
             }
             result.onFailure {
