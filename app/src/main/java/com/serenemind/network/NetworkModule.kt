@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 object NetworkModule {
 
     // REPLACE THIS WITH YOUR PC'S WIFI IP ADDRESS (e.g., 192.168.0.105)
-    private const val BASE_URL = "http://192.168.91.132:8080/"
+    private const val BASE_URL = "http://192.168.90.145:8080/"
 
     private var retrofit: Retrofit? = null
     private var okHttpClient: OkHttpClient? = null
