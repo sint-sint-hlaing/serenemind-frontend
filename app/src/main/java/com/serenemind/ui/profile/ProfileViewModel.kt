@@ -21,13 +21,17 @@ class ProfileViewModel(
 
     fun fetchUserProfile() {
         viewModelScope.launch {
-            _uiState.value = ProfileUiState.Loading
-            userRepository.getUserProfile().collect { response ->
-                if (response.isSuccessful && response.body() != null) {
-                    _uiState.value = ProfileUiState.Success(response.body()!!)
-                } else {
-                    _uiState.value = ProfileUiState.Error("Failed to load profile details.")
+            try {
+                _uiState.value = ProfileUiState.Loading
+                userRepository.getUserProfile().collect { response ->
+                    if (response.isSuccessful && response.body() != null) {
+                        _uiState.value = ProfileUiState.Success(response.body()!!)
+                    } else {
+                        _uiState.value = ProfileUiState.Error("Failed to load profile details.")
+                    }
                 }
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error("An error occurred: ${e.message}")
             }
         }
     }

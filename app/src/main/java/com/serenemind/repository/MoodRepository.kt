@@ -1,21 +1,29 @@
 package com.serenemind.repository
 
+import com.serenemind.datastore.TokenManager
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.network.ApiService
 import retrofit2.Response
 
-class MoodRepository(private val apiService: ApiService) {
+class MoodRepository(
+    private val apiService: ApiService,
+    private val tokenManager: TokenManager
+) {
     suspend fun saveMood(request: MoodRequest): Response<Unit> {
         return apiService.saveMood(request)
     }
 
     suspend fun getMoodSummary(): Map<String, Double> {
-        val response = apiService.getMoodSummary()
-        return if (response.isSuccessful) {
-            response.body() ?: emptyMap()
-        } else {
+        return try {
+            val response = apiService.getMoodSummary()
+            if (response.isSuccessful) {
+                response.body() ?: emptyMap()
+            } else {
+                emptyMap()
+            }
+        } catch (e: Exception) {
             emptyMap()
         }
     }

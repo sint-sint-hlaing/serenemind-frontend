@@ -26,7 +26,17 @@ data class WeeklyMoodResponse(
 )
 
 data class QuickActionResponse(
-    val title: String,
-    val route: String,
-    val icon: String
+    val title: String? = "",
+    val route: String? = "",
+    val icon: String? = ""
+)
+
+data class WeeklyData(
+    val day: String? = "",
+    val percentage: Float? = 0f
+)
+
+data class ActionItem(
+    val name: String? = null,
+    val route: String? = null
 )

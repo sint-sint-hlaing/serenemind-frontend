@@ -97,7 +97,7 @@ fun AppNavigation(
                     onDarkModeToggle = onDarkModeToggle,
                     onLogout = {
                         scope.launch {
-                            tokenManager.clearToken()
+                            tokenManager.clearTokens()
                             navController.navigate(Screen.Welcome.route) {
                                 popUpTo(Screen.Main.route) {
                                     inclusive = true

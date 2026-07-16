@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.serenemind.datastore.ThemeManager
 import com.serenemind.datastore.TokenManager
 import com.serenemind.datastore.ThemeManager
 import com.serenemind.network.NetworkModule
@@ -37,17 +38,21 @@ fun BottomNavGraph(
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val themeManager = remember { ThemeManager(context) }
-    
+
     val apiService = remember { NetworkModule.provideApiService(context) }
     val goalApiService = remember { NetworkModule.provideGoalApiService(context) }
     val meditationApiService = remember { NetworkModule.provideMeditationApiService(context) }
+    val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
+    val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
+    val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
+    val themeManager = remember { ThemeManager(context) }
 
     // Repositories
     val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
-    val goalRepository = remember { GoalRepository(goalApiService) }
-    val meditationRepository = remember { MeditationRepository(meditationApiService) }
-    val moodRepository = remember { MoodRepository(apiService) }
+    val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
+    val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
+    val streakRepository = remember { StreakRepository(apiService, tokenManager) }
     val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
     val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
     val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
@@ -79,6 +84,20 @@ fun BottomNavGraph(
     val notificationViewModel: NotificationViewModel = viewModel(
         factory = NotificationViewModelFactory(notificationRepository)
     )
+    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+
+    // ViewModels
+    val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
+    val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
+    val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
+    val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
+    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
+    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
+    val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
+    val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
 
     NavHost(
         navController = navController,
@@ -87,8 +106,15 @@ fun BottomNavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 viewModel = homeViewModel,
+                onLogout = onLogout,
                 onNavigateToBreathing = {
                     navController.navigate(Screen.Breathing.route)
+                },
+                onNavigateToStreak = {
+                    navController.navigate(Screen.Streak.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications.route)
                 },
                 onActionClick = { action ->
                     when (action.lowercase()) {
@@ -123,6 +149,19 @@ fun BottomNavGraph(
             )
         }
 
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(
+                viewModel = notificationViewModel,
+                onNavigateToPost = { postId ->
+                    navController.navigate("post_detail/$postId")
+                },
+                onNavigateToReminder = {
+                    navController.navigate(Screen.Reminders.route)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Breathing.route) {
             val breathingViewModel: BreathingViewModel = viewModel(
                 factory = BreathingViewModelFactory(breathingRepository)
@@ -141,6 +180,7 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Mood.route) {
+            val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
             MoodTrackerScreen(
                 viewModel = moodViewModel,
                 onBack = { navController.popBackStack() },
@@ -225,6 +265,8 @@ fun BottomNavGraph(
             val postId = postIdStr?.toLongOrNull() ?: -1L
             val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
 
+            val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
+
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
@@ -262,9 +304,15 @@ fun BottomNavGraph(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 viewModel = profileViewModel,
+                isDarkMode = isDarkMode,
+                onDarkModeToggle = onDarkModeToggle,
+                onNavigateToSettings = { },
                 onLogout = onLogout,
                 onNavigateToReminders = {
                     navController.navigate(Screen.Reminders.route)
+                },
+                onNavigateToStreak = {
+                    navController.navigate(Screen.Streak.route)
                 }
             )
         }

@@ -55,11 +55,13 @@ class CommunityRepository(
         content: String,
         isAnonymous: Boolean = false
     ): Response<CommentResponse> {
+    suspend fun addComment(postId: Long, content: String, isAnonymous: Boolean = false): Response<CommentResponse> {
         return try {
             apiService.addComment(
                 postId,
                 CommentRequest(content, isAnonymous)
             )
+            apiService.addComment(postId, CommentRequest(content, isAnonymous))
         } catch (e: Exception) {
             Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }

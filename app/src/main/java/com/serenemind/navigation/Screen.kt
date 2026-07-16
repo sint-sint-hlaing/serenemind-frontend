@@ -1,6 +1,7 @@
 package com.serenemind.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -23,6 +24,12 @@ sealed class Screen(
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Filled.Assignment)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
+    object Streak : Screen("streak", "Streak", Icons.Default.Whatshot)
+    object Goal : Screen("goal", "Goal", Icons.Default.Attribution)
+    object Community : Screen("community", "Community", Icons.Default.People)
+    object Profile : Screen("profile", "Profile", Icons.Default.Person)
+
+    // Sub Screens
     object MoodHistory : Screen("mood_history")
     object Goal: Screen(route="goal", title="Goal", icon = Icons.Default.Flag)
     object GoalDetail: Screen("goal_detail")

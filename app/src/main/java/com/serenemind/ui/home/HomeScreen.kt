@@ -58,9 +58,9 @@ fun HomeScreen(
                         Text(text = "Something went wrong", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = state.message, color = Color.Gray, fontSize = 14.sp, textAlign = TextAlign.Center)
-                        
+
                         Spacer(modifier = Modifier.height(24.dp))
-                        
+
                         Button(
                             onClick = { viewModel.fetchDashboardData() },
                             modifier = Modifier.fillMaxWidth().height(54.dp),
@@ -68,9 +68,9 @@ fun HomeScreen(
                         ) {
                             Text("Retry")
                         }
-                        
+
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         TextButton(onClick = onLogout) {
                             Text("Logout & Sign In Again", color = Color.Gray)
                         }
@@ -102,7 +102,7 @@ fun DashboardContent(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
                         "Dashboard",
                         fontWeight = FontWeight.Bold,
@@ -128,7 +128,7 @@ fun DashboardContent(
     ) { innerPadding ->
         BoxWithConstraints(modifier = Modifier.padding(innerPadding)) {
             val isWide = maxWidth > 600.dp
-            
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -205,7 +205,7 @@ fun DashboardContent(
                         val moodType = remember(data.todayMood.mood) {
                             MoodType.entries.find { it.name.equals(data.todayMood.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
                         }
-                        
+
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -218,9 +218,9 @@ fun DashboardContent(
                                 fontSize = 36.sp
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column(modifier = Modifier.weight(1f)) {
                             val moodDisplay = data.todayMood.mood.lowercase().replaceFirstChar { it.uppercase() }
                             Text(
@@ -235,7 +235,7 @@ fun DashboardContent(
                                 fontSize = 13.sp
                             )
                         }
-                        
+
                         Text(
                             text = "${data.todayMood.percentage}%",
                             color = Success,
@@ -245,7 +245,7 @@ fun DashboardContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
                 // Weekly Overview Header
                 Row(
@@ -291,9 +291,9 @@ fun DashboardContent(
                     color = TextPrimary,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 QuickActionsGrid(
                     actions = data.quickActions,
                     onNavigateToBreathing = onNavigateToBreathing,

@@ -21,6 +21,6 @@ class UserRepository(
     }
 
     suspend fun logout() {
-        tokenManager.clearToken()
+        tokenManager.clearTokens()
     }
 }

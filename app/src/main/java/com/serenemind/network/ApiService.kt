@@ -15,6 +15,9 @@ interface ApiService {
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<Unit>
 
+    @POST("api/auth/refresh")
+    suspend fun refreshToken(@Body request: RefreshRequest): Response<LoginResponse>
+
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
 

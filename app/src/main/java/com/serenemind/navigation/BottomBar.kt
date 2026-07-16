@@ -25,21 +25,23 @@ fun BottomBar(navController: NavHostController) {
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
+    NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { screen ->
-            val isConceptuallySelected = currentRoute == screen.route || 
+            val isConceptuallySelected = currentRoute == screen.route ||
                 (screen == Screen.Mood && currentRoute == Screen.MoodHistory.route) ||
                 (screen == Screen.Home && (
-                    currentRoute == Screen.Goal.route || 
-                    currentRoute == Screen.GoalDetail.route || 
-                    currentRoute == Screen.Meditation.route || 
+                    currentRoute == Screen.Goal.route ||
+                    currentRoute == Screen.GoalDetail.route ||
+                    currentRoute == Screen.Meditation.route ||
                     currentRoute == Screen.Breathing.route ||
                     currentRoute == Screen.Notifications.route
                 ))
 
             val isExactlyOnRoute = currentRoute == screen.route
+                (screen == Screen.Goal && (currentRoute == screen.route || currentRoute == Screen.GoalDetail.route))
 
             NavigationBarItem(
                 selected = isConceptuallySelected,
@@ -62,21 +64,29 @@ fun BottomBar(navController: NavHostController) {
                             launchSingleTop = true
                             restoreState = true
                         }
+                    if (currentRoute != screen.route) {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = false // Set to false to prevent potential restoration crashes
+                        }
                     }
                 },
-                icon = { 
+                icon = {
                     screen.icon?.let {
                         Icon(
-                            imageVector = it, 
+                            imageVector = it,
                             contentDescription = screen.title
-                        ) 
+                        )
                     }
                 },
-                label = { 
+                label = {
                     Text(
                         text = screen.title,
                         fontWeight = if (isConceptuallySelected) FontWeight.Bold else FontWeight.Medium
-                    ) 
+                    )
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
