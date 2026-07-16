@@ -3,7 +3,6 @@ package com.serenemind.navigation
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -25,7 +24,6 @@ fun BottomBar(navController: NavHostController) {
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
-    NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
@@ -40,7 +38,7 @@ fun BottomBar(navController: NavHostController) {
                     currentRoute == Screen.Notifications.route
                 ))
 
-            val isExactlyOnRoute = currentRoute == screen.route
+            val isExactlyOnRoute = currentRoute == screen.route ||
                 (screen == Screen.Goal && (currentRoute == screen.route || currentRoute == Screen.GoalDetail.route))
 
             NavigationBarItem(
@@ -64,13 +62,14 @@ fun BottomBar(navController: NavHostController) {
                             launchSingleTop = true
                             restoreState = true
                         }
-                    if (currentRoute != screen.route) {
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                        if (currentRoute != screen.route) {
+                            navController.navigate(screen.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = false // Set to false to prevent potential restoration crashes
                             }
-                            launchSingleTop = true
-                            restoreState = false // Set to false to prevent potential restoration crashes
                         }
                     }
                 },

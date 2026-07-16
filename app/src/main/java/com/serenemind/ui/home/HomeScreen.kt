@@ -388,11 +388,11 @@ fun QuickActionsGrid(
                 action = action,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    val route = action.route.lowercase()
+                    val route = (action.route ?: "").lowercase()
                     if (route == "breathing") {
                         onNavigateToBreathing()
                     } else {
-                        onActionClick(action.route)
+                        onActionClick(action.route ?: "")
                     }
                 }
             )
@@ -426,18 +426,18 @@ fun QuickActionItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(getBackgroundColorForAction(action.title)),
+                    .background(getBackgroundColorForAction(action.title ?: "")),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = action.icon,
+                    text = action.icon ?: "",
                     fontSize = 28.sp
                 )
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = action.title,
+            text = action.title ?: "",
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary,

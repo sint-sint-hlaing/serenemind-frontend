@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.90.145:8080/"
+    const val BASE_URL = "http://192.168.91.132:8080/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
