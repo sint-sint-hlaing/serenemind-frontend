@@ -77,12 +77,8 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
-
     // Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
-
-    implementation(libs.richeditor.compose)
-
 
 //    Icons
     implementation("androidx.compose.material:material-icons-extended")

@@ -42,4 +42,13 @@ sealed class Screen(
     object AddReminder : Screen("add_reminder")
     object Breathing : Screen("breathing")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
+
+    // Journal Flow
+    object JournalEditor : Screen("journal_editor/{id}?isEdit={isEdit}") {
+        fun createRoute(id: Int? = null, isEdit: Boolean = false) =
+            if (id != null) "journal_editor/$id?isEdit=$isEdit" else "journal_editor/-1?isEdit=false"
+    }
+    object JournalAnalysis : Screen("journal_analysis/{id}") {
+        fun createRoute(id: Int) = "journal_analysis/$id"
+    }
 }
