@@ -2,6 +2,7 @@ package com.serenemind.ui.goal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serenemind.model.request.GoalRequest
 import com.serenemind.model.response.UserGoal
 import com.serenemind.repository.GoalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,9 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
 
     private val _selectedGoal = MutableStateFlow<UserGoal?>(null)
     val selectedGoal = _selectedGoal.asStateFlow()
+
+    private val _createGoalSuccess = MutableStateFlow(false)
+    val createGoalSuccess = _createGoalSuccess.asStateFlow()
 
     init {
         fetchGoals()
@@ -55,5 +59,24 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                 // Handle error
             }
         }
+    }
+
+    fun createGoal(title: String, description: String, targetDays: Int) {
+        viewModelScope.launch {
+            try {
+                val request = GoalRequest(title, description, targetDays)
+                val response = repository.createGoal(request)
+                if (response.isSuccessful) {
+                    _createGoalSuccess.value = true
+                    fetchGoals()
+                }
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun resetCreateGoalSuccess() {
+        _createGoalSuccess.value = false
     }
 }

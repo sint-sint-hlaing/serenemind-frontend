@@ -27,6 +27,27 @@ interface ApiService {
     @GET("api/mood/summary")
     suspend fun getMoodSummary(): Response<Map<String, Double>>
 
+    @GET("api/mood/history")
+    suspend fun getMoodHistory(
+        @Query("year") year: Int,
+        @Query("month") month: Int
+    ): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/date/{date}")
+    suspend fun getMoodByDate(@Path("date") date: String): Response<DailyMoodResponse>
+
+    @GET("api/mood/weekly")
+    suspend fun getWeeklyMood(): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/monthly")
+    suspend fun getMonthlyMood(): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/summary/week")
+    suspend fun getWeeklySummary(): Response<WeeklyMoodResponse>
+
+    @DELETE("api/mood/delete/{id}")
+    suspend fun deleteMood(@Path("id") id: Long): Response<Unit>
+
     @GET("api/posts")
     suspend fun getPosts(): Response<List<PostResponse>>
 
@@ -47,38 +68,29 @@ interface ApiService {
 
     // Streak API
     @GET("api/streaks/me")
-    suspend fun getStreak(
-        @Header("Authorization") token: String
-    ): Response<StreakResponse>
+    suspend fun getStreak(): Response<StreakResponse>
 
     @POST("api/streaks/use-freeze")
-    suspend fun useStreakFreeze(
-        @Header("Authorization") token: String
-    ): Response<StreakResponse>
+    suspend fun useStreakFreeze(): Response<StreakResponse>
 
     // Notification API
     @GET("api/notifications")
     suspend fun getNotifications(
-        @Header("Authorization") token: String,
         @Query("filter") filter: String? = null
     ): Response<List<NotificationResponse>>
 
     @PATCH("api/notifications/{id}/read")
     suspend fun markAsRead(
-        @Path("id") id: Long,
-        @Header("Authorization") token: String
+        @Path("id") id: Long
     ): Response<Unit>
 
     @GET("api/notifications/{id}/click")
     suspend fun clickNotification(
-        @Path("id") id: Long,
-        @Header("Authorization") token: String
+        @Path("id") id: Long
     ): Response<NotificationResponse>
 
     @POST("api/notifications/read-all")
-    suspend fun markAllAsRead(
-        @Header("Authorization") token: String
-    ): Response<Unit>
+    suspend fun markAllAsRead(): Response<Unit>
 
     @Multipart
     @POST("api/posts")
@@ -110,10 +122,4 @@ interface ApiService {
 
     @POST("api/breathing/session/{sessionId}/complete")
     suspend fun completeBreathingSession(@Path("sessionId") sessionId: String): Response<BreathingSummaryResponse>
-
-    @GET("api/mood/history/{year}/{month}")
-    suspend fun getMoodHistory(
-        @Path("year") year: Int,
-        @Path("month") month: Int
-    ): Response<List<DailyMoodResponse>>
 }

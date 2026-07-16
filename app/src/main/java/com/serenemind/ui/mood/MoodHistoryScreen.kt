@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,8 +60,21 @@ fun MoodHistoryScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* More options */ }) {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
+                    var showMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Refresh Data") },
+                            onClick = { 
+                                viewModel.refresh()
+                                showMenu = false
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -67,85 +82,99 @@ fun MoodHistoryScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
+        BoxWithConstraints(modifier = Modifier.padding(padding)) {
+            val isWide = maxWidth > 600.dp
+            
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = if (isWide) 32.dp else 20.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
-                // Calendar Month Header
-                Row(
+                
+                // Calendar Card
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    IconButton(onClick = { 
-                        val newCal = calendar.clone() as Calendar
-                        newCal.add(Calendar.MONTH, -1)
-                        calendar = newCal
-                    }) {
-                        Icon(Icons.Default.ChevronLeft, contentDescription = "Prev", modifier = Modifier.size(20.dp))
-                    }
-                    Text(
-                        text = monthYearFormat.format(calendar.time), 
-                        fontWeight = FontWeight.Bold, 
-                        fontSize = 17.sp,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = TextPrimary
-                    )
-                    IconButton(onClick = { 
-                        val newCal = calendar.clone() as Calendar
-                        newCal.add(Calendar.MONTH, 1)
-                        calendar = newCal
-                    }) {
-                        Icon(Icons.Default.ChevronRight, contentDescription = "Next", modifier = Modifier.size(20.dp))
-                    }
-                }
-
-                // Calendar Grid Header
-                val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    daysOfWeek.forEach { day ->
-                        Text(
-                            text = day, 
-                            color = TextSecondary, 
-                            fontSize = 12.sp, 
-                            modifier = Modifier.weight(1f), 
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-                
-                // Calculate days for the grid
-                val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-                val firstDayOfWeek = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK)
-                val offset = (firstDayOfWeek + 5) % 7
-                val totalCells = daysInMonth + offset
-                
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(7),
-                    modifier = Modifier.height(300.dp),
-                    userScrollEnabled = false
-                ) {
-                    items(totalCells) { index ->
-                        if (index >= offset) {
-                            val day = index - offset + 1
-                            val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
-                            val dateString = dayFormat.format(cellDate.time)
-                            val moodData = history.find { it.date == dateString }
-                            CalendarDayItem(
-                                day = day,
-                                moodEmoji = moodData?.mood?.let { getEmojiForMood(it) },
-                                isSelected = selectedMood?.date == dateString,
-                                onClick = { viewModel.selectDateMood(dateString) }
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Calendar Month Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { 
+                                val newCal = calendar.clone() as Calendar
+                                newCal.add(Calendar.MONTH, -1)
+                                calendar = newCal
+                            }) {
+                                Icon(Icons.Default.ChevronLeft, contentDescription = "Prev")
+                            }
+                            Text(
+                                text = monthYearFormat.format(calendar.time), 
+                                fontWeight = FontWeight.Bold, 
+                                fontSize = 18.sp,
+                                color = TextPrimary
                             )
-                        } else {
-                            Box(modifier = Modifier.aspectRatio(1f))
+                            IconButton(onClick = { 
+                                val newCal = calendar.clone() as Calendar
+                                newCal.add(Calendar.MONTH, 1)
+                                calendar = newCal
+                            }) {
+                                Icon(Icons.Default.ChevronRight, contentDescription = "Next")
+                            }
+                        }
+
+                        // Calendar Grid Header
+                        val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            daysOfWeek.forEach { day ->
+                                Text(
+                                    text = day, 
+                                    color = TextSecondary, 
+                                    fontSize = 12.sp, 
+                                    modifier = Modifier.weight(1f), 
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                        
+                        // Calculate days for the grid
+                        val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+                        val firstDayOfMonth = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }
+                        val firstDayOfWeek = firstDayOfMonth.get(Calendar.DAY_OF_WEEK)
+                        val offset = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - 2
+                        val totalCells = daysInMonth + offset
+                        
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(7),
+                            modifier = Modifier.height(300.dp),
+                            userScrollEnabled = false
+                        ) {
+                            items(totalCells) { index ->
+                                if (index >= offset) {
+                                    val day = index - offset + 1
+                                    val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
+                                    val dateString = dayFormat.format(cellDate.time)
+                                    val moodData = history.find { it.date == dateString }
+                                    
+                                    val isSelected = selectedMood?.date == dateString
+                                    
+                                    CalendarDayItem(
+                                        day = day,
+                                        mood = moodData?.mood,
+                                        isSelected = isSelected,
+                                        onClick = { viewModel.selectDateMood(dateString) }
+                                    )
+                                } else {
+                                    Box(modifier = Modifier.aspectRatio(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -246,13 +275,107 @@ fun MoodHistoryScreen(
     }
 }
 
+@Composable
+fun CalendarDayItem(
+    day: Int, 
+    mood: MoodType?, 
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .padding(2.dp)
+            .clip(CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .background(PrimaryPurple),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = day.toString(),
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = day.toString(),
+                    fontSize = 12.sp,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Medium
+                )
+                if (mood != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(getMoodColor(mood)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = getEmojiForMood(mood),
+                            fontSize = 11.sp
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+            }
+        }
+    }
+}
+
+fun getMoodColor(mood: MoodType): Color {
+    return when (mood) {
+        MoodType.HAPPY -> MoodHappy
+        MoodType.CALM -> MoodCalm
+        MoodType.NEUTRAL -> MoodNeutral
+        MoodType.SAD -> MoodSad
+        MoodType.ANXIOUS -> MoodAnxious
+        MoodType.ANGRY -> MoodAngry
+    }
+}
+
+@Composable
+fun SummaryItem(label: String, percentage: Int, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = TextPrimary)
+        Text(text = "$percentage%", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+    }
+}
+
 fun getEmojiForMood(mood: MoodType): String {
     return when (mood) {
         MoodType.HAPPY -> "😊"
-        MoodType.SAD -> "☹️"
-        MoodType.ANXIOUS -> "😰"
-        MoodType.ANGRY -> "😡"
+        MoodType.SAD -> "😢"
         MoodType.CALM -> "😌"
+        MoodType.ANXIOUS -> "😰"
+        MoodType.ANGRY -> "😠"
         MoodType.NEUTRAL -> "😐"
     }
 }
@@ -277,57 +400,5 @@ fun formatDateNicely(dateStr: String): String {
         formatter.format(date!!)
     } catch (e: Exception) {
         dateStr
-    }
-}
-
-@Composable
-fun CalendarDayItem(
-    day: Int, 
-    moodEmoji: String?, 
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .padding(2.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = day.toString(),
-                fontSize = 13.sp,
-                color = if (isSelected) Color.White else TextPrimary,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-            )
-            if (moodEmoji != null) {
-                Text(text = moodEmoji, fontSize = 14.sp)
-            } else {
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun SummaryItem(label: String, percentage: Int, color: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(text = label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = TextPrimary)
-        Text(text = "$percentage%", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
     }
 }

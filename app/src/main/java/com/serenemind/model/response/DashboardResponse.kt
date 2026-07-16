@@ -6,7 +6,9 @@ data class DashboardResponse(
     val date: String,
     val todayMood: TodayMoodResponse,
     val weeklyOverview: List<WeeklyMoodResponse>,
-    val quickActions: List<QuickActionResponse>
+    val quickActions: List<QuickActionResponse>,
+    val currentStreak: Int,
+    val isNewBest: Boolean
 )
 
 data class TodayMoodResponse(
@@ -16,9 +18,11 @@ data class TodayMoodResponse(
 )
 
 data class WeeklyMoodResponse(
-    val day: String,
-    val mood: String,
-    val percentage: Int
+    val day: String? = null,
+    val mood: String? = null,
+    val percentage: Int? = null,
+    val dailyMoods: Map<String, Int>? = null,
+    val averageIntensity: Double? = null
 )
 
 data class QuickActionResponse(

@@ -2,6 +2,7 @@ package com.serenemind.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,9 +32,15 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToBreathing: () -> Unit = {},
     onActionClick: (String) -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchDashboardData(isSilent = true)
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -74,178 +81,228 @@ fun HomeScreen(
                 DashboardContent(
                     data = state.data,
                     onNavigateToBreathing = onNavigateToBreathing,
-                    onActionClick = onActionClick
+                    onActionClick = onActionClick,
+                    onNotificationClick = onNotificationClick,
+                    onMenuClick = onMenuClick
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardContent(
     data: DashboardResponse,
     onNavigateToBreathing: () -> Unit,
-    onActionClick: (String) -> Unit
+    onActionClick: (String) -> Unit,
+    onNotificationClick: () -> Unit,
+    onMenuClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        // Top Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { /* Open menu */ }) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu")
-            }
-            Text(
-                text = "Dashboard",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { 
+                    Text(
+                        "Dashboard",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNotificationClick) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
-            IconButton(onClick = { /* Notifications */ }) {
-                Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Greeting Section
-        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-            Text(
-                text = data.date,
-                color = TextSecondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "${data.greeting}, ${data.username}! 👋",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Today's Mood Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onActionClick("mood") },
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Row(
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        BoxWithConstraints(modifier = Modifier.padding(innerPadding)) {
+            val isWide = maxWidth > 600.dp
+            
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = if (isWide) 32.dp else 16.dp)
             ) {
-                val moodType = remember(data.todayMood.mood) {
-                    MoodType.entries.find { it.name.equals(data.todayMood.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Greeting Section
+                Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(
+                        text = data.date,
+                        color = TextSecondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${data.greeting}, ${data.username}! 👋",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (data.currentStreak > 0) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🔥", fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "${data.currentStreak} days",
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-                
-                Box(
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Today's Mood Card
+                Card(
                     modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(getMoodBgColor(moodType)),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(),
+                            onClick = { onActionClick("mood") }
+                        ),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val moodType = remember(data.todayMood.mood) {
+                            MoodType.entries.find { it.name.equals(data.todayMood.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(getMoodBgColor(moodType)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = getEmojiForMood(moodType),
+                                fontSize = 36.sp
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            val moodDisplay = data.todayMood.mood.lowercase().replaceFirstChar { it.uppercase() }
+                            Text(
+                                text = moodDisplay,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = data.todayMood.message,
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+                        }
+                        
+                        Text(
+                            text = "${data.todayMood.percentage}%",
+                            color = Success,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Weekly Overview Header
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = getEmojiForMood(moodType),
-                        fontSize = 36.sp
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    val moodDisplay = data.todayMood.mood.lowercase().replaceFirstChar { it.uppercase() }
-                    Text(
-                        text = moodDisplay,
-                        fontSize = 18.sp,
+                        text = "Weekly Overview",
                         fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
                         color = TextPrimary
                     )
                     Text(
-                        text = data.todayMood.message,
-                        color = TextSecondary,
-                        fontSize = 13.sp
+                        text = "View all",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable { onActionClick("mood_history") }
                     )
                 }
-                
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Box(modifier = Modifier.padding(20.dp)) {
+                        WeeklyChart(data.weeklyOverview)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Quick Actions Section
                 Text(
-                    text = "${data.todayMood.percentage}%",
-                    color = Success,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Quick Actions",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                QuickActionsGrid(
+                    actions = data.quickActions,
+                    onNavigateToBreathing = onNavigateToBreathing,
+                    onActionClick = onActionClick
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Weekly Overview Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Weekly Overview",
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                color = TextPrimary
-            )
-            Text(
-                text = "View all",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { onActionClick("mood_history") }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Box(modifier = Modifier.padding(20.dp)) {
-                WeeklyChart(data.weeklyOverview)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Quick Actions Section
-        Text(
-            text = "Quick Actions",
-            fontWeight = FontWeight.Bold,
-            fontSize = 17.sp,
-            color = TextPrimary,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        QuickActionsGrid(
-            actions = data.quickActions,
-            onNavigateToBreathing = onNavigateToBreathing,
-            onActionClick = onActionClick
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -262,6 +319,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
             val moodType = remember(item.mood) {
                 MoodType.entries.find { it.name.equals(item.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
             }
+            val percentage = item.percentage ?: 0
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
@@ -269,13 +327,13 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
                 Box(
                     modifier = Modifier
                         .width(18.dp)
-                        .height((item.percentage.coerceAtLeast(10) * 1.2f).dp)
+                        .height((percentage.coerceAtLeast(10) * 1.2f).dp)
                         .clip(RoundedCornerShape(9.dp))
                         .background(getMoodColor(moodType))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = item.day.take(3).lowercase().replaceFirstChar { it.uppercase() },
+                    text = item.day?.take(3)?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "",
                     fontSize = 11.sp,
                     color = TextSecondary,
                     fontWeight = FontWeight.Medium
@@ -328,6 +386,7 @@ fun QuickActionsGrid(
         actions.forEach { action ->
             QuickActionItem(
                 action = action,
+                modifier = Modifier.weight(1f),
                 onClick = {
                     val route = action.route.lowercase()
                     if (route == "breathing") {
@@ -344,12 +403,18 @@ fun QuickActionsGrid(
 @Composable
 fun QuickActionItem(
     action: QuickActionResponse,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .width(76.dp)
-            .clickable { onClick() },
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(),
+                onClick = onClick
+            )
+            .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Card(
@@ -373,14 +438,16 @@ fun QuickActionItem(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = action.title,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
     }
 }
 
+@Composable
 fun getBackgroundColorForAction(title: String): Color {
     return when (title.lowercase()) {
         "journal" -> ActionJournal

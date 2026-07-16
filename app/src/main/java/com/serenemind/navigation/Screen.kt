@@ -1,12 +1,9 @@
 package com.serenemind.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Attribution
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
@@ -24,15 +21,13 @@ sealed class Screen(
 
     // Bottom Tabs
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
+    object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Filled.Assignment)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
     object MoodHistory : Screen("mood_history")
-    object Goal: Screen(route="goal", title="Goal", icon = Icons.Default.Attribution)
+    object Goal: Screen(route="goal", title="Goal", icon = Icons.Default.Flag)
     object GoalDetail: Screen("goal_detail")
-    object Community : Screen("community", "Community", icon = Icons.Default.People)
-    object Streak : Screen("streak", "Streak", Icons.Default.Share) // Temporary icon
-    object Goal: Screen(route="goal",title="Goal", Icons.Default.Attribution)
-    object Community : Screen("community", "Community", Icons.Default.People)
+    object Community : Screen("community", "Community", icon = Icons.Default.Groups)
+    object Streak : Screen("streak", "Streak", Icons.Default.Whatshot)
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
     object Reminders : Screen("reminders")

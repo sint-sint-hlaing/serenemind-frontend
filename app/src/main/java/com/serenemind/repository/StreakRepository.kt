@@ -12,12 +12,10 @@ class StreakRepository(
     private val tokenManager: TokenManager
 ) {
     fun getStreak(): Flow<Response<StreakResponse>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getStreak("Bearer $token"))
+        emit(apiService.getStreak())
     }
 
     suspend fun useStreakFreeze(): Response<StreakResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.useStreakFreeze("Bearer $token")
+        return apiService.useStreakFreeze()
     }
 }

@@ -36,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.CommentResponse
 import com.serenemind.model.response.PostResponse
+import com.serenemind.util.getAvatarResource
+import com.serenemind.util.formatPostDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

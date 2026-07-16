@@ -1,6 +1,8 @@
 package com.serenemind.repository
 
 import com.serenemind.model.request.MoodRequest
+import com.serenemind.model.response.DailyMoodResponse
+import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.network.ApiService
 import retrofit2.Response
 
@@ -19,4 +21,14 @@ class MoodRepository(private val apiService: ApiService) {
     }
 
     suspend fun getMoodHistory(year: Int, month: Int) = apiService.getMoodHistory(year, month)
+
+    suspend fun getMoodByDate(date: String) = apiService.getMoodByDate(date)
+
+    suspend fun getWeeklyMood() = apiService.getWeeklyMood()
+
+    suspend fun getMonthlyMood() = apiService.getMonthlyMood()
+
+    suspend fun getWeeklySummary(): Response<WeeklyMoodResponse> = apiService.getWeeklySummary()
+
+    suspend fun deleteMood(id: Long) = apiService.deleteMood(id)
 }

@@ -4,6 +4,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -28,35 +29,60 @@ fun BottomBar(navController: NavHostController) {
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { screen ->
-            val isSelected = currentRoute == screen.route || 
+            val isConceptuallySelected = currentRoute == screen.route || 
                 (screen == Screen.Mood && currentRoute == Screen.MoodHistory.route) ||
-                (screen == Screen.Goal && currentRoute == Screen.GoalDetail.route)
+                (screen == Screen.Home && (
+                    currentRoute == Screen.Goal.route || 
+                    currentRoute == Screen.GoalDetail.route || 
+                    currentRoute == Screen.Meditation.route || 
+                    currentRoute == Screen.Breathing.route ||
+                    currentRoute == Screen.Notifications.route
+                ))
+
+            val isExactlyOnRoute = currentRoute == screen.route
 
             NavigationBarItem(
-                selected = isSelected,
+                selected = isConceptuallySelected,
                 onClick = {
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (isExactlyOnRoute) {
+                        // Refresh logic could go here, e.g. notify current screen
+                        // For now, we just navigate to it again to ensure LaunchedEffect(Unit) might re-run
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 },
                 icon = { 
-                    Icon(
-                        imageVector = screen.icon!!, 
-                        contentDescription = screen.title,
-                        tint = if (isSelected) MaterialTheme.colorScheme.primary else TextSecondary
-                    ) 
+                    screen.icon?.let {
+                        Icon(
+                            imageVector = it, 
+                            contentDescription = screen.title
+                        ) 
+                    }
                 },
                 label = { 
                     Text(
                         text = screen.title,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else TextSecondary
+                        fontWeight = if (isConceptuallySelected) FontWeight.Bold else FontWeight.Medium
                     ) 
                 },
                 colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = TextSecondary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedTextColor = TextSecondary,
                     indicatorColor = ActionMeditation.copy(alpha = 0.5f)
                 )
             )

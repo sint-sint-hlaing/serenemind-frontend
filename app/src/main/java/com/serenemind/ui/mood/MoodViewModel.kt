@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.serenemind.model.entity.enums.MoodType
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
+import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.repository.MoodRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +26,16 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
     private val _selectedDateMood = MutableStateFlow<DailyMoodResponse?>(null)
     val selectedDateMood = _selectedDateMood.asStateFlow()
 
+    private val _weeklySummary = MutableStateFlow<WeeklyMoodResponse?>(null)
+    val weeklySummary = _weeklySummary.asStateFlow()
+
     init {
+        refresh()
+    }
+
+    fun refresh() {
         fetchMoodSummary()
+        fetchWeeklySummary()
         val calendar = Calendar.getInstance()
         fetchMoodHistory(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1)
     }
@@ -36,6 +45,19 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
             try {
                 val data = repository.getMoodSummary()
                 _summaryState.value = data
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun fetchWeeklySummary() {
+        viewModelScope.launch {
+            try {
+                val response = repository.getWeeklySummary()
+                if (response.isSuccessful) {
+                    _weeklySummary.value = response.body()
+                }
             } catch (e: Exception) {
                 // Handle error
             }
@@ -75,9 +97,7 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
                 if (response.isSuccessful) {
                     _uiState.value = MoodUiState.Success
                     // Refresh data
-                    fetchMoodSummary()
-                    val calendar = Calendar.getInstance()
-                    fetchMoodHistory(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1)
+                    refresh()
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     _uiState.value = MoodUiState.Error("Server error ${response.code()}: $errorBody")

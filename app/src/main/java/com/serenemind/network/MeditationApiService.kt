@@ -4,10 +4,7 @@ import com.serenemind.model.request.MeditationSessionRequest
 import com.serenemind.model.response.Meditation
 import com.serenemind.model.response.MeditationDashboardResponse
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.*
 
 interface MeditationApiService {
     @GET("api/meditations/dashboard")
@@ -21,5 +18,17 @@ interface MeditationApiService {
     suspend fun completeSession(@Body request: MeditationSessionRequest): Response<String>
 
     @GET("api/meditations/history")
-    suspend fun getHistory(): Response<List<Meditation>> // Assuming history returns list of meditation or similar
+    suspend fun getHistory(): Response<List<Meditation>>
+
+    @GET("api/users/me/recommendations")
+    suspend fun getRecommendations(): Response<List<Meditation>>
+
+    @GET("api/users/search")
+    suspend fun search(@Query("keyword") keyword: String): Response<List<Meditation>>
+
+    @POST("api/users/favorites")
+    suspend fun addFavorite(@Body request: Map<String, Long>): Response<Unit>
+
+    @GET("api/users/me/continue-listening")
+    suspend fun getContinueListening(): Response<List<Meditation>>
 }
