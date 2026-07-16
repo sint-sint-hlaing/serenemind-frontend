@@ -14,6 +14,17 @@ class MoodRepository(
     }
 
     suspend fun getMoodSummary(): Map<String, Double> {
-        return apiService.getMoodSummary()
+        return try {
+            val response = apiService.getMoodSummary()
+            if (response.isSuccessful) {
+                response.body() ?: emptyMap()
+            } else {
+                emptyMap()
+            }
+        } catch (e: Exception) {
+            emptyMap()
+        }
     }
+
+    suspend fun getMoodHistory(year: Int, month: Int) = apiService.getMoodHistory(year, month)
 }

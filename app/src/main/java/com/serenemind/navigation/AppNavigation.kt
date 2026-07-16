@@ -57,7 +57,7 @@ fun AppNavigation(
                     viewModel = loginViewModel,
                     onLoginSuccess = {
                         navController.navigate(Screen.Main.route) {
-                            popUpTo(Screen.Welcome.route) {
+                            popUpTo(navController.graph.id) {
                                 inclusive = true
                             }
                         }

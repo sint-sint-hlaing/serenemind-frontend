@@ -13,22 +13,34 @@ class ReminderRepository(
     private val tokenManager: TokenManager
 ) {
     fun getReminders(): Flow<Response<List<ReminderResponse>>> = flow {
-        val token = tokenManager.getToken() ?: ""
-        emit(apiService.getReminders("Bearer $token"))
+        try {
+            emit(apiService.getReminders())
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
     }
 
     suspend fun createReminder(request: ReminderRequest): Response<ReminderResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.createReminder("Bearer $token", request)
+        return try {
+            apiService.createReminder(request)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun deleteReminder(id: Long): Response<Unit> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.deleteReminder("Bearer $token", id)
+        return try {
+            apiService.deleteReminder(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 
     suspend fun toggleReminder(id: Long): Response<ReminderResponse> {
-        val token = tokenManager.getToken() ?: ""
-        return apiService.toggleReminder("Bearer $token", id)
+        return try {
+            apiService.toggleReminder(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
     }
 }

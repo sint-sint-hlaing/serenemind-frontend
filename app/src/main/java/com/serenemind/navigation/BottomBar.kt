@@ -20,23 +20,25 @@ fun BottomBar(navController: NavHostController) {
         Screen.Profile
     )
 
-    NavigationBar() {
+    NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { screen ->
+            val isSelected = currentRoute == screen.route || 
+                (screen == Screen.Mood && currentRoute == Screen.MoodHistory.route) ||
+                (screen == Screen.Goal && (currentRoute == screen.route || currentRoute == Screen.GoalDetail.route))
+
             NavigationBarItem(
-                selected = currentRoute == screen.route,
+                selected = isSelected,
                 onClick = {
                     if (currentRoute != screen.route) {
                         navController.navigate(screen.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
-                                // We don't save state here to ensure that switching tabs 
-                                // always brings the user back to the root of that tab.
-                                saveState = false 
+                                saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = false
+                            restoreState = false // Set to false to prevent potential restoration crashes
                         }
                     }
                 },
