@@ -18,7 +18,7 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, fcmToken: String = "") {
         if (email.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState.Error("Empty fields")
             return
@@ -26,7 +26,12 @@ class LoginViewModel(
 
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            val result = repository.login(LoginRequest(email, password))
+            
+            // Backend requires a non-blank FCM token. 
+            // If token is missing (e.g. Google Play Services not ready), send a dummy identifier.
+            val finalFcmToken = if (fcmToken.isBlank()) "android_dummy_token_${System.currentTimeMillis()}" else fcmToken
+            
+            val result = repository.login(LoginRequest(email.trim(), password, finalFcmToken))
             result.onSuccess { response ->
                 tokenManager.saveTokens(response.accessToken, response.refreshToken)
                 _uiState.value = LoginUiState.Success
