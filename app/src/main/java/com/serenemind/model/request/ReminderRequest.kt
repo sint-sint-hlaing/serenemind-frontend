@@ -7,5 +7,6 @@ data class ReminderRequest(
     val startDate: String,
     val reminderTone: String,
     val note: String?,
-    val enabled: Boolean
+    val enabled: Boolean,
+    val repeatDays: String? = null
 )

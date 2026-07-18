@@ -15,9 +15,10 @@ class AuthRepository(
             if (response.isSuccessful) {
                 response.body()?.let {
                     Result.success(it)
-                } ?: Result.failure(Exception("Empty response"))
+                } ?: Result.failure(Exception("Empty response body"))
             } else {
-                Result.failure(Exception("Invalid credentials"))
+                val errorMsg = response.errorBody()?.string() ?: "Login failed"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

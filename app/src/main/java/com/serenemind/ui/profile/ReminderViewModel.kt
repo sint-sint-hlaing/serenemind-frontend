@@ -45,13 +45,7 @@ class ReminderViewModel(
         if (currentState is ReminderUiState.Success) {
             val updatedReminders = currentState.reminders.map {
                 if (it.id == id) {
-                    val newEnabled = !it.enabled
-                    if (newEnabled) {
-                        ReminderScheduler.scheduleReminder(context, it.copy(enabled = true))
-                    } else {
-                        ReminderScheduler.cancelReminder(context, it.id)
-                    }
-                    it.copy(enabled = newEnabled)
+                    it.copy(enabled = !it.enabled)
                 } else it
             }
             _uiState.value = ReminderUiState.Success(updatedReminders)
@@ -60,7 +54,6 @@ class ReminderViewModel(
                 val response = reminderRepository.toggleReminder(id)
                 if (!response.isSuccessful) {
                     _uiState.value = currentState // Rollback
-                    // Should also rollback alarm here ideally
                 }
             }
         }
@@ -74,15 +67,15 @@ class ReminderViewModel(
         startDate: String,
         tone: String,
         note: String?,
-        enabled: Boolean
+        enabled: Boolean,
+        repeatDays: String? = null
     ) {
         viewModelScope.launch {
             _addUiState.value = AddReminderUiState.Loading
-            val request = ReminderRequest(title, repeatType, time, startDate, tone, note, enabled)
+            val request = ReminderRequest(title, repeatType, time, startDate, tone, note, enabled, repeatDays)
             val response = reminderRepository.createReminder(request)
             if (response.isSuccessful && response.body() != null) {
                 _addUiState.value = AddReminderUiState.Success
-                ReminderScheduler.scheduleReminder(context, response.body()!!)
                 fetchReminders(showLoading = false)
             } else {
                 _addUiState.value = AddReminderUiState.Error("Failed to create reminder")
@@ -95,7 +88,6 @@ class ReminderViewModel(
         if (currentState is ReminderUiState.Success) {
             val updatedReminders = currentState.reminders.filter { it.id != id }
             _uiState.value = ReminderUiState.Success(updatedReminders)
-            ReminderScheduler.cancelReminder(context, id)
 
             viewModelScope.launch {
                 val response = reminderRepository.deleteReminder(id)

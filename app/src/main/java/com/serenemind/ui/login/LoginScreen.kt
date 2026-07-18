@@ -46,10 +46,13 @@ fun LoginScreen(
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     fcmToken = task.result
+                    android.util.Log.d("FCM", "Token successfully fetched: $fcmToken")
+                } else {
+                    android.util.Log.e("FCM", "Fetching FCM registration token failed", task.exception)
                 }
             }
         } catch (e: Exception) {
-            // Firebase not initialized yet or missing google-services.json
+            android.util.Log.e("FCM", "Firebase not initialized", e)
         }
     }
 

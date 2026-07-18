@@ -27,11 +27,7 @@ class LoginViewModel(
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
             
-            // Backend requires a non-blank FCM token. 
-            // If token is missing (e.g. Google Play Services not ready), send a dummy identifier.
-            val finalFcmToken = if (fcmToken.isBlank()) "android_dummy_token_${System.currentTimeMillis()}" else fcmToken
-            
-            val result = repository.login(LoginRequest(email.trim(), password, finalFcmToken))
+            val result = repository.login(LoginRequest(email.trim(), password, fcmToken))
             result.onSuccess { response ->
                 tokenManager.saveTokens(response.accessToken, response.refreshToken)
                 _uiState.value = LoginUiState.Success

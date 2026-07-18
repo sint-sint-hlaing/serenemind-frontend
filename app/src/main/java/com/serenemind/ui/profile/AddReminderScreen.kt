@@ -2,9 +2,11 @@ package com.serenemind.ui.profile
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,7 +37,8 @@ fun AddReminderScreen(
     val context = LocalContext.current
     
     var title by remember { mutableStateOf("") }
-    var repeatType by remember { mutableStateOf("Daily") }
+    var repeatType by remember { mutableStateOf("Once") }
+    var selectedDays by remember { mutableStateOf(setOf<String>()) }
     var timeDisplay by remember { mutableStateOf("09:00 AM") }
     var timeValue by remember { mutableStateOf("09:00:00") }
     
@@ -50,7 +53,8 @@ fun AddReminderScreen(
     var note by remember { mutableStateOf("") }
     var enabled by remember { mutableStateOf(true) }
 
-    val repeatOptions = listOf("Daily", "Weekly", "Monthly", "Mon, Wed, Fri")
+    val repeatOptions = listOf("Once", "Daily", "Weekly", "Monthly", "Custom Days")
+    val weekDays = listOf("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 
     val datePickerDialog = DatePickerDialog(
         context,
@@ -71,6 +75,8 @@ fun AddReminderScreen(
             val selectedTime = Calendar.getInstance()
             selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay)
             selectedTime.set(Calendar.MINUTE, minute)
+            selectedTime.set(Calendar.SECOND, 0)
+            selectedTime.set(Calendar.MILLISECOND, 0)
             timeDisplay = sdfTimeDisplay.format(selectedTime.time)
             timeValue = sdfTimeValue.format(selectedTime.time)
         },
@@ -98,18 +104,25 @@ fun AddReminderScreen(
                 actions = {
                     TextButton(
                         onClick = {
+                            val finalRepeatType = if (repeatType == "Custom Days") "CUSTOM_DAYS" else repeatType.uppercase()
+                            val finalRepeatDays = if (finalRepeatType == "CUSTOM_DAYS") {
+                                selectedDays.joinToString(",")
+                            } else null
+
                             viewModel.createReminder(
                                 context = context,
                                 title = title,
-                                repeatType = repeatType.uppercase(),
+                                repeatType = finalRepeatType,
                                 time = timeValue,
                                 startDate = startDateValue,
                                 tone = "Default",
                                 note = note,
-                                enabled = enabled
+                                enabled = enabled,
+                                repeatDays = finalRepeatDays
                             )
                         },
-                        enabled = title.isNotBlank() && uiState !is AddReminderUiState.Loading
+                        enabled = title.isNotBlank() && uiState !is AddReminderUiState.Loading && 
+                                (repeatType != "Custom Days" || selectedDays.isNotEmpty())
                     ) {
                         if (uiState is AddReminderUiState.Loading) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -148,6 +161,44 @@ fun AddReminderScreen(
 
             DropdownField(label = "Repeat", options = repeatOptions, selectedOption = repeatType) { repeatType = it }
             
+            if (repeatType == "Custom Days") {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Select Days", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    weekDays.forEach { day ->
+                        val initial = day.take(1)
+                        val isSelected = selectedDays.contains(day)
+                        Surface(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clickable {
+                                    selectedDays = if (isSelected) {
+                                        selectedDays - day
+                                    } else {
+                                        selectedDays + day
+                                    }
+                                },
+                            shape = CircleShape,
+                            color = if (isSelected) Color(0xFF6750A4) else Color(0xFFF7F7F7),
+                            border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFEEEEEE))
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = initial,
+                                    color = if (isSelected) Color.White else Color.Black,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Text("Time", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)

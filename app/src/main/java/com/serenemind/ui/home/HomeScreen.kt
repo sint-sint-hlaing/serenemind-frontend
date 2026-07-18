@@ -207,8 +207,9 @@ fun DashboardContent(
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val moodType = remember(data.todayMood?.mood) {
-                    MoodType.entries.find { it.name.equals(data.todayMood?.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                val todayMood = data.todayMood
+                val moodType = remember(todayMood?.mood) {
+                    MoodType.entries.find { it.name.equals(todayMood?.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
                 }
                 
                 Box(
@@ -228,19 +229,19 @@ fun DashboardContent(
                 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = (data.todayMood?.mood ?: "Neutral").replaceFirstChar { it.uppercase() },
+                        text = (todayMood?.mood ?: "Steady").replaceFirstChar { it.uppercase() },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = data.todayMood?.message ?: "How are you feeling?",
+                        text = todayMood?.message ?: "Take a moment to check in.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
                 }
                 
                 Text(
-                    text = "${data.todayMood?.percentage ?: 0}%",
+                    text = "${todayMood?.percentage ?: 0}%",
                     color = Color(0xFF4CAF50),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold

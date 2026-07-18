@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -80,20 +81,27 @@ fun CommunityScreen(
                 containerColor = Color.Transparent
             ) {
                 tabs.forEachIndexed { index, title ->
+                    val isSelected = selectedTab == index
                     Tab(
-                        selected = selectedTab == index,
+                        selected = isSelected,
                         onClick = { selectedTab = index },
+                        selectedContentColor = Color.Transparent,
+                        unselectedContentColor = Color.Transparent,
+                        interactionSource = remember { MutableInteractionSource() },
                         text = {
                             Surface(
-                                color = if (selectedTab == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                                 shape = RoundedCornerShape(20.dp),
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+                                modifier = Modifier
+                                    .padding(vertical = 4.dp, horizontal = 4.dp),
+                                shadowElevation = 0.dp
                             ) {
                                 Text(
                                     text = title,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    color = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 14.sp
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
                         }
@@ -200,7 +208,7 @@ fun PostItem(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val displayName = post.username
+                val displayName = if (post.anonymous) "Anonymous" else post.username
                 val displayAvatar = if (post.anonymous) null else post.userProfilePicture
                 val avatarRes = getAvatarResource(displayAvatar)
                 
