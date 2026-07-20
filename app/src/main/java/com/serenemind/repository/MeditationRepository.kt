@@ -14,4 +14,12 @@ class MeditationRepository(private val apiService: MeditationApiService) {
     suspend fun completeSession(request: MeditationSessionRequest): Response<String> = apiService.completeSession(request)
 
     suspend fun getHistory(): Response<List<Meditation>> = apiService.getHistory()
+
+    suspend fun getRecommendations(): Response<List<Meditation>> = apiService.getRecommendations()
+
+    suspend fun search(keyword: String): Response<List<Meditation>> = apiService.search(keyword)
+
+    suspend fun addFavorite(meditationId: Long): Response<Unit> = apiService.addFavorite(mapOf("meditationId" to meditationId))
+
+    suspend fun getContinueListening(): Response<List<Meditation>> = apiService.getContinueListening()
 }

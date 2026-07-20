@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,7 +23,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.serenemind.model.response.UserGoal
+import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,10 +47,10 @@ fun GoalDetailScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Color(0xFFFBFBFF)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         goal?.let { g ->
             Column(
@@ -60,76 +61,63 @@ fun GoalDetailScreen(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
                 // Circular Progress
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
                     CircularProgressIndicator(
                         progress = { g.progress.toFloat() / g.targetDays.toFloat() },
                         modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFF4CAF50),
-                        strokeWidth = 8.dp,
-                        trackColor = Color(0xFFF5F5F5),
+                        color = Success,
+                        strokeWidth = 12.dp,
+                        trackColor = Color(0xFFF0F0F0),
                         strokeCap = StrokeCap.Round
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = g.progress.toString(), fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "/${g.targetDays}", fontSize = 14.sp, color = Color.Gray)
+                        Text(text = g.progress.toString(), fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = TextPrimary)
+                        Text(text = "/${g.targetDays}", fontSize = 18.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
-                Text(g.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(g.description ?: "Build a calm and peaceful mind.", color = Color.Gray, fontSize = 13.sp)
+                Text(g.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = g.description ?: "Build a calm and peaceful mind.", 
+                    color = TextSecondary, 
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Progress Info Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Progress", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text("${g.progress} / ${g.targetDays} days", color = Color.Gray, fontSize = 13.sp)
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        LinearProgressIndicator(
-                            progress = { g.progress.toFloat() / g.targetDays.toFloat() },
-                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                            color = Color(0xFF4CAF50),
-                            trackColor = Color(0xFFF5F5F5)
-                        )
-                    }
+                // Progress Card
+                DetailCard(title = "Progress", value = "${g.progress} / ${g.targetDays} days") {
+                    LinearProgressIndicator(
+                        progress = { g.progress.toFloat() / g.targetDays.toFloat() },
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        color = Success,
+                        trackColor = Color(0xFFF0F0F0)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Streak Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Streak", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text("7 days", color = Color(0xFF673AB7), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            val streak = 7
-                            repeat(7) { index ->
-                                Text(
-                                    text = if (index < streak) "🔥" else "⚪",
-                                    fontSize = 20.sp
-                                )
-                            }
+                DetailCard(title = "Streak", value = "7 days") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val streak = 7
+                        repeat(10) { index ->
+                            Icon(
+                                imageVector = Icons.Default.Whatshot,
+                                contentDescription = null,
+                                tint = if (index < streak) Color(0xFFFF7043) else Color(0xFFE0E0E0),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
@@ -137,79 +125,87 @@ fun GoalDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // History Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("History", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            HistoryItem("May 6", true)
-                            HistoryItem("May 7", true)
-                            HistoryItem("May 8", true)
-                            HistoryItem("May 9", true)
-                            HistoryItem("May 10", true)
-                            HistoryItem("May 11", false)
-                            HistoryItem("May 12", false)
-                        }
+                DetailCard(title = "History", value = "") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        HistoryNode("May 6", true)
+                        HistoryNode("May 7", true)
+                        HistoryNode("May 8", true)
+                        HistoryNode("May 9", true)
+                        HistoryNode("May 10", true)
+                        HistoryNode("May 11", false)
+                        HistoryNode("May 12", null)
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(40.dp))
                 
                 Button(
                     onClick = { viewModel.incrementProgress(g.id) },
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Complete Today", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
 
 @Composable
-fun HistoryItem(date: String, completed: Boolean) {
+fun DetailCard(title: String, value: String, content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                if (value.isNotEmpty()) {
+                    Text(value, color = if (title == "Streak") MaterialTheme.colorScheme.primary else TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+fun HistoryNode(date: String, completed: Boolean?) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(if (completed) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)),
+                .background(
+                    when (completed) {
+                        true -> Color(0xFFE8F5E9)
+                        false -> Color(0xFFFFEBEE)
+                        else -> Color(0xFFF5F5F5)
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
-            if (completed) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF4CAF50),
-                    modifier = Modifier.size(16.dp)
-                )
-            } else {
-                Text(
-                    text = "✕",
-                    color = Color(0xFFF44336),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            when (completed) {
+                true -> Icon(Icons.Default.Check, null, tint = Success, modifier = Modifier.size(18.dp))
+                false -> Text("✕", color = Error, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                else -> Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFE0E0E0)))
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = date,
             fontSize = 10.sp,
-            color = Color.Gray,
-            fontWeight = FontWeight.Medium
+            color = TextSecondary,
+            fontWeight = FontWeight.Bold
         )
     }
 }

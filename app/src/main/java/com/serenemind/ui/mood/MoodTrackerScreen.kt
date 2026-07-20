@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.entity.enums.MoodType
+import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +61,7 @@ fun MoodTrackerScreen(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color(0xFFFBFBFF)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -75,22 +76,23 @@ fun MoodTrackerScreen(
 
                 Text(
                     "How are you feeling today?",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
                 Text(
                     "Let's check in with your emotions",
-                    color = Color.Gray,
-                    fontSize = 13.sp
+                    color = TextSecondary,
+                    fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.height(200.dp),
+                    modifier = Modifier.height(220.dp),
                     userScrollEnabled = false
                 ) {
                     items(MoodType.entries.toList()) { mood ->
@@ -102,15 +104,15 @@ fun MoodTrackerScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text("${intensity.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text("${intensity.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                 }
 
                 Slider(
@@ -118,46 +120,47 @@ fun MoodTrackerScreen(
                     onValueChange = { intensity = it },
                     valueRange = 0f..100f,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFF673AB7),
-                        activeTrackColor = Color(0xFF673AB7),
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
                         inactiveTrackColor = Color(0xFFE0E0E0)
                     )
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
                     "Add a note (optional)",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 16.sp,
+                    color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
                     placeholder = { Text("What's on your mind?", fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp),
-                    shape = RoundedCornerShape(16.dp),
+                        .height(140.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedBorderColor = Color(0xFF673AB7),
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
                 if (uiState is MoodUiState.Error) {
                     Text(
                         text = (uiState as MoodUiState.Error).message,
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.error,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 Button(
                     onClick = {
@@ -167,9 +170,9 @@ fun MoodTrackerScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = uiState !is MoodUiState.Loading
                 ) {
                     if (uiState is MoodUiState.Loading) {
@@ -179,7 +182,7 @@ fun MoodTrackerScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -187,27 +190,28 @@ fun MoodTrackerScreen(
 
 @Composable
 fun MoodItemView(mood: MoodType, isSelected: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (isSelected) Color(0xFFF3E5F5) else Color.Transparent
-    val borderColor = if (isSelected) Color(0xFF673AB7) else Color.Transparent
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .then(
-                if (isSelected) Modifier.border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                if (isSelected) Modifier.border(1.5.dp, borderColor, RoundedCornerShape(16.dp))
                 else Modifier
             )
             .clickable { onClick() }
-            .padding(10.dp)
+            .padding(12.dp)
     ) {
-        Text(text = mood.toEmoji(), fontSize = 34.sp)
-        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = mood.toEmoji(), fontSize = 36.sp)
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = mood.name.lowercase().replaceFirstChar { it.uppercase() },
             fontSize = 13.sp,
-            color = if (isSelected) Color.Black else Color.Gray
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else TextSecondary
         )
     }
 }

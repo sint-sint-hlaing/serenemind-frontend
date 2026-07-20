@@ -8,16 +8,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.serenemind.ui.theme.*
 
 @Composable
 fun MoodSummaryPieChart(summary: Map<String, Double>) {
     val moodColors = mapOf(
-        "HAPPY" to Color(0xFFFF9800),
-        "CALM" to Color(0xFF03A9F4),
-        "NEUTRAL" to Color(0xFFFFEB3B),
-        "SAD" to Color(0xFF9C27B0),
-        "ANXIOUS" to Color(0xFF80DEEA),
-        "ANGRY" to Color(0xFFF44336)
+        "HAPPY" to MoodHappy,
+        "CALM" to MoodCalm,
+        "NEUTRAL" to MoodNeutral,
+        "SAD" to MoodSad,
+        "ANXIOUS" to MoodAnxious,
+        "ANGRY" to MoodAngry
     )
     
     var startAngle = -90f // Start from the top

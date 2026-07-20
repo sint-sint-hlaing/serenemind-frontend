@@ -2,6 +2,7 @@ package com.serenemind.ui.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,17 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Whatshot
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,11 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.R
+import com.serenemind.ui.theme.*
+import com.serenemind.util.getAvatarResource
 
 @Composable
 fun ProfileScreen(
@@ -113,11 +109,13 @@ fun ProfileScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Image(
-                                        painter = painterResource(id = getDrawableIdForAvatar(user.avatar)),
+                                        painter = painterResource(id = getAvatarResource(user.avatar)),
                                         contentDescription = "User Avatar",
                                         modifier = Modifier
                                             .size(72.dp)
                                             .clip(CircleShape)
+                                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                        contentScale = ContentScale.Crop
                                     )
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
@@ -165,7 +163,7 @@ fun ProfileScreen(
                                         onClick = onNavigateToStreak
                                     )
                                     ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
-                                    
+
                                     // Dark Mode Toggle
                                     Row(
                                         modifier = Modifier
@@ -200,6 +198,11 @@ fun ProfileScreen(
                                         title = "Reminders",
                                         onClick = onNavigateToReminders
                                     )
+                                    ProfileMenuItem(
+                                        icon = Icons.Default.CardMembership,
+                                        title = "Subscription",
+                                        badge = "Premium"
+                                    )
                                     ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
                                     ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -207,7 +210,9 @@ fun ProfileScreen(
                                         icon = Icons.AutoMirrored.Filled.Logout,
                                         title = "Logout",
                                         isLast = true,
-                                        onClick = onLogout
+                                        onClick = {
+                                            viewModel.logout { onLogout() }
+                                        }
                                     )
                                 }
                             }
@@ -236,34 +241,45 @@ fun ProfileMenuItem(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = icon, contentDescription = title, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
 
             if (badge != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    Text(text = badge, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = badge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
                 }
             }
 
-            Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Go",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(14.dp)
+            )
         }
         if (!isLast) {
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
         }
-    }
-}
-
-fun getDrawableIdForAvatar(avatarName: String?): Int {
-    return when (avatarName) {
-        "avatar-1" -> R.drawable.avatar_1
-        "avatar-2" -> R.drawable.avatar_2
-        else -> R.drawable.default_avatar
     }
 }

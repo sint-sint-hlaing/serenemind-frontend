@@ -50,15 +50,25 @@ class CommunityRepository(
         }
     }
 
-    suspend fun addComment(postId: Long, content: String, isAnonymous: Boolean = false): Response<CommentResponse> {
+    suspend fun addComment(
+        postId: Long,
+        content: String,
+        isAnonymous: Boolean = false
+    ): Response<CommentResponse> {
         return try {
-            apiService.addComment(postId, CommentRequest(content, isAnonymous))
+            apiService.addComment(
+                postId,
+                CommentRequest(content, isAnonymous)
+            )
         } catch (e: Exception) {
             Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }
     }
 
-    suspend fun createPost(request: CreatePostRequest, imagePart: MultipartBody.Part?): Response<PostResponse> {
+    suspend fun createPost(
+        request: CreatePostRequest,
+        imagePart: MultipartBody.Part?
+    ): Response<PostResponse> {
         return try {
             val json = Gson().toJson(request)
             val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())

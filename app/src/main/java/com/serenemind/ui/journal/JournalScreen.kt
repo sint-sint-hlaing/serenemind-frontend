@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +30,12 @@ fun JournalScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("My Journal", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text("My Journal", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = { /* Open menu */ }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
                 actions = {
                     IconButton(onClick = { /* Search */ }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
@@ -37,33 +44,23 @@ fun JournalScreen(
                         Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(28.dp))
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick,
-                containerColor = Color(0xFF673AB7),
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Journal")
-            }
-        },
-        containerColor = Color(0xFFFBFBFF)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             // Filter Tabs
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.Start
             ) {
                 JournalFilterTab("All", true)
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 JournalFilterTab("Favorites", false)
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 JournalFilterTab("Tagged", false)
             }
 
@@ -75,7 +72,7 @@ fun JournalScreen(
                 item {
                     JournalEntryItem(
                         title = "A better day",
-                        preview = "Today was a good day. I finished my tasks and spent time with my family...",
+                        preview = "Today was a good day. I finished my tasks and spent time with my family in the evening which made me feel so relaxed and happy.",
                         date = "May 12, 2024",
                         onClick = { onJournalClick(1L) }
                     )
@@ -83,7 +80,7 @@ fun JournalScreen(
                 item {
                     JournalEntryItem(
                         title = "Grateful for little things",
-                        preview = "I am grateful for my family, friends and good health...",
+                        preview = "I am grateful for my family, friends and good health. Things are getting better. I just need to keep going.",
                         date = "May 10, 2024",
                         onClick = { onJournalClick(2L) }
                     )
@@ -91,9 +88,17 @@ fun JournalScreen(
                 item {
                     JournalEntryItem(
                         title = "Overthinking",
-                        preview = "Sometimes I think too much about the future...",
-                        date = "May 8, 2024",
+                        preview = "Sometimes, I think too much about the future... but I should focus on the present moment.",
+                        date = "May 08, 2024",
                         onClick = { onJournalClick(3L) }
+                    )
+                }
+                item {
+                    JournalEntryItem(
+                        title = "New beginnings",
+                        preview = "Excited for what's coming next. I will do my best to stay positive.",
+                        date = "May 05, 2024",
+                        onClick = { onJournalClick(4L) }
                     )
                 }
             }
@@ -105,13 +110,13 @@ fun JournalScreen(
 fun JournalFilterTab(title: String, isSelected: Boolean) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) Color(0xFF673AB7) else Color(0xFFF5F5F5),
-        modifier = Modifier.height(32.dp)
+        color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFF5F5F5),
+        modifier = Modifier.height(34.dp)
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 18.dp)) {
             Text(
                 text = title,
-                color = if (isSelected) Color.White else Color.Gray,
+                color = if (isSelected) Color.White else TextSecondary,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
@@ -125,28 +130,29 @@ fun JournalEntryItem(title: String, preview: String, date: String, onClick: () -
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF673AB7)))
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextPrimary)
+                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(MoodHappy)) // Yellow dot like in design
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = preview,
-                color = Color.Gray,
-                fontSize = 13.sp,
-                maxLines = 2
+                color = TextSecondary,
+                fontSize = 14.sp,
+                maxLines = 2,
+                lineHeight = 20.sp
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(text = date, color = Color.LightGray, fontSize = 11.sp)
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(text = date, color = TextHint, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

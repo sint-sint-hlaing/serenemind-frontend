@@ -30,6 +30,27 @@ interface ApiService {
     @GET("api/mood/summary")
     suspend fun getMoodSummary(): Response<Map<String, Double>>
 
+    @GET("api/mood/history/{year}/{month}")
+    suspend fun getMoodHistory(
+        @Path("year") year: Int,
+        @Path("month") month: Int
+    ): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/date/{date}")
+    suspend fun getMoodByDate(@Path("date") date: String): Response<DailyMoodResponse>
+
+    @GET("api/mood/weekly")
+    suspend fun getWeeklyMood(): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/monthly")
+    suspend fun getMonthlyMood(): Response<List<DailyMoodResponse>>
+
+    @GET("api/mood/summary/week")
+    suspend fun getWeeklySummary(): Response<WeeklyMoodResponse>
+
+    @DELETE("api/mood/delete/{id}")
+    suspend fun deleteMood(@Path("id") id: Long): Response<Unit>
+
     @GET("api/posts")
     suspend fun getPosts(): Response<List<PostResponse>>
 
@@ -61,12 +82,12 @@ interface ApiService {
         @Query("filter") filter: String? = null
     ): Response<List<NotificationResponse>>
 
-    @PATCH("api/notifications/{id}/read")
+    @POST("api/notifications/{id}/read")
     suspend fun markAsRead(
         @Path("id") id: Long
     ): Response<Unit>
 
-    @GET("api/notifications/{id}/click")
+    @POST("api/notifications/{id}/click")
     suspend fun clickNotification(
         @Path("id") id: Long
     ): Response<NotificationResponse>
@@ -104,10 +125,4 @@ interface ApiService {
 
     @POST("api/breathing/session/{sessionId}/complete")
     suspend fun completeBreathingSession(@Path("sessionId") sessionId: String): Response<BreathingSummaryResponse>
-
-    @GET("api/mood/history/{year}/{month}")
-    suspend fun getMoodHistory(
-        @Path("year") year: Int,
-        @Path("month") month: Int
-    ): Response<List<DailyMoodResponse>>
 }

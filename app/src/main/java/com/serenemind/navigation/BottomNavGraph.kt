@@ -1,12 +1,7 @@
 package com.serenemind.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -36,10 +31,11 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val themeManager = remember { ThemeManager(context) }
+
     val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
     val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
     val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
-    val themeManager = remember { ThemeManager(context) }
 
     // Repositories
     val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
@@ -52,11 +48,11 @@ fun BottomNavGraph(
     val moodRepository = remember { MoodRepository(apiService, tokenManager) }
     val goalRepository = remember { GoalRepository(goalApiService) }
     val meditationRepository = remember { MeditationRepository(meditationApiService) }
-    
+
     // ViewModels
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
-    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
     val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
     val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
@@ -72,15 +68,6 @@ fun BottomNavGraph(
             HomeScreen(
                 viewModel = homeViewModel,
                 onLogout = onLogout,
-                onNavigateToBreathing = {
-                    navController.navigate(Screen.Breathing.route)
-                },
-                onNavigateToStreak = {
-                    navController.navigate(Screen.Streak.route)
-                },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications.route)
-                },
                 onActionClick = { action ->
                     when (action.lowercase()) {
                         "meditate", "meditation" -> navController.navigate(Screen.Meditation.route)
@@ -90,6 +77,15 @@ fun BottomNavGraph(
                         "breathing" -> navController.navigate(Screen.Breathing.route)
                         "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
                     }
+                },
+                onNotificationClick = {
+                    navController.navigate(Screen.Notifications.route)
+                },
+                onMenuClick = {
+                    navController.navigate(Screen.Profile.route)
+                },
+                onNavigateToBreathing = {
+                    navController.navigate(Screen.Breathing.route)
                 }
             )
         }
@@ -115,7 +111,10 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Journal.route) {
-            JournalScreen()
+            JournalScreen(
+                onAddClick = { /* Navigate to New Journal */ },
+                onJournalClick = { /* Navigate to Detail */ }
+            )
         }
 
         composable(Screen.Mood.route) {
@@ -139,7 +138,18 @@ fun BottomNavGraph(
                 onGoalClick = { goal ->
                     goalViewModel.selectGoal(goal)
                     navController.navigate(Screen.GoalDetail.route)
+                },
+                onAddGoalClick = {
+                    navController.navigate("add_goal")
                 }
+            )
+        }
+
+        composable("add_goal") {
+            AddGoalScreen(
+                viewModel = goalViewModel,
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
 
@@ -191,7 +201,7 @@ fun BottomNavGraph(
             val postIdStr = backStackEntry.arguments?.getString("postId")
             val postId = postIdStr?.toLongOrNull() ?: -1L
             val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
-            
+
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
@@ -257,12 +267,5 @@ fun BottomNavGraph(
                 onSaveSuccess = { navController.popBackStack() }
             )
         }
-    }
-}
-
-@Composable
-fun SampleScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
     }
 }

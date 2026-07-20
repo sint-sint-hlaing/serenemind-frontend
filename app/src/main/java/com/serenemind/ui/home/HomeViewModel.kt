@@ -36,7 +36,7 @@ class HomeViewModel(
                     if (response.isSuccessful && response.body() != null) {
                         _uiState.value = HomeUiState.Success(response.body()!!)
                     } else if (!isSilent) {
-                        val errorDetail = response.errorBody()?.string() ?: "Unknown error"
+                        val errorDetail = response.errorBody()?.string() ?: response.message() ?: "Unknown error"
                         _uiState.value = HomeUiState.Error("Error ${response.code()}: $errorDetail")
                     }
                 }
