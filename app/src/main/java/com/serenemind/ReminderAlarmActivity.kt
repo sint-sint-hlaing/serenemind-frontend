@@ -59,13 +59,13 @@ class ReminderAlarmActivity : ComponentActivity() {
                 note = note,
                 onDismiss = {
                     stopAlarmService()
-                    dismissNotification()
+                    dismissNotification(id)
                     finish()
                 },
                 onSnooze = { minutes ->
                     stopAlarmService()
                     snoozeAlarm(id, title, note, minutes)
-                    dismissNotification()
+                    dismissNotification(id)
                     finish()
                 }
             )
@@ -76,9 +76,9 @@ class ReminderAlarmActivity : ComponentActivity() {
         stopService(Intent(this, AlarmService::class.java))
     }
 
-    private fun dismissNotification() {
+    private fun dismissNotification(id: Long) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(1001)
+        notificationManager.cancel(id.toInt())
     }
 
     private fun snoozeAlarm(id: Long, title: String, note: String, minutes: Int) {

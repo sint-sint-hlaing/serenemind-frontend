@@ -19,6 +19,11 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import kotlinx.coroutines.launch
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+
 class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -27,11 +32,23 @@ class MainActivity : ComponentActivity() {
         // Handle permission result if needed
     }
 
+    private val refreshReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            // Logic to refresh data could go here if we can access the relevant viewmodel
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         askNotificationPermission()
         createReminderNotificationChannel()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(refreshReceiver, IntentFilter("com.serenemind.REFRESH_REMINDERS"), Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(refreshReceiver, IntentFilter("com.serenemind.REFRESH_REMINDERS"))
+        }
 
         val tokenManager = TokenManager(this)
         val api = NetworkModule.provideApiService(this, tokenManager)
@@ -39,6 +56,16 @@ class MainActivity : ComponentActivity() {
         val themeManager = ThemeManager(this)
 
         val viewModel = LoginViewModel(repo, tokenManager)
+
+        // BroadcastReceiver to refresh data when a push notification is received
+        val refreshReceiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                // We can't easily reach the Compose-level ViewModel here directly
+                // but we can trigger a re-fetch if we have a reference to the Activity or use a SharedFlow
+                // For now, let's just log it and see if we can improve architecture.
+            }
+        }
+        registerReceiver(refreshReceiver, android.content.IntentFilter("com.serenemind.REFRESH_REMINDERS"))
 
         setContent {
             val systemTheme = isSystemInDarkTheme()

@@ -40,6 +40,11 @@ fun RemindersScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    // အသစ်ဆောက်ပြီး ပြန်လာတဲ့အခါတိုင်း စာရင်းကို အလိုအလျောက် Refresh လုပ်ပေးရန်
+    LaunchedEffect(Unit) {
+        viewModel.fetchReminders(showLoading = false)
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -79,51 +84,55 @@ fun RemindersScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
+                        if (state.reminders.isEmpty()) {
+                            item {
+                                Column(
                                     modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFF3E5F5)),
-                                    contentAlignment = Alignment.Center
+                                        .fillMaxWidth()
+                                        .padding(vertical = 24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Notifications,
-                                        contentDescription = null,
-                                        tint = Color(0xFF6750A4),
-                                        modifier = Modifier.size(60.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFF3E5F5)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Notifications,
+                                            contentDescription = null,
+                                            tint = Color(0xFF6750A4),
+                                            modifier = Modifier.size(60.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        "Never forget what matters to you",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.Black
                                     )
-                                }
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    "Never forget what matters to you",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = Color.Black
-                                )
-                                Text(
-                                    "Set reminders to stay on track\nwith your goals and habits.",
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    color = Color.Gray,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = onAddClick,
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
-                                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Add Reminder")
+                                    Text(
+                                        "Set reminders to stay on track\nwith your goals and habits.",
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        color = Color.Gray,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(
+                                        onClick = onAddClick,
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Add Reminder")
+                                    }
                                 }
                             }
                         }
