@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
 
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            // Logic to refresh data could go here if we can access the relevant viewmodel
+            // Data refresh signal handled via RefreshSignals flow in ViewModels
         }
     }
 
@@ -44,10 +44,16 @@ class MainActivity : ComponentActivity() {
         askNotificationPermission()
         createReminderNotificationChannel()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(refreshReceiver, IntentFilter("com.serenemind.REFRESH_REMINDERS"), Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(refreshReceiver, IntentFilter("com.serenemind.REFRESH_REMINDERS"))
+        // Registration for Android 14+ security compliance
+        try {
+            val filter = IntentFilter("com.serenemind.REFRESH_REMINDERS")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(refreshReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(refreshReceiver, filter)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Receiver registration failed", e)
         }
 
         val tokenManager = TokenManager(this)
@@ -56,16 +62,6 @@ class MainActivity : ComponentActivity() {
         val themeManager = ThemeManager(this)
 
         val viewModel = LoginViewModel(repo, tokenManager)
-
-        // BroadcastReceiver to refresh data when a push notification is received
-        val refreshReceiver = object : android.content.BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                // We can't easily reach the Compose-level ViewModel here directly
-                // but we can trigger a re-fetch if we have a reference to the Activity or use a SharedFlow
-                // For now, let's just log it and see if we can improve architecture.
-            }
-        }
-        registerReceiver(refreshReceiver, android.content.IntentFilter("com.serenemind.REFRESH_REMINDERS"))
 
         setContent {
             val systemTheme = isSystemInDarkTheme()
@@ -99,7 +95,7 @@ class MainActivity : ComponentActivity() {
 
     private fun createReminderNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = "reminder_channel_v2"
+            val channelId = "serenemind_gentle_reminders" // Unified channel ID
             val name = "Mental Health Reminders"
             val descriptionText = "Gentle reminders for your wellness"
             val importance = android.app.NotificationManager.IMPORTANCE_HIGH

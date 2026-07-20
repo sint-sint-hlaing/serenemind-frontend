@@ -25,7 +25,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     companion object {
         private const val TAG = "FCM_Service"
-        const val REMINDER_CHANNEL_ID = "serenemind_gentle_reminders"
+        const val REMINDER_CHANNEL_ID = "serenemind_reminders_v3"
+        const val GENERAL_CHANNEL_ID = "serenemind_general_v3"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -37,80 +38,79 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val title = data["title"] ?: remoteMessage.notification?.title ?: "SereneMind"
         val body = data["body"] ?: remoteMessage.notification?.body ?: ""
         
-        // Try multiple potential ID keys from server
         val id = data["id"]?.toLongOrNull() 
             ?: data["targetId"]?.toLongOrNull() 
             ?: data["reminderId"]?.toLongOrNull() 
             ?: System.currentTimeMillis()
 
         if (targetType == "REMINDER") {
-            // Handle Reminder with Full Screen Alert and Buttons
             handleReminderNotification(id, title, body)
-            
-            // Server က status ကို update လုပ်ပြီးသားဖြစ်လို့ App ဘက်က UI ကိုပဲ refresh လုပ်ခိုင်းရပါမယ်
-            CoroutineScope(Dispatchers.Main).launch {
-                com.serenemind.util.RefreshSignals.signalRefreshReminders()
-            }
+            com.serenemind.util.RefreshSignals.signalRefreshReminders()
         } else {
-            // Handle General Notifications
             showGeneralNotification(id, title, body, targetType)
         }
     }
 
     private fun handleReminderNotification(id: Long, title: String, body: String) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        createReminderChannel(notificationManager)
+        createChannels(notificationManager)
 
-        // Clean title if it contains "Reminder: " prefix from server
         val cleanTitle = title.replace("Reminder: ", "", ignoreCase = true).trim()
+        val requestCode = (id % Int.MAX_VALUE).toInt()
 
-        // Intent for Full Screen Alarm
         val fullScreenIntent = Intent(this, ReminderAlarmActivity::class.java).apply {
             putExtra("id", id)
             putExtra("title", "It's time to " + cleanTitle)
             putExtra("note", "SereneMind Reminder")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
-            this, id.toInt() + 100, fullScreenIntent,
+            this, requestCode + 100, fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Quick Actions
         val dismissIntent = Intent(this, ReminderReceiver::class.java).apply {
             action = ReminderReceiver.ACTION_DISMISS
             putExtra("id", id)
         }
         val dismissPendingIntent = PendingIntent.getBroadcast(
-            this, id.toInt() + 200, dismissIntent,
+            this, requestCode + 200, dismissIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, REMINDER_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
-            .setColor(0xFF6750A4.toInt())
-            .setContentTitle("Mental Health Reminder")
-            .setContentText(cleanTitle)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(true)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .addAction(0, "Dismiss", dismissPendingIntent)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
+        try {
+            val notificationBuilder = NotificationCompat.Builder(this, REMINDER_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
+                .setColor(0xFF6750A4.toInt())
+                .setContentTitle("Mental Health Reminder")
+                .setContentText(cleanTitle)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setOngoing(true)
+                .setDefaults(Notification.DEFAULT_ALL) // Trigger sound, vibration and pop-up
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .addAction(0, "Dismiss", dismissPendingIntent)
 
-        notificationManager.notify(id.toInt(), notification)
+            if (Build.VERSION.SDK_INT >= 34) {
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                if (alarmManager.canScheduleExactAlarms()) {
+                    notificationBuilder.setFullScreenIntent(fullScreenPendingIntent, true)
+                }
+            } else {
+                notificationBuilder.setFullScreenIntent(fullScreenPendingIntent, true)
+            }
+
+            notificationManager.notify(requestCode, notificationBuilder.build())
+        } catch (e: Exception) {
+            Log.e(TAG, "Notification error: ${e.message}")
+        }
     }
 
     private fun showGeneralNotification(id: Long, title: String, body: String, type: String) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "serenemind_general_channel"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "General Updates", NotificationManager.IMPORTANCE_DEFAULT)
-            notificationManager.createNotificationChannel(channel)
-        }
+        createChannels(notificationManager)
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -119,21 +119,27 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
         val pendingIntent = PendingIntent.getActivity(this, id.toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder(this, channelId)
+        val notification = NotificationCompat.Builder(this, GENERAL_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))
+            .setColor(0xFF6750A4.toInt())
             .setContentTitle(title)
             .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // Set High for Heads-up pop-up
+            .setDefaults(Notification.DEFAULT_ALL)        // Enable sound and vibration
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
 
         notificationManager.notify(id.toInt(), notification)
     }
 
-    private fun createReminderChannel(notificationManager: NotificationManager) {
+    private fun createChannels(notificationManager: NotificationManager) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Reminder Channel
             if (notificationManager.getNotificationChannel(REMINDER_CHANNEL_ID) == null) {
-                val channel = NotificationChannel(
+                val reminderChannel = NotificationChannel(
                     REMINDER_CHANNEL_ID,
                     "Mental Health Reminders",
                     NotificationManager.IMPORTANCE_HIGH
@@ -142,7 +148,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     enableVibration(true)
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 }
-                notificationManager.createNotificationChannel(channel)
+                notificationManager.createNotificationChannel(reminderChannel)
+            }
+
+            // General Channel
+            if (notificationManager.getNotificationChannel(GENERAL_CHANNEL_ID) == null) {
+                val generalChannel = NotificationChannel(
+                    GENERAL_CHANNEL_ID,
+                    "General Updates",
+                    NotificationManager.IMPORTANCE_HIGH // Change from DEFAULT to HIGH
+                ).apply {
+                    description = "Likes, Comments and Community"
+                    enableVibration(true)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                }
+                notificationManager.createNotificationChannel(generalChannel)
             }
         }
     }
