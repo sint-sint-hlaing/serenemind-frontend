@@ -1,8 +1,6 @@
 package com.serenemind.model.response
 
-import com.google.gson.annotations.SerializedName
-
-data class Meditation(
+data class MeditationResponse(
     val id: Long,
     val title: String,
     val duration: String,
@@ -18,7 +16,7 @@ data class MeditationCategory(
 )
 
 data class MeditationDashboardResponse(
-    val featured: Meditation,
+    val featured: MeditationResponse,
     val categories: List<MeditationCategory>,
-    val recommended: List<Meditation>
+    val recommended: List<MeditationResponse>
 )

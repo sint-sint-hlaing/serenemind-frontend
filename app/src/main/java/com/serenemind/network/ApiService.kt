@@ -2,13 +2,16 @@ package com.serenemind.network
 
 import com.serenemind.model.request.*
 import com.serenemind.model.response.*
+import com.serenemind.model.entity.enums.GoalStatus
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
+import java.time.LocalDate
 
 interface ApiService {
 
+    // --- AUTH ---
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
@@ -18,12 +21,31 @@ interface ApiService {
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshRequest): Response<LoginResponse>
 
+    // --- USER PROFILE ---
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
 
+    @PUT("api/users/me")
+    suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
+
+    @Multipart
+    @POST("api/users/me/profile-image")
+    suspend fun uploadProfileImage(@Part image: MultipartBody.Part): Response<MessageResponse>
+
+    @DELETE("api/users/me/profile-image")
+    suspend fun removeProfileImage(): Response<MessageResponse>
+
+    @PUT("api/users/me/avatar")
+    suspend fun changeAvatar(@Body request: SelectAvatarRequest): Response<MessageResponse>
+
+    @GET("api/avatars")
+    suspend fun getAvatars(): Response<List<AvatarResponse>>
+
+    // --- DASHBOARD ---
     @GET("api/dashboard")
     suspend fun getDashboardData(): Response<DashboardResponse>
 
+    // --- MOOD TRACKING ---
     @POST("api/mood/save")
     suspend fun saveMood(@Body request: MoodRequest): Response<Unit>
 
@@ -40,7 +62,7 @@ interface ApiService {
     suspend fun getMoodByDate(@Path("date") date: String): Response<DailyMoodResponse>
 
     @GET("api/mood/weekly")
-    suspend fun getWeeklyMood(): Response<List<DailyMoodResponse>>
+    suspend fun getWeeklyMood(): Response<List<WeeklyMoodResponse>>
 
     @GET("api/mood/monthly")
     suspend fun getMonthlyMood(): Response<List<DailyMoodResponse>>
@@ -51,6 +73,98 @@ interface ApiService {
     @DELETE("api/mood/delete/{id}")
     suspend fun deleteMood(@Path("id") id: Long): Response<Unit>
 
+    // --- GOALS ---
+    @POST("api/goals")
+    suspend fun createGoal(@Body request: GoalRequest): Response<UserGoal>
+
+    @GET("api/goals")
+    suspend fun getAllGoals(): Response<List<UserGoal>>
+
+    @GET("api/goals/active")
+    suspend fun getActiveGoals(): Response<List<UserGoal>>
+
+    @GET("api/goals/completed")
+    suspend fun getCompletedGoals(): Response<List<UserGoal>>
+
+    @GET("api/goals/status/{status}")
+    suspend fun getGoalsByStatus(@Path("status") status: GoalStatus): Response<List<UserGoal>>
+
+    @GET("api/goals/statistics")
+    suspend fun getGoalStatistics(): Response<GoalStatistics>
+
+    @PATCH("api/goals/{id}/progress")
+    suspend fun updateGoalProgress(@Path("id") id: Long): Response<UserGoal>
+
+    @PATCH("api/goals/{id}/complete")
+    suspend fun completeGoal(@Path("id") id: Long): Response<UserGoal>
+
+    @PATCH("api/goals/{id}/pause")
+    suspend fun pauseGoal(@Path("id") id: Long): Response<UserGoal>
+
+    @PATCH("api/goals/{id}/resume")
+    suspend fun resumeGoal(@Path("id") id: Long): Response<UserGoal>
+
+    @DELETE("api/goals/{id}")
+    suspend fun deleteGoal(@Path("id") id: Long): Response<Unit>
+
+    @DELETE("api/goals/{id}/hard")
+    suspend fun hardDeleteGoal(@Path("id") id: Long): Response<Unit>
+
+    // --- MEDITATION ---
+    @GET("api/meditations/dashboard")
+    suspend fun getMeditationDashboard(): Response<MeditationDashboardResponse>
+
+    @GET("api/meditations/{id}")
+    suspend fun getMeditationById(@Path("id") id: Long): Response<MeditationResponse>
+
+    @POST("api/meditations/complete")
+    suspend fun completeMeditationSession(@Body request: MeditationSessionRequest): Response<Unit>
+
+    @GET("api/meditations/history")
+    suspend fun getMeditationHistory(): Response<List<MeditationResponse>>
+
+    // --- JOURNAL ---
+    @POST("api/journals")
+    suspend fun createJournal(@Body request: JournalRequest): Response<JournalResponse>
+
+    @GET("api/journals")
+    suspend fun getAllJournals(@Query("filter") filter: String): Response<List<JournalResponse>>
+
+    @GET("api/journals/search")
+    suspend fun searchJournals(@Query("q") query: String): Response<List<JournalResponse>>
+
+    @GET("api/journals/{id}")
+    suspend fun getJournalById(@Path("id") id: Long): Response<JournalResponse>
+
+    @PUT("api/journals/{id}")
+    suspend fun updateJournal(@Path("id") id: Long, @Body request: JournalRequest): Response<JournalResponse>
+
+    @DELETE("api/journals/{id}")
+    suspend fun deleteJournal(@Path("id") id: Long): Response<Unit>
+
+    @PATCH("api/journals/{id}/favorite")
+    suspend fun toggleFavoriteJournal(@Path("id") id: Long): Response<JournalResponse>
+
+    @PATCH("api/journals/{id}/private")
+    suspend fun togglePrivateJournal(@Path("id") id: Long): Response<JournalResponse>
+
+    @Multipart
+    @POST("api/journals/{id}/photo")
+    suspend fun uploadJournalPhoto(
+        @Path("id") id: Long,
+        @Part photo: MultipartBody.Part
+    ): Response<JournalPhotoResponse>
+
+    @DELETE("api/journals/{id}/photo")
+    suspend fun deleteJournalPhoto(@Path("id") id: Long): Response<JournalPhotoResponse>
+
+    @GET("api/journals/{id}/analysis")
+    suspend fun getJournalAnalysis(@Path("id") id: Long): Response<JournalAnalysisResponse>
+
+    @POST("api/journals/{id}/analysis")
+    suspend fun triggerJournalAnalysis(@Path("id") id: Long): Response<JournalAnalysisResponse>
+
+    // --- COMMUNITY ---
     @GET("api/posts")
     suspend fun getPosts(): Response<List<PostResponse>>
 
@@ -69,32 +183,6 @@ interface ApiService {
         @Body request: CommentRequest
     ): Response<CommentResponse>
 
-    // Streak API
-    @GET("api/streaks/me")
-    suspend fun getStreak(): Response<StreakResponse>
-
-    @POST("api/streaks/use-freeze")
-    suspend fun useStreakFreeze(): Response<StreakResponse>
-
-    // Notification API
-    @GET("api/notifications")
-    suspend fun getNotifications(
-        @Query("filter") filter: String? = null
-    ): Response<List<NotificationResponse>>
-
-    @PATCH("api/notifications/{id}/read")
-    suspend fun markAsRead(
-        @Path("id") id: Long
-    ): Response<Unit>
-
-    @GET("api/notifications/{id}/click")
-    suspend fun clickNotification(
-        @Path("id") id: Long
-    ): Response<NotificationResponse>
-
-    @POST("api/notifications/read-all")
-    suspend fun markAllAsRead(): Response<Unit>
-
     @Multipart
     @POST("api/posts")
     suspend fun createPost(
@@ -102,6 +190,29 @@ interface ApiService {
         @Part image: MultipartBody.Part? = null
     ): Response<PostResponse>
 
+    // --- STREAK (Legacy or Keep) ---
+    @GET("api/streaks/me")
+    suspend fun getStreak(): Response<StreakResponse>
+
+    @POST("api/streaks/use-freeze")
+    suspend fun useStreakFreeze(): Response<StreakResponse>
+
+    // --- NOTIFICATIONS ---
+    @GET("api/notifications")
+    suspend fun getNotifications(
+        @Query("filter") filter: String? = null
+    ): Response<List<NotificationResponse>>
+
+    @PATCH("api/notifications/{id}/read")
+    suspend fun markAsRead(@Path("id") id: Long): Response<Unit>
+
+    @GET("api/notifications/{id}/click")
+    suspend fun clickNotification(@Path("id") id: Long): Response<NotificationResponse>
+
+    @POST("api/notifications/read-all")
+    suspend fun markAllAsRead(): Response<Unit>
+
+    // --- REMINDERS ---
     @GET("api/reminders")
     suspend fun getReminders(): Response<List<ReminderResponse>>
 
@@ -114,6 +225,7 @@ interface ApiService {
     @PATCH("api/reminders/{id}/toggle")
     suspend fun toggleReminder(@Path("id") id: Long): Response<ReminderResponse>
 
+    // --- BREATHING ---
     @POST("api/breathing/session/start")
     suspend fun startBreathingSession(@Body request: BreathingRequest): Response<BreathingStartResponse>
 

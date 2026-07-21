@@ -30,11 +30,11 @@ import com.serenemind.ui.theme.*
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onNavigateToBreathing: () -> Unit = {},
+    onLogout: () -> Unit = {},
     onActionClick: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onNavigateToBreathing: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -316,9 +316,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
         verticalAlignment = Alignment.Bottom
     ) {
         weeklyOverview.take(7).forEach { item ->
-            val moodType = remember(item.mood) {
-                MoodType.entries.find { it.name.equals(item.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
-            }
+            val moodType = item.mood ?: MoodType.NEUTRAL
             val percentage = item.percentage ?: 0
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -333,7 +331,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = item.day?.take(3)?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "",
+                    text = item.day?.name?.take(3)?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "",
                     fontSize = 11.sp,
                     color = TextSecondary,
                     fontWeight = FontWeight.Medium
@@ -347,16 +345,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
     }
 }
 
-fun getEmojiForMood(mood: MoodType): String {
-    return when (mood) {
-        MoodType.HAPPY -> "😊"
-        MoodType.SAD -> "😢"
-        MoodType.CALM -> "😌"
-        MoodType.ANXIOUS -> "😰"
-        MoodType.ANGRY -> "😠"
-        MoodType.NEUTRAL -> "😐"
-    }
-}
+fun getEmojiForMood(mood: MoodType): String = mood.emoji
 
 fun getMoodColor(mood: MoodType): Color {
     return when (mood) {

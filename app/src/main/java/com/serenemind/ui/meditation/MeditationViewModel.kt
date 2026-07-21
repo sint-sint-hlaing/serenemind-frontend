@@ -2,6 +2,7 @@ package com.serenemind.ui.meditation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serenemind.model.response.MeditationResponse
 import com.serenemind.repository.MeditationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +12,9 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     private val _uiState = MutableStateFlow<MeditationUiState>(MeditationUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
+    private val _selectedMeditation = MutableStateFlow<MeditationResponse?>(null)
+    val selectedMeditation = _selectedMeditation.asStateFlow()
+
     init {
         fetchMeditationDashboard()
     }
@@ -18,8 +22,7 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     fun fetchMeditationDashboard() {
         viewModelScope.launch {
             _uiState.value = MeditationUiState.Loading
-            try {
-                val response = repository.getMeditationDashboard()
+            repository.getDashboard().collect { response ->
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _uiState.value = MeditationUiState.Success(it)
@@ -29,9 +32,11 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
                 } else {
                     _uiState.value = MeditationUiState.Error("Server error: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.value = MeditationUiState.Error("Network error: ${e.localizedMessage}")
             }
         }
+    }
+
+    fun selectMeditation(meditation: MeditationResponse) {
+        _selectedMeditation.value = meditation
     }
 }

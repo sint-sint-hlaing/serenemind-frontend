@@ -40,7 +40,8 @@ fun ProfileScreen(
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToReminders: () -> Unit = {},
-    onNavigateToStreak: () -> Unit = {}
+    onNavigateToStreak: () -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -141,7 +142,9 @@ fun ProfileScreen(
                                         imageVector = Icons.Default.Edit,
                                         contentDescription = "Edit Profile",
                                         tint = if (isDarkMode) Color.LightGray else Color.Gray,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { onNavigateToEditProfile() }
                                     )
                                 }
                             }

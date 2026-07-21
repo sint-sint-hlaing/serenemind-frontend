@@ -42,32 +42,27 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun fetchMoodSummary() {
         viewModelScope.launch {
-            try {
-                val data = repository.getMoodSummary()
-                _summaryState.value = data
-            } catch (e: Exception) {
-                // Handle error
+            repository.getMoodSummary().collect { response ->
+                if (response.isSuccessful) {
+                    _summaryState.value = response.body() ?: emptyMap()
+                }
             }
         }
     }
 
     fun fetchWeeklySummary() {
         viewModelScope.launch {
-            try {
-                val response = repository.getWeeklySummary()
+            repository.getWeeklySummary().collect { response ->
                 if (response.isSuccessful) {
                     _weeklySummary.value = response.body()
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }
 
     fun fetchMoodHistory(year: Int, month: Int) {
         viewModelScope.launch {
-            try {
-                val response = repository.getMoodHistory(year, month)
+            repository.getMoodHistory(year, month).collect { response ->
                 if (response.isSuccessful) {
                     val history = response.body() ?: emptyList()
                     _historyState.value = history
@@ -77,8 +72,6 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
                     val today = sdf.format(Date())
                     _selectedDateMood.value = history.find { it.date == today }
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.serenemind.ui.meditation
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,21 +23,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.serenemind.R
-import com.serenemind.model.response.Meditation
 import com.serenemind.model.response.MeditationCategory
 import com.serenemind.model.response.MeditationDashboardResponse
+import com.serenemind.model.response.MeditationResponse
 import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeditationScreen(
     viewModel: MeditationViewModel,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onMeditationClick: (MeditationResponse) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -73,7 +72,7 @@ fun MeditationScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                             Text(text = "Error", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Text(text = state.message, color = Color.Gray, textAlign = TextAlign.Center)
+                            Text(text = state.message, color = Color.Gray)
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.fetchMeditationDashboard() }) {
                                 Text("Retry")
@@ -82,16 +81,18 @@ fun MeditationScreen(
                     }
                 }
                 is MeditationUiState.Success -> {
-                    MeditationContent(state.data)
+                    MeditationContent(state.data, onMeditationClick)
                 }
-                else -> {}
             }
         }
     }
 }
 
 @Composable
-fun MeditationContent(data: MeditationDashboardResponse) {
+fun MeditationContent(
+    data: MeditationDashboardResponse,
+    onMeditationClick: (MeditationResponse) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,7 +100,7 @@ fun MeditationContent(data: MeditationDashboardResponse) {
             .padding(16.dp)
     ) {
         // Featured Card
-        FeaturedMeditationCard(data.featured)
+        FeaturedMeditationCard(data.featured, onClick = { onMeditationClick(data.featured) })
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -129,7 +130,7 @@ fun MeditationContent(data: MeditationDashboardResponse) {
         Spacer(modifier = Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             data.recommended.forEach { meditation ->
-                RecommendedItem(meditation)
+                RecommendedItem(meditation, onClick = { onMeditationClick(meditation) })
             }
         }
         Spacer(modifier = Modifier.height(32.dp))
@@ -137,11 +138,12 @@ fun MeditationContent(data: MeditationDashboardResponse) {
 }
 
 @Composable
-fun FeaturedMeditationCard(meditation: Meditation) {
+fun FeaturedMeditationCard(meditation: MeditationResponse, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(200.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -151,8 +153,7 @@ fun FeaturedMeditationCard(meditation: Meditation) {
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                error = painterResource(R.drawable.ic_launcher_background),
-                placeholder = painterResource(R.drawable.ic_launcher_background)
+                error = painterResource(R.drawable.ic_launcher_background)
             )
             Box(
                 modifier = Modifier
@@ -176,15 +177,8 @@ fun FeaturedMeditationCard(meditation: Meditation) {
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
-                val durationDisplay = try {
-                    val seconds = meditation.duration.toInt()
-                    "${seconds / 60} min"
-                } catch (e: Exception) {
-                    meditation.duration
-                }
-                val categoryDisplay = meditation.category.lowercase().replaceFirstChar { it.uppercase() }
                 Text(
-                    text = "$durationDisplay • $categoryDisplay",
+                    text = "${meditation.duration} min • ${meditation.category}",
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
@@ -241,11 +235,11 @@ fun getCategoryBgColor(name: String): Color {
 }
 
 @Composable
-fun RecommendedItem(meditation: Meditation) {
+fun RecommendedItem(meditation: MeditationResponse, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Start meditation */ },
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -255,22 +249,15 @@ fun RecommendedItem(meditation: Meditation) {
                 .size(72.dp)
                 .clip(RoundedCornerShape(20.dp)),
             contentScale = ContentScale.Crop,
-            error = painterResource(R.drawable.ic_launcher_background),
-            placeholder = painterResource(R.drawable.ic_launcher_background)
+            error = painterResource(R.drawable.ic_launcher_background)
         )
         Spacer(modifier = Modifier.width(20.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(meditation.title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextPrimary)
-            val durationDisplay = try {
-                val seconds = meditation.duration.toInt()
-                "${seconds / 60} min"
-            } catch (e: Exception) {
-                meditation.duration
-            }
-            Text(durationDisplay, color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text("${meditation.duration} min", color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
         IconButton(
-            onClick = { /* Play */ },
+            onClick = onClick,
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)

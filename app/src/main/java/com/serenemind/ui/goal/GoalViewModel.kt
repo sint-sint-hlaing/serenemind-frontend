@@ -27,15 +27,12 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
     fun fetchGoals() {
         viewModelScope.launch {
             _uiState.value = GoalUiState.Loading
-            try {
-                val response = repository.getAllGoals()
+            repository.getAllGoals().collect { response ->
                 if (response.isSuccessful) {
                     _uiState.value = GoalUiState.Success(response.body() ?: emptyList())
                 } else {
                     _uiState.value = GoalUiState.Error("Failed to fetch goals: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.value = GoalUiState.Error(e.localizedMessage ?: "Unknown error")
             }
         }
     }
@@ -61,14 +58,24 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         }
     }
 
-    fun createGoal(title: String, description: String, targetDays: Int) {
+    fun createGoal(
+        title: String, 
+        description: String, 
+        target: Int, 
+        unit: String?, 
+        frequency: String?, 
+        color: String?, 
+        reminderTime: String?, 
+        startDate: String?
+    ) {
         viewModelScope.launch {
             try {
-                val request = GoalRequest(title, description, targetDays)
-                val response = repository.createGoal(request)
-                if (response.isSuccessful) {
-                    _createGoalSuccess.value = true
-                    fetchGoals()
+                val request = GoalRequest(title, description, target, unit, frequency, color, reminderTime, startDate)
+                repository.createGoal(request).collect { response ->
+                    if (response.isSuccessful) {
+                        _createGoalSuccess.value = true
+                        fetchGoals()
+                    }
                 }
             } catch (e: Exception) {
                 // Handle error

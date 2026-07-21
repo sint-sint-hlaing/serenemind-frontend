@@ -17,26 +17,8 @@ data class TodayMoodResponse(
     val message: String
 )
 
-data class WeeklyMoodResponse(
-    val day: String? = null,
-    val mood: String? = null,
-    val percentage: Int? = null,
-    val dailyMoods: Map<String, Int>? = null,
-    val averageIntensity: Double? = null
-)
-
 data class QuickActionResponse(
     val title: String? = "",
     val route: String? = "",
     val icon: String? = ""
-)
-
-data class WeeklyData(
-    val day: String? = "",
-    val percentage: Float? = 0f
-)
-
-data class ActionItem(
-    val name: String? = null,
-    val route: String? = null
 )

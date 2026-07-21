@@ -1,25 +1,43 @@
 package com.serenemind.repository
 
 import com.serenemind.model.request.MeditationSessionRequest
-import com.serenemind.model.response.Meditation
 import com.serenemind.model.response.MeditationDashboardResponse
-import com.serenemind.network.MeditationApiService
+import com.serenemind.model.response.MeditationResponse
+import com.serenemind.network.ApiService
+import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 
-class MeditationRepository(private val apiService: MeditationApiService) {
-    suspend fun getMeditationDashboard(): Response<MeditationDashboardResponse> = apiService.getMeditationDashboard()
+class MeditationRepository(private val apiService: ApiService) {
 
-    suspend fun getMeditationById(id: Long): Response<Meditation> = apiService.getMeditationById(id)
+    fun getDashboard() = flow {
+        try {
+            emit(apiService.getMeditationDashboard())
+        } catch (e: Exception) {
+            emit(Response.error<MeditationDashboardResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
 
-    suspend fun completeSession(request: MeditationSessionRequest): Response<String> = apiService.completeSession(request)
+    fun getMeditationById(id: Long) = flow {
+        try {
+            emit(apiService.getMeditationById(id))
+        } catch (e: Exception) {
+            emit(Response.error<MeditationResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
 
-    suspend fun getHistory(): Response<List<Meditation>> = apiService.getHistory()
+    suspend fun completeSession(request: MeditationSessionRequest): Response<Unit> {
+        return try {
+            apiService.completeMeditationSession(request)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
 
-    suspend fun getRecommendations(): Response<List<Meditation>> = apiService.getRecommendations()
-
-    suspend fun search(keyword: String): Response<List<Meditation>> = apiService.search(keyword)
-
-    suspend fun addFavorite(meditationId: Long): Response<Unit> = apiService.addFavorite(mapOf("meditationId" to meditationId))
-
-    suspend fun getContinueListening(): Response<List<Meditation>> = apiService.getContinueListening()
+    fun getHistory() = flow {
+        try {
+            emit(apiService.getMeditationHistory())
+        } catch (e: Exception) {
+            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
 }

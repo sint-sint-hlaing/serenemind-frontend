@@ -36,4 +36,5 @@ sealed class Screen(
     object AddReminder : Screen("add_reminder")
     object Breathing : Screen("breathing")
     object Meditation : Screen("meditation")
+    object EditProfile : Screen("edit_profile")
 }

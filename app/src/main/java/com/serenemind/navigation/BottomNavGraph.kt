@@ -45,9 +45,9 @@ fun BottomNavGraph(
     val streakRepository = remember { StreakRepository(apiService, tokenManager) }
     val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
     val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
-    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
-    val goalRepository = remember { GoalRepository(goalApiService) }
-    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val moodRepository = remember { MoodRepository(apiService) }
+    val goalRepository = remember { GoalRepository(apiService) }
+    val meditationRepository = remember { MeditationRepository(apiService) }
 
     // ViewModels
     val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
@@ -59,6 +59,7 @@ fun BottomNavGraph(
     val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
+    val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository))
 
     NavHost(
         navController = navController,
@@ -161,10 +162,18 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Meditation.route) {
-            val meditationViewModel: MeditationViewModel = viewModel(
-                factory = MeditationViewModelFactory(meditationRepository)
-            )
             MeditationScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() },
+                onMeditationClick = { meditation ->
+                    meditationViewModel.selectMeditation(meditation)
+                    navController.navigate("meditation_player")
+                }
+            )
+        }
+
+        composable("meditation_player") {
+            MeditationPlayerScreen(
                 viewModel = meditationViewModel,
                 onBack = { navController.popBackStack() }
             )
@@ -248,7 +257,17 @@ fun BottomNavGraph(
                 },
                 onNavigateToStreak = {
                     navController.navigate(Screen.Streak.route)
+                },
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
                 }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            EditProfileScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 

@@ -202,10 +202,10 @@ fun GoalItem(goal: UserGoal, onClick: (UserGoal) -> Unit) {
             Spacer(modifier = Modifier.width(18.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(goal.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
-                Text("${goal.progress} / ${goal.targetDays} days", color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text("${goal.progress} / ${goal.target} days", color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(10.dp))
                 LinearProgressIndicator(
-                    progress = { goal.progress.toFloat() / goal.targetDays.toFloat() },
+                    progress = { goal.progress.toFloat() / goal.target.toFloat().coerceAtLeast(1f) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
