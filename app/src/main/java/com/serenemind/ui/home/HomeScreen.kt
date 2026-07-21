@@ -140,7 +140,7 @@ fun DashboardContent(
                 // Greeting Section
                 Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                     Text(
-                        text = data.date,
+                        text = data.date ?: "",
                         color = TextSecondary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
@@ -151,7 +151,7 @@ fun DashboardContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${data.greeting}, ${data.username}! 👋",
+                            text = "${data.greeting ?: "Hello"}, ${data.username ?: "User"}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
@@ -202,8 +202,8 @@ fun DashboardContent(
                             .padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val moodType = remember(data.todayMood.mood) {
-                            MoodType.entries.find { it.name.equals(data.todayMood.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                        val moodType = remember(data.mood) {
+                            MoodType.entries.find { it.name.equals(data.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
                         }
 
                         Box(
@@ -222,7 +222,8 @@ fun DashboardContent(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            val moodDisplay = data.todayMood.mood.lowercase().replaceFirstChar { it.uppercase() }
+                            val moodDisplay = (data.mood ?: "Steady")
+                                .lowercase().replaceFirstChar { it.uppercase() }
                             Text(
                                 text = moodDisplay,
                                 fontSize = 18.sp,
@@ -230,14 +231,14 @@ fun DashboardContent(
                                 color = TextPrimary
                             )
                             Text(
-                                text = data.todayMood.message,
+                                text = "How are you feeling today?",
                                 color = TextSecondary,
                                 fontSize = 13.sp
                             )
                         }
 
                         Text(
-                            text = "${data.todayMood.percentage}%",
+                            text = "${data.percentage ?: 0}%",
                             color = Success,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold

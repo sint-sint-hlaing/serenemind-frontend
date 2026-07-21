@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.messaging.FirebaseMessaging
 import com.serenemind.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,9 +43,25 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var fcmToken by remember { mutableStateOf("") }
 
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    fcmToken = task.result
+                    android.util.Log.d("FCM", "Token successfully fetched: $fcmToken")
+                } else {
+                    android.util.Log.e("FCM", "Fetching FCM registration token failed", task.exception)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FCM", "Firebase not initialized", e)
+        }
+    }
 
     LaunchedEffect(state) {
         if (state is LoginUiState.Success) {
@@ -171,7 +188,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    viewModel.login(email, password)
+                    viewModel.login(email, password, fcmToken)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

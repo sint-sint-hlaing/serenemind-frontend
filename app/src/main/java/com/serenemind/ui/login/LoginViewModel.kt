@@ -18,7 +18,7 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, fcmToken: String = "") {
         if (email.isBlank() || password.isBlank()) {
             _uiState.value = LoginUiState.Error("Empty fields")
             return
@@ -26,7 +26,8 @@ class LoginViewModel(
 
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            val result = repository.login(LoginRequest(email, password))
+            
+            val result = repository.login(LoginRequest(email.trim(), password, fcmToken))
             result.onSuccess { response ->
                 tokenManager.saveTokens(response.accessToken, response.refreshToken)
                 _uiState.value = LoginUiState.Success

@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.PostResponse
 import com.serenemind.ui.theme.*
@@ -151,7 +153,9 @@ fun PostItem(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val avatarRes = getAvatarResource(post.userProfilePicture)
+                val displayName = if (post.anonymous) "Anonymous" else post.username
+                val displayAvatar = if (post.anonymous) null else post.userProfilePicture
+                val avatarRes = getAvatarResource(displayAvatar)
                 
                 Image(
                     painter = painterResource(id = avatarRes),
@@ -163,7 +167,7 @@ fun PostItem(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text(text = post.username, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                     Text(text = formatPostDate(post.createdAt), color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }

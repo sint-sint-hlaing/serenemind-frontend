@@ -52,10 +52,10 @@ interface ApiService {
     @GET("api/mood/summary")
     suspend fun getMoodSummary(): Response<Map<String, Double>>
 
-    @GET("api/mood/history")
+    @GET("api/mood/history/{year}/{month}")
     suspend fun getMoodHistory(
-        @Query("year") year: Int,
-        @Query("month") month: Int
+        @Path("year") year: Int,
+        @Path("month") month: Int
     ): Response<List<DailyMoodResponse>>
 
     @GET("api/mood/date/{date}")
@@ -205,9 +205,17 @@ interface ApiService {
 
     @PATCH("api/notifications/{id}/read")
     suspend fun markAsRead(@Path("id") id: Long): Response<Unit>
+    @POST("api/notifications/{id}/read")
+    suspend fun markAsRead(
+        @Path("id") id: Long
+    ): Response<Unit>
 
     @GET("api/notifications/{id}/click")
     suspend fun clickNotification(@Path("id") id: Long): Response<NotificationResponse>
+    @POST("api/notifications/{id}/click")
+    suspend fun clickNotification(
+        @Path("id") id: Long
+    ): Response<NotificationResponse>
 
     @POST("api/notifications/read-all")
     suspend fun markAllAsRead(): Response<Unit>
