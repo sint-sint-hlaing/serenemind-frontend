@@ -221,7 +221,17 @@ fun BottomNavGraph(
                 isDarkMode = isDarkMode,
                 onDarkModeToggle = onDarkModeToggle,
                 onNavigateToSettings = { },
-                onLogout = onLogout
+                onLogout = onLogout,
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
+                }
+            )
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() }
             )
         }
     }

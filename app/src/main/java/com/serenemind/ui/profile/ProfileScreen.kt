@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.R
@@ -38,7 +40,8 @@ fun ProfileScreen(
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -146,6 +149,35 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
+                            // Your Activity Section
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    "Your Activity",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceAround
+                                    ) {
+                                        ActivityItem(icon = Icons.AutoMirrored.Filled.Assignment, label = "Journals", value = "36", subValue = "entries", color = Color(0xFF9C27B0))
+                                        ActivityItem(icon = Icons.Default.Flag, label = "Goals Completed", value = "7", subValue = "goals", color = Color(0xFF4CAF50))
+                                        ActivityItem(icon = Icons.Default.Create, label = "Posts", value = "24", subValue = "posts", color = Color(0xFFFF9800))
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
                             // Settings List
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
@@ -154,8 +186,16 @@ fun ProfileScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column {
-                                    ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
-                                    ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
+                                    ProfileMenuItem(
+                                        icon = Icons.Default.Person, 
+                                        title = "Personal Information",
+                                        iconTint = Color.Gray
+                                    )
+                                    ProfileMenuItem(
+                                        icon = Icons.Default.Favorite, 
+                                        title = "Saved & Favorites",
+                                        iconTint = Color(0xFFEF5350)
+                                    )
 
                                     // Dark Mode Toggle
                                     Row(
@@ -169,7 +209,7 @@ fun ProfileScreen(
                                             Icon(
                                                 imageVector = Icons.Default.DarkMode,
                                                 contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                tint = Color(0xFF7C4DFF),
                                                 modifier = Modifier.size(24.dp)
                                             )
                                             Spacer(modifier = Modifier.width(16.dp))
@@ -187,16 +227,15 @@ fun ProfileScreen(
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
                                     ProfileMenuItem(
-                                        icon = Icons.Default.CardMembership,
-                                        title = "Subscription",
-                                        badge = "Premium"
+                                        icon = Icons.Default.Info, 
+                                        title = "About SereneMind",
+                                        iconTint = Color(0xFF2196F3),
+                                        onClick = onNavigateToAbout
                                     )
-                                    ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
-                                    ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
-                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                                     ProfileMenuItem(
                                         icon = Icons.AutoMirrored.Filled.Logout,
                                         title = "Logout",
+                                        iconTint = Color(0xFFF44336),
                                         isLast = true,
                                         onClick = {
                                             viewModel.logout { onLogout() }
@@ -214,11 +253,55 @@ fun ProfileScreen(
 }
 
 @Composable
+fun ActivityItem(icon: ImageVector, label: String, value: String, subValue: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(80.dp)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = color.copy(alpha = 0.15f),
+            modifier = Modifier.size(48.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon, 
+                    contentDescription = null, 
+                    tint = color, 
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = label, 
+            fontSize = 11.sp, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+            textAlign = TextAlign.Center,
+            lineHeight = 14.sp,
+            modifier = Modifier.height(28.dp)
+        )
+        Text(
+            text = value, 
+            fontSize = 18.sp, 
+            fontWeight = FontWeight.Bold, 
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = subValue, 
+            fontSize = 11.sp, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 fun ProfileMenuItem(
     icon: ImageVector,
     title: String,
     badge: String? = null,
     isLast: Boolean = false,
+    iconTint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     onClick: () -> Unit = {}
 ) {
     Column {
@@ -232,7 +315,7 @@ fun ProfileMenuItem(
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = iconTint,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
