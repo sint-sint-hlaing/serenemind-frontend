@@ -30,7 +30,6 @@ import com.serenemind.ui.theme.*
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onNavigateToBreathing: () -> Unit = {},
     onActionClick: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
@@ -80,7 +79,6 @@ fun HomeScreen(
             is HomeUiState.Success -> {
                 DashboardContent(
                     data = state.data,
-                    onNavigateToBreathing = onNavigateToBreathing,
                     onActionClick = onActionClick,
                     onNotificationClick = onNotificationClick,
                     onMenuClick = onMenuClick
@@ -94,7 +92,6 @@ fun HomeScreen(
 @Composable
 fun DashboardContent(
     data: DashboardResponse,
-    onNavigateToBreathing: () -> Unit,
     onActionClick: (String) -> Unit,
     onNotificationClick: () -> Unit,
     onMenuClick: () -> Unit
@@ -297,7 +294,6 @@ fun DashboardContent(
 
                 QuickActionsGrid(
                     actions = data.quickActions,
-                    onNavigateToBreathing = onNavigateToBreathing,
                     onActionClick = onActionClick
                 )
 
@@ -306,6 +302,7 @@ fun DashboardContent(
         }
     }
 }
+
 
 @Composable
 fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
@@ -377,7 +374,6 @@ fun getMoodBgColor(mood: MoodType): Color {
 @Composable
 fun QuickActionsGrid(
     actions: List<QuickActionResponse>,
-    onNavigateToBreathing: () -> Unit,
     onActionClick: (String) -> Unit
 ) {
     Row(
@@ -389,12 +385,7 @@ fun QuickActionsGrid(
                 action = action,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    val route = (action.route ?: "").lowercase()
-                    if (route == "breathing") {
-                        onNavigateToBreathing()
-                    } else {
-                        onActionClick(action.route ?: "")
-                    }
+                    onActionClick(action.route ?: "")
                 }
             )
         }
@@ -454,7 +445,6 @@ fun getBackgroundColorForAction(title: String): Color {
         "journal" -> ActionJournal
         "meditate", "meditation" -> ActionMeditation
         "goals" -> ActionGoals
-        "breathing" -> ActionBreathing
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 }

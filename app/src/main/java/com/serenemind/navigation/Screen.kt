@@ -32,8 +32,5 @@ sealed class Screen(
     object GoalDetail : Screen("goal_detail")
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
-    object Reminders : Screen("reminders")
-    object AddReminder : Screen("add_reminder")
-    object Breathing : Screen("breathing")
     object Meditation : Screen("meditation")
 }

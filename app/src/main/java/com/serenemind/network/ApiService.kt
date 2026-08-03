@@ -101,28 +101,4 @@ interface ApiService {
         @Part("post") post: RequestBody,
         @Part image: MultipartBody.Part? = null
     ): Response<PostResponse>
-
-    @GET("api/reminders")
-    suspend fun getReminders(): Response<List<ReminderResponse>>
-
-    @POST("api/reminders")
-    suspend fun createReminder(@Body request: ReminderRequest): Response<ReminderResponse>
-
-    @DELETE("api/reminders/{id}")
-    suspend fun deleteReminder(@Path("id") id: Long): Response<Unit>
-
-    @PATCH("api/reminders/{id}/toggle")
-    suspend fun toggleReminder(@Path("id") id: Long): Response<ReminderResponse>
-
-    @POST("api/breathing/session/start")
-    suspend fun startBreathingSession(@Body request: BreathingRequest): Response<BreathingStartResponse>
-
-    @POST("api/breathing/session/{sessionId}/round-complete")
-    suspend fun trackRoundComplete(
-        @Path("sessionId") sessionId: String,
-        @Query("roundNumber") roundNumber: Int
-    ): Response<Unit>
-
-    @POST("api/breathing/session/{sessionId}/complete")
-    suspend fun completeBreathingSession(@Path("sessionId") sessionId: String): Response<BreathingSummaryResponse>
 }

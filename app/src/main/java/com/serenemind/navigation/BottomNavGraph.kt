@@ -11,7 +11,6 @@ import com.serenemind.datastore.ThemeManager
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
 import com.serenemind.repository.*
-import com.serenemind.ui.breathing.*
 import com.serenemind.ui.community.*
 import com.serenemind.ui.home.*
 import com.serenemind.ui.profile.*
@@ -43,8 +42,6 @@ fun BottomNavGraph(
     val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
     val streakRepository = remember { StreakRepository(apiService, tokenManager) }
-    val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
-    val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
     val moodRepository = remember { MoodRepository(apiService, tokenManager) }
     val goalRepository = remember { GoalRepository(goalApiService) }
     val meditationRepository = remember { MeditationRepository(meditationApiService) }
@@ -55,8 +52,6 @@ fun BottomNavGraph(
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
     val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
-    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
-    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
 
@@ -74,7 +69,6 @@ fun BottomNavGraph(
                         "goals", "goal" -> navController.navigate(Screen.Goal.route)
                         "journal" -> navController.navigate(Screen.Journal.route)
                         "mood" -> navController.navigate(Screen.Mood.route)
-                        "breathing" -> navController.navigate(Screen.Breathing.route)
                         "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
                     }
                 },
@@ -83,9 +77,6 @@ fun BottomNavGraph(
                 },
                 onMenuClick = {
                     navController.navigate(Screen.Profile.route)
-                },
-                onNavigateToBreathing = {
-                    navController.navigate(Screen.Breathing.route)
                 }
             )
         }
@@ -96,16 +87,6 @@ fun BottomNavGraph(
                 onNavigateToPost = { postId ->
                     navController.navigate("post_detail/$postId")
                 },
-                onNavigateToReminder = {
-                    navController.navigate(Screen.Reminders.route)
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Breathing.route) {
-            BreathingScreen(
-                viewModel = breathingViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -116,6 +97,7 @@ fun BottomNavGraph(
                 onJournalClick = { /* Navigate to Detail */ }
             )
         }
+
 
         composable(Screen.Mood.route) {
             MoodTrackerScreen(
@@ -243,28 +225,9 @@ fun BottomNavGraph(
                 onDarkModeToggle = onDarkModeToggle,
                 onNavigateToSettings = { },
                 onLogout = onLogout,
-                onNavigateToReminders = {
-                    navController.navigate(Screen.Reminders.route)
-                },
                 onNavigateToStreak = {
                     navController.navigate(Screen.Streak.route)
                 }
-            )
-        }
-
-        composable(Screen.Reminders.route) {
-            RemindersScreen(
-                viewModel = reminderViewModel,
-                onBackClick = { navController.popBackStack() },
-                onAddClick = { navController.navigate(Screen.AddReminder.route) }
-            )
-        }
-
-        composable(Screen.AddReminder.route) {
-            AddReminderScreen(
-                viewModel = reminderViewModel,
-                onBackClick = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
             )
         }
     }
