@@ -69,13 +69,6 @@ interface ApiService {
         @Body request: CommentRequest
     ): Response<CommentResponse>
 
-    // Streak API
-    @GET("api/streaks/me")
-    suspend fun getStreak(): Response<StreakResponse>
-
-    @POST("api/streaks/use-freeze")
-    suspend fun useStreakFreeze(): Response<StreakResponse>
-
     // Notification API
     @GET("api/notifications")
     suspend fun getNotifications(

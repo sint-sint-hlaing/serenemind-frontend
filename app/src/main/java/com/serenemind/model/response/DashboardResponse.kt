@@ -9,9 +9,7 @@ data class DashboardResponse(
     @SerializedName("currentMood") val mood: String? = null,
     @SerializedName("moodPercentage") val percentage: Int? = null,
     @SerializedName("weeklyDataList") val weeklyOverview: List<WeeklyMoodResponse> = emptyList(),
-    @SerializedName("quickActions") val quickActions: List<QuickActionResponse> = emptyList(),
-    val currentStreak: Int = 0,
-    val isNewBest: Boolean = false
+    @SerializedName("quickActions") val quickActions: List<QuickActionResponse> = emptyList()
 )
 
 data class TodayMoodResponse(

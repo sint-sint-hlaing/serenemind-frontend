@@ -154,27 +154,6 @@ fun DashboardContent(
                             color = TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
-                        if (data.currentStreak > 0) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.padding(start = 8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("🔥", fontSize = 16.sp)
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "${data.currentStreak} days",
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
 

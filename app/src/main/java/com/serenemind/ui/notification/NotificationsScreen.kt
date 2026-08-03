@@ -257,11 +257,6 @@ fun getNotificationTypeDesign(type: String?): NotificationDesign {
             Color(0xFFFFF8E1), 
             Color(0xFFFFC107)
         )
-        "STREAK" -> NotificationDesign(
-            Icons.Default.Whatshot, 
-            Color(0xFFFBE9E7), 
-            Color(0xFFFF5722)
-        )
         "QUOTE" -> NotificationDesign(
             Icons.Default.FormatQuote, 
             Color(0xFFF3E5F5), 

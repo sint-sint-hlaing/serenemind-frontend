@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -104,26 +103,6 @@ fun GoalDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Streak Card
-                DetailCard(title = "Streak", value = "7 days") {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        val streak = 7
-                        repeat(10) { index ->
-                            Icon(
-                                imageVector = Icons.Default.Whatshot,
-                                contentDescription = null,
-                                tint = if (index < streak) Color(0xFFFF7043) else Color(0xFFE0E0E0),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // History Card
                 DetailCard(title = "History", value = "") {
                     Row(
@@ -169,7 +148,7 @@ fun DetailCard(title: String, value: String, content: @Composable () -> Unit) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
                 if (value.isNotEmpty()) {
-                    Text(value, color = if (title == "Streak") MaterialTheme.colorScheme.primary else TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(value, color = TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))

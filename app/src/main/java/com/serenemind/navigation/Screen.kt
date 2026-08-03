@@ -22,7 +22,6 @@ sealed class Screen(
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Filled.Assignment)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
-    object Streak : Screen("streak", "Streak", Icons.Default.Whatshot)
     object Goal : Screen("goal", "Goal", Icons.Default.Flag)
     object Community : Screen("community", "Community", Icons.Default.Groups)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)

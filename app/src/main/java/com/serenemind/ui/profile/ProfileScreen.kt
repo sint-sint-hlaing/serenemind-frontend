@@ -38,8 +38,7 @@ fun ProfileScreen(
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
-    onLogout: () -> Unit = {},
-    onNavigateToStreak: () -> Unit = {}
+    onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -156,11 +155,6 @@ fun ProfileScreen(
                             ) {
                                 Column {
                                     ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
-                                    ProfileMenuItem(
-                                        icon = Icons.Default.Whatshot,
-                                        title = "My Streaks",
-                                        onClick = onNavigateToStreak
-                                    )
                                     ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
 
                                     // Dark Mode Toggle

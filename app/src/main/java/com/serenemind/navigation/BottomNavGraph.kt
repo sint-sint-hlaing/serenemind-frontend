@@ -19,7 +19,6 @@ import com.serenemind.ui.goal.*
 import com.serenemind.ui.meditation.*
 import com.serenemind.ui.journal.*
 import com.serenemind.ui.notification.*
-import com.serenemind.ui.streak.*
 
 @Composable
 fun BottomNavGraph(
@@ -41,17 +40,15 @@ fun BottomNavGraph(
     val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
     val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
-    val streakRepository = remember { StreakRepository(apiService, tokenManager) }
     val moodRepository = remember { MoodRepository(apiService, tokenManager) }
     val goalRepository = remember { GoalRepository(goalApiService) }
     val meditationRepository = remember { MeditationRepository(meditationApiService) }
 
     // ViewModels
-    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository))
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
-    val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
 
@@ -152,13 +149,6 @@ fun BottomNavGraph(
             )
         }
 
-        composable(Screen.Streak.route) {
-            StreakScreen(
-                viewModel = streakViewModel,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
         composable(Screen.Community.route) {
             CommunityScreen(
                 viewModel = communityViewModel,
@@ -194,7 +184,6 @@ fun BottomNavGraph(
                 onBack = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
-                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack()
                 }
             )
@@ -212,7 +201,6 @@ fun BottomNavGraph(
                 onPostSuccess = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
-                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack()
                 }
             )
@@ -224,10 +212,7 @@ fun BottomNavGraph(
                 isDarkMode = isDarkMode,
                 onDarkModeToggle = onDarkModeToggle,
                 onNavigateToSettings = { },
-                onLogout = onLogout,
-                onNavigateToStreak = {
-                    navController.navigate(Screen.Streak.route)
-                }
+                onLogout = onLogout
             )
         }
     }
