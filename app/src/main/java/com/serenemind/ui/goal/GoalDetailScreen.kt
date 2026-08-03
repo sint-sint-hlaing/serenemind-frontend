@@ -28,6 +28,7 @@ import com.serenemind.ui.theme.*
 @Composable
 fun GoalDetailScreen(
     viewModel: GoalViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit = {}
 ) {
     val goal by viewModel.selectedGoal.collectAsState()
@@ -73,18 +74,18 @@ fun GoalDetailScreen(
                         strokeCap = StrokeCap.Round
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = g.progress.toString(), fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = TextPrimary)
-                        Text(text = "/${g.targetDays}", fontSize = 18.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
+                        Text(text = g.progress.toString(), fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(text = "/${g.targetDays}", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                Text(g.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(g.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = g.description ?: "Build a calm and peaceful mind.", 
-                    color = TextSecondary, 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -97,7 +98,7 @@ fun GoalDetailScreen(
                         progress = { g.progress.toFloat() / g.targetDays.toFloat() },
                         modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
                         color = Success,
-                        trackColor = Color(0xFFF0F0F0)
+                        trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0)
                     )
                 }
 
@@ -109,13 +110,13 @@ fun GoalDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        HistoryNode("May 6", true)
-                        HistoryNode("May 7", true)
-                        HistoryNode("May 8", true)
-                        HistoryNode("May 9", true)
-                        HistoryNode("May 10", true)
-                        HistoryNode("May 11", false)
-                        HistoryNode("May 12", null)
+                        HistoryNode("May 6", true, isDarkMode)
+                        HistoryNode("May 7", true, isDarkMode)
+                        HistoryNode("May 8", true, isDarkMode)
+                        HistoryNode("May 9", true, isDarkMode)
+                        HistoryNode("May 10", true, isDarkMode)
+                        HistoryNode("May 11", false, isDarkMode)
+                        HistoryNode("May 12", null, isDarkMode)
                     }
                 }
                 
@@ -146,9 +147,9 @@ fun DetailCard(title: String, value: String, content: @Composable () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                 if (value.isNotEmpty()) {
-                    Text(value, color = TextSecondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -158,7 +159,7 @@ fun DetailCard(title: String, value: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-fun HistoryNode(date: String, completed: Boolean?) {
+fun HistoryNode(date: String, completed: Boolean?, isDarkMode: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
@@ -166,9 +167,9 @@ fun HistoryNode(date: String, completed: Boolean?) {
                 .clip(CircleShape)
                 .background(
                     when (completed) {
-                        true -> Color(0xFFE8F5E9)
-                        false -> Color(0xFFFFEBEE)
-                        else -> Color(0xFFF5F5F5)
+                        true -> if (isDarkMode) Color(0xFF1B5E20).copy(alpha = 0.3f) else Color(0xFFE8F5E9)
+                        false -> if (isDarkMode) Color(0xFFB71C1C).copy(alpha = 0.3f) else Color(0xFFFFEBEE)
+                        else -> if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF5F5F5)
                     }
                 ),
             contentAlignment = Alignment.Center
@@ -176,14 +177,14 @@ fun HistoryNode(date: String, completed: Boolean?) {
             when (completed) {
                 true -> Icon(Icons.Default.Check, null, tint = Success, modifier = Modifier.size(18.dp))
                 false -> Text("✕", color = Error, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                else -> Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFE0E0E0)))
+                else -> Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)))
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = date,
             fontSize = 10.sp,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
     }

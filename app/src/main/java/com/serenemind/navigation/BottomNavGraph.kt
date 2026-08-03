@@ -59,6 +59,7 @@ fun BottomNavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 viewModel = homeViewModel,
+                isDarkMode = isDarkMode,
                 onLogout = onLogout,
                 onActionClick = { action ->
                     when (action.lowercase()) {
@@ -81,6 +82,7 @@ fun BottomNavGraph(
         composable(Screen.Notifications.route) {
             NotificationsScreen(
                 viewModel = notificationViewModel,
+                isDarkMode = isDarkMode,
                 onNavigateToPost = { postId ->
                     navController.navigate("post_detail/$postId")
                 },
@@ -90,6 +92,7 @@ fun BottomNavGraph(
 
         composable(Screen.Journal.route) {
             JournalScreen(
+                isDarkMode = isDarkMode,
                 onAddClick = { /* Navigate to New Journal */ },
                 onJournalClick = { /* Navigate to Detail */ }
             )
@@ -99,6 +102,7 @@ fun BottomNavGraph(
         composable(Screen.Mood.route) {
             MoodTrackerScreen(
                 viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onViewHistory = { navController.navigate(Screen.MoodHistory.route) }
             )
@@ -107,6 +111,7 @@ fun BottomNavGraph(
         composable(Screen.MoodHistory.route) {
             MoodHistoryScreen(
                 viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -114,6 +119,7 @@ fun BottomNavGraph(
         composable(Screen.Goal.route) {
             GoalScreen(
                 viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onGoalClick = { goal ->
                     goalViewModel.selectGoal(goal)
                     navController.navigate(Screen.GoalDetail.route)
@@ -135,6 +141,7 @@ fun BottomNavGraph(
         composable(Screen.GoalDetail.route) {
             GoalDetailScreen(
                 viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -145,6 +152,7 @@ fun BottomNavGraph(
             )
             MeditationScreen(
                 viewModel = meditationViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -152,6 +160,7 @@ fun BottomNavGraph(
         composable(Screen.Community.route) {
             CommunityScreen(
                 viewModel = communityViewModel,
+                isDarkMode = isDarkMode,
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
                 },

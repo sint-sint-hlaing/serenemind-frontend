@@ -106,7 +106,7 @@ fun PostDetailScreen(
                         Text(
                             text = "Comment as",
                             fontSize = 12.sp,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                         
@@ -181,7 +181,7 @@ fun PostDetailScreen(
             }
             is PostDetailUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message, color = Color.Red)
+                    Text(text = state.message, color = MaterialTheme.colorScheme.error)
                 }
             }
             is PostDetailUiState.Success -> {

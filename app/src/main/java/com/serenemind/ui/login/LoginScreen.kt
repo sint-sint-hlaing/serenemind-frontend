@@ -106,13 +106,13 @@ fun LoginScreen(
             Text(
                 text = "Log in to continue your\nSereneMind journey.",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Email
-            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
             TextField(
                 value = email,
                 onValueChange = { email = it },
@@ -121,7 +121,9 @@ fun LoginScreen(
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
 

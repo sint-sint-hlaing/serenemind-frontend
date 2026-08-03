@@ -43,14 +43,14 @@ fun WelcomeScreen(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder for the tree/leaf logo
                 contentDescription = "Logo",
                 modifier = Modifier.size(100.dp),
-                tint = Color(0xFF6750A4)
+                tint = MaterialTheme.colorScheme.primary
             )
 
             Text(
                 text = "SereneMind",
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF6750A4)
+                color = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -59,7 +59,7 @@ fun WelcomeScreen(
                 text = "Take care of your mind.\nEvery day.",
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
-                color = Color(0xFF6750A4).copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                 fontWeight = FontWeight.Medium
             )
 
@@ -72,7 +72,7 @@ fun WelcomeScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
@@ -85,9 +85,9 @@ fun WelcomeScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF6750A4))
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
             ) {
-                Text("Login", fontSize = 16.sp, color = Color(0xFF6750A4), fontWeight = FontWeight.Bold)
+                Text("Login", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(60.dp))

@@ -30,6 +30,7 @@ import com.serenemind.ui.theme.*
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    isDarkMode: Boolean,
     onActionClick: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
@@ -56,7 +57,7 @@ fun HomeScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                         Text(text = "Something went wrong", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = state.message, color = Color.Gray, fontSize = 14.sp, textAlign = TextAlign.Center)
+                        Text(text = state.message, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -71,7 +72,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         TextButton(onClick = onLogout) {
-                            Text("Logout & Sign In Again", color = Color.Gray)
+                            Text("Logout & Sign In Again", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -79,6 +80,7 @@ fun HomeScreen(
             is HomeUiState.Success -> {
                 DashboardContent(
                     data = state.data,
+                    isDarkMode = isDarkMode,
                     onActionClick = onActionClick,
                     onNotificationClick = onNotificationClick,
                     onMenuClick = onMenuClick
@@ -92,6 +94,7 @@ fun HomeScreen(
 @Composable
 fun DashboardContent(
     data: DashboardResponse,
+    isDarkMode: Boolean,
     onActionClick: (String) -> Unit,
     onNotificationClick: () -> Unit,
     onMenuClick: () -> Unit
@@ -138,7 +141,7 @@ fun DashboardContent(
                 Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                     Text(
                         text = data.date ?: "",
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -151,7 +154,7 @@ fun DashboardContent(
                             text = "${data.greeting ?: "Hello"}, ${data.username ?: "User"}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
+                            color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -204,11 +207,11 @@ fun DashboardContent(
                                 text = moodDisplay,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "How are you feeling today?",
-                                color = TextSecondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -234,7 +237,7 @@ fun DashboardContent(
                         text = "Weekly Overview",
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "View all",
@@ -265,7 +268,7 @@ fun DashboardContent(
                     text = "Quick Actions",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
@@ -273,6 +276,7 @@ fun DashboardContent(
 
                 QuickActionsGrid(
                     actions = data.quickActions,
+                    isDarkMode = isDarkMode,
                     onActionClick = onActionClick
                 )
 
@@ -312,7 +316,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
                 Text(
                     text = item.day?.take(3)?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "",
                     fontSize = 11.sp,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
@@ -353,6 +357,7 @@ fun getMoodBgColor(mood: MoodType): Color {
 @Composable
 fun QuickActionsGrid(
     actions: List<QuickActionResponse>,
+    isDarkMode: Boolean,
     onActionClick: (String) -> Unit
 ) {
     Row(
@@ -362,6 +367,7 @@ fun QuickActionsGrid(
         actions.forEach { action ->
             QuickActionItem(
                 action = action,
+                isDarkMode = isDarkMode,
                 modifier = Modifier.weight(1f),
                 onClick = {
                     onActionClick(action.route ?: "")
@@ -374,6 +380,7 @@ fun QuickActionsGrid(
 @Composable
 fun QuickActionItem(
     action: QuickActionResponse,
+    isDarkMode: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -397,7 +404,7 @@ fun QuickActionItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(getBackgroundColorForAction(action.title ?: "")),
+                    .background(getBackgroundColorForAction(action.title ?: "", isDarkMode)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -411,7 +418,7 @@ fun QuickActionItem(
             text = action.title ?: "",
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
@@ -419,11 +426,12 @@ fun QuickActionItem(
 }
 
 @Composable
-fun getBackgroundColorForAction(title: String): Color {
-    return when (title.lowercase()) {
+fun getBackgroundColorForAction(title: String, isDarkMode: Boolean): Color {
+    val baseColor = when (title.lowercase()) {
         "journal" -> ActionJournal
         "meditate", "meditation" -> ActionMeditation
         "goals" -> ActionGoals
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
+    return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor
 }

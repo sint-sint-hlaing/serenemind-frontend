@@ -24,6 +24,7 @@ import com.serenemind.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalScreen(
+    isDarkMode: Boolean,
     onAddClick: () -> Unit = {},
     onJournalClick: (Long) -> Unit = {}
 ) {
@@ -57,11 +58,11 @@ fun JournalScreen(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.Start
             ) {
-                JournalFilterTab("All", true)
+                JournalFilterTab("All", true, isDarkMode)
                 Spacer(modifier = Modifier.width(12.dp))
-                JournalFilterTab("Favorites", false)
+                JournalFilterTab("Favorites", false, isDarkMode)
                 Spacer(modifier = Modifier.width(12.dp))
-                JournalFilterTab("Tagged", false)
+                JournalFilterTab("Tagged", false, isDarkMode)
             }
 
             LazyColumn(
@@ -74,6 +75,7 @@ fun JournalScreen(
                         title = "A better day",
                         preview = "Today was a good day. I finished my tasks and spent time with my family in the evening which made me feel so relaxed and happy.",
                         date = "May 12, 2024",
+                        isDarkMode = isDarkMode,
                         onClick = { onJournalClick(1L) }
                     )
                 }
@@ -82,6 +84,7 @@ fun JournalScreen(
                         title = "Grateful for little things",
                         preview = "I am grateful for my family, friends and good health. Things are getting better. I just need to keep going.",
                         date = "May 10, 2024",
+                        isDarkMode = isDarkMode,
                         onClick = { onJournalClick(2L) }
                     )
                 }
@@ -90,6 +93,7 @@ fun JournalScreen(
                         title = "Overthinking",
                         preview = "Sometimes, I think too much about the future... but I should focus on the present moment.",
                         date = "May 08, 2024",
+                        isDarkMode = isDarkMode,
                         onClick = { onJournalClick(3L) }
                     )
                 }
@@ -98,6 +102,7 @@ fun JournalScreen(
                         title = "New beginnings",
                         preview = "Excited for what's coming next. I will do my best to stay positive.",
                         date = "May 05, 2024",
+                        isDarkMode = isDarkMode,
                         onClick = { onJournalClick(4L) }
                     )
                 }
@@ -107,16 +112,16 @@ fun JournalScreen(
 }
 
 @Composable
-fun JournalFilterTab(title: String, isSelected: Boolean) {
+fun JournalFilterTab(title: String, isSelected: Boolean, isDarkMode: Boolean) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFF5F5F5),
+        color = if (isSelected) MaterialTheme.colorScheme.primary else if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF5F5F5),
         modifier = Modifier.height(34.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 18.dp)) {
             Text(
                 text = title,
-                color = if (isSelected) Color.White else TextSecondary,
+                color = if (isSelected) Color.White else if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
@@ -125,7 +130,7 @@ fun JournalFilterTab(title: String, isSelected: Boolean) {
 }
 
 @Composable
-fun JournalEntryItem(title: String, preview: String, date: String, onClick: () -> Unit) {
+fun JournalEntryItem(title: String, preview: String, date: String, isDarkMode: Boolean, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -140,19 +145,19 @@ fun JournalEntryItem(title: String, preview: String, date: String, onClick: () -
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextPrimary)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurface)
                 Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(MoodHappy)) // Yellow dot like in design
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = preview,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 maxLines = 2,
                 lineHeight = 20.sp
             )
             Spacer(modifier = Modifier.height(14.dp))
-            Text(text = date, color = TextHint, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(text = date, color = if (isDarkMode) Color.Gray else TextHint, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

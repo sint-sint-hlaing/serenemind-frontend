@@ -35,6 +35,7 @@ import java.util.*
 @Composable
 fun MoodHistoryScreen(
     viewModel: MoodViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit = {}
 ) {
     val summary by viewModel.summaryState.collectAsState()
@@ -118,7 +119,7 @@ fun MoodHistoryScreen(
                                 text = monthYearFormat.format(calendar.time), 
                                 fontWeight = FontWeight.Bold, 
                                 fontSize = 18.sp,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             IconButton(onClick = { 
                                 val newCal = calendar.clone() as Calendar
@@ -135,7 +136,7 @@ fun MoodHistoryScreen(
                             daysOfWeek.forEach { day ->
                                 Text(
                                     text = day, 
-                                    color = TextSecondary, 
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
                                     fontSize = 12.sp, 
                                     modifier = Modifier.weight(1f), 
                                     textAlign = TextAlign.Center,
@@ -169,6 +170,7 @@ fun MoodHistoryScreen(
                                         day = day,
                                         mood = moodData?.mood,
                                         isSelected = isSelected,
+                                        isDarkMode = isDarkMode,
                                         onClick = { viewModel.selectDateMood(dateString) }
                                     )
                                 } else {
@@ -192,7 +194,7 @@ fun MoodHistoryScreen(
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
                                 text = formatDateNicely(mood.date),
-                                color = TextSecondary, 
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, 
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -213,7 +215,7 @@ fun MoodHistoryScreen(
                                         text = mood.mood.name.lowercase().replaceFirstChar { it.uppercase() },
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp,
-                                        color = TextPrimary
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = "${mood.intensity}%", 
@@ -222,7 +224,7 @@ fun MoodHistoryScreen(
                                         fontSize = 16.sp
                                     )
                                     mood.note?.let {
-                                        Text(it, color = TextSecondary, fontSize = 14.sp)
+                                        Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                                     }
                                 }
                             }
@@ -235,14 +237,14 @@ fun MoodHistoryScreen(
                             .height(100.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No mood recorded for this day", color = TextSecondary, fontSize = 14.sp)
+                        Text("No mood recorded for this day", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Mood Summary
-                Text("Mood Summary (This Week)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                Text("Mood Summary (This Week)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(20.dp))
                 
                 val moodColors = mapOf(
@@ -266,7 +268,7 @@ fun MoodHistoryScreen(
                         summary.forEach { (mood, percentage) ->
                             val moodKey = mood.uppercase()
                             val displayLabel = mood.lowercase().replaceFirstChar { it.uppercase() }
-                            SummaryItem(displayLabel, percentage.toInt(), moodColors[moodKey] ?: Color.Gray)
+                            SummaryItem(displayLabel, percentage.toInt(), moodColors[moodKey] ?: MaterialTheme.colorScheme.outline)
                         }
                     }
                 }
@@ -280,6 +282,7 @@ fun CalendarDayItem(
     day: Int, 
     mood: MoodType?, 
     isSelected: Boolean,
+    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     Box(
@@ -314,7 +317,7 @@ fun CalendarDayItem(
                 Text(
                     text = day.toString(),
                     fontSize = 12.sp,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
                 )
                 if (mood != null) {
@@ -364,8 +367,8 @@ fun SummaryItem(label: String, percentage: Int, color: Color) {
                 .background(color)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = TextPrimary)
-        Text(text = "$percentage%", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+        Text(text = label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = "$percentage%", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

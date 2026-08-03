@@ -36,6 +36,7 @@ import java.util.*
 @Composable
 fun CommunityScreen(
     viewModel: CommunityViewModel,
+    isDarkMode: Boolean,
     onPostClick: (PostResponse, Boolean) -> Unit,
     onCreatePostClick: () -> Unit
 ) {
@@ -80,7 +81,7 @@ fun CommunityScreen(
                 horizontalArrangement = Arrangement.Start
             ) {
                 tabs.forEachIndexed { index, title ->
-                    CommunityTab(title, selectedTab == index) { selectedTab = index }
+                    CommunityTab(title, selectedTab == index, isDarkMode) { selectedTab = index }
                     if (index < tabs.size - 1) Spacer(modifier = Modifier.width(12.dp))
                 }
             }
@@ -118,17 +119,17 @@ fun CommunityScreen(
 }
 
 @Composable
-fun CommunityTab(title: String, isSelected: Boolean, onClick: () -> Unit) {
+fun CommunityTab(title: String, isSelected: Boolean, isDarkMode: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFF5F5F5),
+        color = if (isSelected) MaterialTheme.colorScheme.primary else if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF5F5F5),
         modifier = Modifier.height(34.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 18.dp)) {
             Text(
                 text = title,
-                color = if (isSelected) Color.White else TextSecondary,
+                color = if (isSelected) Color.White else if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
@@ -167,12 +168,12 @@ fun PostItem(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
-                    Text(text = formatPostDate(post.createdAt), color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = post.content, fontSize = 14.sp, color = TextPrimary, lineHeight = 20.sp)
+            Text(text = post.content, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
             
             if (post.imageUrl != null) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -202,7 +203,7 @@ fun PostItem(
                         Icon(
                             imageVector = if (post.isLikedByMe) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Like",
-                            tint = if (post.isLikedByMe) Color(0xFFFF4081) else TextSecondary,
+                            tint = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -210,7 +211,7 @@ fun PostItem(
                             text = post.likeCount.toString(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (post.isLikedByMe) Color(0xFFFF4081) else TextSecondary
+                            color = if (post.isLikedByMe) Color(0xFFFF4081) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -224,7 +225,7 @@ fun PostItem(
                         Icon(
                             imageVector = Icons.Outlined.ChatBubbleOutline,
                             contentDescription = "Comment",
-                            tint = TextSecondary,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -232,7 +233,7 @@ fun PostItem(
                             text = post.commentCount.toString(), 
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -241,7 +242,7 @@ fun PostItem(
                     Icon(
                         imageVector = Icons.Outlined.BookmarkBorder,
                         contentDescription = "Bookmark",
-                        tint = TextSecondary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }

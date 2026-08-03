@@ -29,6 +29,7 @@ import com.serenemind.ui.theme.*
 @Composable
 fun MoodTrackerScreen(
     viewModel: MoodViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit = {},
     onViewHistory: () -> Unit = {}
 ) {
@@ -78,11 +79,11 @@ fun MoodTrackerScreen(
                     "How are you feeling today?",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     "Let's check in with your emotions",
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
 
@@ -111,7 +112,7 @@ fun MoodTrackerScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                    Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
                     Text("${intensity.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                 }
 
@@ -122,7 +123,7 @@ fun MoodTrackerScreen(
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = Color(0xFFE0E0E0)
+                        inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFE0E0E0)
                     )
                 )
 
@@ -132,7 +133,7 @@ fun MoodTrackerScreen(
                     "Add a note (optional)",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedTextField(
@@ -144,7 +145,7 @@ fun MoodTrackerScreen(
                         .height(140.dp),
                     shape = RoundedCornerShape(20.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFE0E0E0),
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedContainerColor = MaterialTheme.colorScheme.surface
@@ -211,7 +212,7 @@ fun MoodItemView(mood: MoodType, isSelected: Boolean, onClick: () -> Unit) {
             text = mood.name.lowercase().replaceFirstChar { it.uppercase() },
             fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else TextSecondary
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
