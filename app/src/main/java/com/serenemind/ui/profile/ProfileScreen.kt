@@ -166,13 +166,32 @@ fun ProfileScreen(
                                     elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
                                     border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0))
                                 ) {
+                                    val activity = state.activity
                                     Row(
                                         modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceAround
                                     ) {
-                                        ActivityItem(icon = Icons.AutoMirrored.Filled.Assignment, label = "Journals", value = "36", subValue = "entries", color = Color(0xFF9C27B0))
-                                        ActivityItem(icon = Icons.Default.Flag, label = "Goals Completed", value = "7", subValue = "goals", color = Color(0xFF4CAF50))
-                                        ActivityItem(icon = Icons.Default.Create, label = "Posts", value = "24", subValue = "posts", color = Color(0xFFFF9800))
+                                        ActivityItem(
+                                            icon = Icons.AutoMirrored.Filled.Assignment, 
+                                            label = "Journals", 
+                                            value = activity?.totalJournals?.toString() ?: "0", 
+                                            subValue = "entries", 
+                                            color = Color(0xFF9C27B0)
+                                        )
+                                        ActivityItem(
+                                            icon = Icons.Default.Flag, 
+                                            label = "Goals Completed", 
+                                            value = activity?.goalsCompleted?.toString() ?: "0", 
+                                            subValue = "goals", 
+                                            color = Color(0xFF4CAF50)
+                                        )
+                                        ActivityItem(
+                                            icon = Icons.Default.Create, 
+                                            label = "Posts", 
+                                            value = activity?.totalPosts?.toString() ?: "0", 
+                                            subValue = "posts", 
+                                            color = Color(0xFFFF9800)
+                                        )
                                     }
                                 }
                             }

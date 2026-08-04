@@ -3,6 +3,7 @@ package com.serenemind.repository
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.ApiService
 import com.serenemind.model.response.UserProfileResponse
+import com.serenemind.model.response.UserActivityResponse
 import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 
@@ -17,6 +18,14 @@ class UserRepository(
         } catch (e: Exception) {
             // Rethrow or emit specific error response. Emitting error response to keep Flow alive.
             emit(Response.error<UserProfileResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    fun getUserActivity() = flow {
+        try {
+            emit(apiService.getUserActivity())
+        } catch (e: Exception) {
+            emit(Response.error<UserActivityResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
 

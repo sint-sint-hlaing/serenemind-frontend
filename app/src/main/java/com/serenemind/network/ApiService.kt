@@ -21,6 +21,9 @@ interface ApiService {
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
 
+    @GET("api/users/activity")
+    suspend fun getUserActivity(): Response<UserActivityResponse>
+
     @GET("api/dashboard")
     suspend fun getDashboardData(): Response<DashboardResponse>
 
