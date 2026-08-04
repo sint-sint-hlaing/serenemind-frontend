@@ -18,9 +18,9 @@ class CommunityRepository(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
 ) {
-    fun getPosts(): Flow<Response<List<PostResponse>>> = flow {
+    fun getPosts(filter: String? = null): Flow<Response<List<PostResponse>>> = flow {
         try {
-            emit(apiService.getPosts())
+            emit(apiService.getPosts(filter))
         } catch (e: Exception) {
             emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }

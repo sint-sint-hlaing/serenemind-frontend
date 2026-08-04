@@ -17,20 +17,19 @@ class CommunityViewModel(
     private val _uiState = MutableStateFlow<CommunityUiState>(CommunityUiState.Loading)
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
 
-    init {
-        fetchPosts(isInitialLoad = true)
-    }
+    private var currentFilter: String? = null
 
     fun refresh() {
-        fetchPosts(isInitialLoad = false)
+        fetchPosts(isInitialLoad = false, filter = currentFilter)
     }
 
-    fun fetchPosts(isInitialLoad: Boolean = false) {
+    fun fetchPosts(isInitialLoad: Boolean = false, filter: String? = null) {
+        currentFilter = filter
         viewModelScope.launch {
             if (isInitialLoad) {
                 _uiState.value = CommunityUiState.Loading
             }
-            communityRepository.getPosts()
+            communityRepository.getPosts(filter)
                 .catch { e ->
                     if (isInitialLoad) _uiState.value = CommunityUiState.Error("Exception: ${e.message}")
                 }

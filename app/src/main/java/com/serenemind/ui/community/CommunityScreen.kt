@@ -50,17 +50,17 @@ fun CommunityScreen(
     val currentUsername = (profileState as? ProfileUiState.Success)?.user?.username
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Popular", "Recent", "Following")
+    val tabs = listOf("Popular", "Recent")
+
+    LaunchedEffect(selectedTab) {
+        val filter = if (selectedTab == 0) "popular" else null
+        viewModel.fetchPosts(isInitialLoad = true, filter = filter)
+    }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Community", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-                actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                    }
-                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },

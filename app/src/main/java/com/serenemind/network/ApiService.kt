@@ -68,7 +68,7 @@ interface ApiService {
     suspend fun deleteMood(@Path("id") id: Long): Response<Unit>
 
     @GET("api/posts")
-    suspend fun getPosts(): Response<List<PostResponse>>
+    suspend fun getPosts(@Query("filter") filter: String? = null): Response<List<PostResponse>>
 
     @GET("api/posts/{id}")
     suspend fun getPostById(@Path("id") postId: Long): Response<PostResponse>
