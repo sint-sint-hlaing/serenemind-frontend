@@ -193,9 +193,9 @@ fun ProfileScreen(
                                         iconTint = Color.Gray
                                     )
                                     ProfileMenuItem(
-                                        icon = Icons.Default.Favorite, 
-                                        title = "Saved & Favorites",
-                                        iconTint = Color(0xFFEF5350),
+                                        icon = Icons.Default.Bookmark, 
+                                        title = "Saved Post",
+                                        iconTint = Color(0xFF2196F3),
                                         onClick = onNavigateToSavedPosts
                                     )
 
