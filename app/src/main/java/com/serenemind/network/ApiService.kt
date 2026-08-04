@@ -21,6 +21,9 @@ interface ApiService {
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
 
+    @GET("api/users/personal-info")
+    suspend fun getPersonalInfo(): Response<PersonalInfoResponse>
+
     @Multipart
     @PUT("api/users/me")
     suspend fun updateUserProfile(

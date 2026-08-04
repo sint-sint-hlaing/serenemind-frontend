@@ -230,7 +230,20 @@ fun BottomNavGraph(
                 },
                 onNavigateToEditProfile = {
                     navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToPersonalInfo = {
+                    navController.navigate(Screen.PersonalInfo.route)
                 }
+            )
+        }
+
+        composable(Screen.PersonalInfo.route) {
+            val personalInfoViewModel: PersonalInfoViewModel = viewModel(
+                factory = PersonalInfoViewModelFactory(userRepository)
+            )
+            PersonalInfoScreen(
+                viewModel = personalInfoViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 

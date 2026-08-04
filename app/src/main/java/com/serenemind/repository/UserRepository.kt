@@ -4,6 +4,7 @@ import com.serenemind.datastore.TokenManager
 import com.serenemind.network.ApiService
 import com.serenemind.model.response.UserProfileResponse
 import com.serenemind.model.response.UserActivityResponse
+import com.serenemind.model.response.PersonalInfoResponse
 import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -29,6 +30,14 @@ class UserRepository(
             emit(apiService.getUserActivity())
         } catch (e: Exception) {
             emit(Response.error<UserActivityResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    fun getPersonalInfo() = flow {
+        try {
+            emit(apiService.getPersonalInfo())
+        } catch (e: Exception) {
+            emit(Response.error<PersonalInfoResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
 

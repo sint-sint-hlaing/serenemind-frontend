@@ -44,7 +44,8 @@ fun ProfileScreen(
     onLogout: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToSavedPosts: () -> Unit = {},
-    onNavigateToEditProfile: () -> Unit = {}
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToPersonalInfo: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -215,7 +216,7 @@ fun ProfileScreen(
                                         icon = Icons.Default.Person, 
                                         title = "Personal Information",
                                         iconTint = Color.Gray,
-                                        onClick = onNavigateToEditProfile
+                                        onClick = onNavigateToPersonalInfo
                                     )
                                     ProfileMenuItem(
                                         icon = Icons.Default.Bookmark, 
