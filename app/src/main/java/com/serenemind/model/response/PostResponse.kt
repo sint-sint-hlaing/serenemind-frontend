@@ -11,6 +11,7 @@ data class PostResponse(
     val likeCount: Int,
     val commentCount: Int,
     @SerializedName("likedByMe") val isLikedByMe: Boolean,
+    @SerializedName("savedByMe") val isSavedByMe: Boolean = false,
     val createdAt: String,
     val anonymous: Boolean = false
 )

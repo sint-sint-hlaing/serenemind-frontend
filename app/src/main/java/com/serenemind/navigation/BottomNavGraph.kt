@@ -224,6 +224,9 @@ fun BottomNavGraph(
                 onLogout = onLogout,
                 onNavigateToAbout = {
                     navController.navigate(Screen.About.route)
+                },
+                onNavigateToSavedPosts = {
+                    navController.navigate(Screen.SavedPosts.route)
                 }
             )
         }
@@ -232,6 +235,19 @@ fun BottomNavGraph(
             AboutScreen(
                 isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.SavedPosts.route) {
+            val savedPostsViewModel: SavedPostsViewModel = viewModel(
+                factory = SavedPostsViewModelFactory(communityRepository)
+            )
+            SavedPostsScreen(
+                viewModel = savedPostsViewModel,
+                onBack = { navController.popBackStack() },
+                onPostClick = { post, focusComments ->
+                    navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
+                }
             )
         }
     }

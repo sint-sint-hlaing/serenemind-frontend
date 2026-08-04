@@ -33,4 +33,5 @@ sealed class Screen(
     object CreatePost : Screen("create_post")
     object Meditation : Screen("meditation")
     object About : Screen("about")
+    object SavedPosts : Screen("saved_posts")
 }

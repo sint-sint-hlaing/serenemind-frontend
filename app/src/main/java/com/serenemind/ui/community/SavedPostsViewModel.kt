@@ -2,7 +2,6 @@ package com.serenemind.ui.community
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.serenemind.model.response.PostResponse
 import com.serenemind.repository.CommunityRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class CommunityViewModel(
+class SavedPostsViewModel(
     private val communityRepository: CommunityRepository
 ) : ViewModel() {
 
@@ -18,19 +17,19 @@ class CommunityViewModel(
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
 
     init {
-        fetchPosts(isInitialLoad = true)
+        fetchSavedPosts(isInitialLoad = true)
     }
 
     fun refresh() {
-        fetchPosts(isInitialLoad = false)
+        fetchSavedPosts(isInitialLoad = false)
     }
 
-    fun fetchPosts(isInitialLoad: Boolean = false) {
+    fun fetchSavedPosts(isInitialLoad: Boolean = false) {
         viewModelScope.launch {
             if (isInitialLoad) {
                 _uiState.value = CommunityUiState.Loading
             }
-            communityRepository.getPosts()
+            communityRepository.getSavedPosts()
                 .catch { e ->
                     if (isInitialLoad) _uiState.value = CommunityUiState.Error("Exception: ${e.message}")
                 }
@@ -48,7 +47,6 @@ class CommunityViewModel(
     fun likePost(postId: Long) {
         val currentState = _uiState.value
         if (currentState is CommunityUiState.Success) {
-            // Optimistic UI update
             val updatedPosts = currentState.posts.map { post ->
                 if (post.id == postId) {
                     val isLiked = !post.isLikedByMe
@@ -63,37 +61,23 @@ class CommunityViewModel(
             viewModelScope.launch {
                 val response = communityRepository.likePost(postId)
                 if (!response.isSuccessful) {
-                    // Rollback on failure
                     _uiState.value = currentState
-                } else {
-                    // Refresh silently to sync with server
-                    fetchPosts(isInitialLoad = false)
                 }
             }
         }
     }
 
-    fun savePost(postId: Long) {
+    fun toggleSave(postId: Long) {
         val currentState = _uiState.value
         if (currentState is CommunityUiState.Success) {
-            // Optimistic UI update
-            val updatedPosts = currentState.posts.map { post ->
-                if (post.id == postId) {
-                    post.copy(isSavedByMe = !post.isSavedByMe)
-                } else {
-                    post
-                }
-            }
+            // Optimistic UI update: Remove from saved list if we're unsaving
+            val updatedPosts = currentState.posts.filterNot { it.id == postId }
             _uiState.value = CommunityUiState.Success(updatedPosts)
 
             viewModelScope.launch {
                 val response = communityRepository.toggleSavePost(postId)
                 if (!response.isSuccessful) {
-                    // Rollback on failure
                     _uiState.value = currentState
-                } else {
-                    // Refresh silently to sync with server
-                    fetchPosts(isInitialLoad = false)
                 }
             }
         }

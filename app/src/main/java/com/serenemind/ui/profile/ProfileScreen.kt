@@ -41,7 +41,8 @@ fun ProfileScreen(
     onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToSavedPosts: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -194,7 +195,8 @@ fun ProfileScreen(
                                     ProfileMenuItem(
                                         icon = Icons.Default.Favorite, 
                                         title = "Saved & Favorites",
-                                        iconTint = Color(0xFFEF5350)
+                                        iconTint = Color(0xFFEF5350),
+                                        onClick = onNavigateToSavedPosts
                                     )
 
                                     // Dark Mode Toggle

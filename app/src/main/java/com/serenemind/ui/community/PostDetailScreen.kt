@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -194,7 +196,8 @@ fun PostDetailScreen(
                     item {
                         PostHeader(
                             post = state.post,
-                            onLikeClick = { viewModel.likePost() }
+                            onLikeClick = { viewModel.likePost() },
+                            onSaveClick = { viewModel.savePost() }
                         )
                     }
                     item {
@@ -230,17 +233,20 @@ fun PostDetailPreview() {
             likeCount = 24,
             commentCount = 6,
             isLikedByMe = true,
+            isSavedByMe = false,
             createdAt = "2 hours ago",
             anonymous = false
         ),
-        onLikeClick = {}
+        onLikeClick = {},
+        onSaveClick = {}
     )
 }
 
 @Composable
 fun PostHeader(
     post: PostResponse,
-    onLikeClick: () -> Unit
+    onLikeClick: () -> Unit,
+    onSaveClick: () -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -312,12 +318,14 @@ fun PostHeader(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Icon(
-                imageVector = Icons.Outlined.BookmarkBorder,
-                contentDescription = "Bookmark",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-            )
+            IconButton(onClick = onSaveClick) {
+                Icon(
+                    imageVector = if (post.isSavedByMe) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                    contentDescription = "Bookmark",
+                    tint = if (post.isSavedByMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp)

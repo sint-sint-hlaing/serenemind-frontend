@@ -50,6 +50,22 @@ class CommunityRepository(
         }
     }
 
+    suspend fun toggleSavePost(postId: Long): Response<Unit> {
+        return try {
+            apiService.toggleSavePost(postId)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    fun getSavedPosts(): Flow<Response<List<PostResponse>>> = flow {
+        try {
+            emit(apiService.getSavedPosts())
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
     suspend fun addComment(
         postId: Long,
         content: String,

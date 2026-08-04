@@ -63,6 +63,12 @@ interface ApiService {
     @POST("api/posts/{id}/like")
     suspend fun likePost(@Path("id") postId: Long): Response<Unit>
 
+    @POST("api/posts/{id}/save")
+    suspend fun toggleSavePost(@Path("id") postId: Long): Response<Unit>
+
+    @GET("api/posts/saved")
+    suspend fun getSavedPosts(): Response<List<PostResponse>>
+
     @POST("api/posts/{id}/comments")
     suspend fun addComment(
         @Path("id") postId: Long,
