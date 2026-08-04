@@ -203,7 +203,7 @@ fun PostDetailScreen(
                     item {
                         PostHeader(
                             post = state.post,
-                            isOwnPost = state.post.username == currentUsername,
+                            isOwnPost = state.post.username == currentUsername || state.post.username.endsWith("(You)"),
                             onLikeClick = { viewModel.likePost() },
                             onSaveClick = { viewModel.savePost() },
                             onDeleteClick = {
@@ -222,7 +222,10 @@ fun PostDetailScreen(
                         )
                     }
                     items(state.comments) { comment ->
-                        CommentItem(comment)
+                        CommentItem(
+                            comment = comment,
+                            isOwnComment = comment.username == currentUsername || comment.username.endsWith("(You)") || (comment.id == -1L && !comment.anonymous)
+                        )
                     }
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -298,8 +301,12 @@ fun PostHeader(
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val displayName = post.username
-                val displayAvatar = if (post.anonymous) null else post.userProfilePicture
+                val displayName = when {
+                    post.anonymous && isOwnPost -> "Anonymous (You)"
+                    post.anonymous -> "Anonymous"
+                    else -> post.username
+                }
+                val displayAvatar = if (post.anonymous) com.serenemind.R.drawable.anonymous_avatar else post.userProfilePicture
                 
                 AsyncImage(
                     model = displayAvatar,
@@ -405,7 +412,10 @@ fun PostHeader(
 }
 
 @Composable
-fun CommentItem(comment: CommentResponse) {
+fun CommentItem(
+    comment: CommentResponse,
+    isOwnComment: Boolean = false
+) {
     val isPending = comment.id == -1L // Local pending state
     
     Row(
@@ -414,17 +424,21 @@ fun CommentItem(comment: CommentResponse) {
             .padding(16.dp)
             .alpha(if (isPending) 0.6f else 1f) // Grey out while sending
     ) {
-        val displayName = comment.username
-        val displayAvatar = if (comment.anonymous) null else comment.userProfilePicture
-        val avatarRes = getAvatarResource(displayAvatar)
+        val displayName = when {
+            comment.anonymous && isOwnComment -> "Anonymous (You)"
+            comment.anonymous -> "Anonymous"
+            else -> comment.username
+        }
+        val displayAvatar = if (comment.anonymous) com.serenemind.R.drawable.anonymous_avatar else comment.userProfilePicture
         
-        androidx.compose.foundation.Image(
-            painter = painterResource(id = avatarRes),
+        AsyncImage(
+            model = displayAvatar,
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            error = painterResource(id = getAvatarResource(null))
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column {

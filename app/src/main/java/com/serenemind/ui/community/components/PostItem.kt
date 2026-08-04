@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.serenemind.R
 import com.serenemind.model.response.PostResponse
 import com.serenemind.util.formatPostDate
 import com.serenemind.util.getAvatarResource
@@ -87,8 +88,12 @@ fun PostItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val displayName = if (post.anonymous) "Anonymous" else post.username
-                    val displayAvatar = if (post.anonymous) null else post.userProfilePicture
+                    val displayName = when {
+                        post.anonymous && isOwnPost -> "Anonymous (You)"
+                        post.anonymous -> "Anonymous"
+                        else -> post.username
+                    }
+                    val displayAvatar = if (post.anonymous) com.serenemind.R.drawable.anonymous_avatar else post.userProfilePicture
                     
                     AsyncImage(
                         model = displayAvatar,

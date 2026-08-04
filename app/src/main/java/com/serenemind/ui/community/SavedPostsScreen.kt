@@ -153,7 +153,7 @@ fun SavedPostsScreen(
                             items(state.posts) { post ->
                                 PostItem(
                                     post = post,
-                                    isOwnPost = post.username == currentUsername,
+                                    isOwnPost = post.username == currentUsername || post.username.endsWith("(You)"),
                                     onClick = { onPostClick(post, false) },
                                     onCommentClick = { onPostClick(post, true) },
                                     onLikeClick = { viewModel.likePost(post.id) },
