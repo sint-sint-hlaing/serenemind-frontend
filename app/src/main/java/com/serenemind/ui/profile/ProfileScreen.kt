@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.serenemind.R
 import com.serenemind.ui.theme.*
 import com.serenemind.util.getAvatarResource
@@ -42,7 +43,8 @@ fun ProfileScreen(
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onNavigateToSavedPosts: () -> Unit = {}
+    onNavigateToSavedPosts: () -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -110,14 +112,15 @@ fun ProfileScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = getAvatarResource(user.avatar)),
+                                    AsyncImage(
+                                        model = user.avatar,
                                         contentDescription = "User Avatar",
                                         modifier = Modifier
                                             .size(72.dp)
                                             .clip(CircleShape)
                                             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                                        contentScale = ContentScale.Crop
+                                        contentScale = ContentScale.Crop,
+                                        error = painterResource(id = getAvatarResource(null))
                                     )
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
@@ -134,7 +137,7 @@ fun ProfileScreen(
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "\"Be kind to your mind.\"",
+                                            text = user.bio?.let { "\"$it\"" } ?: "\"Be kind to your mind.\"",
                                             fontSize = 13.sp,
                                             color = if (isDarkMode) MaterialTheme.colorScheme.primary else Color(0xFF673AB7)
                                         )
@@ -143,7 +146,9 @@ fun ProfileScreen(
                                         imageVector = Icons.Default.Edit,
                                         contentDescription = "Edit Profile",
                                         tint = if (isDarkMode) Color.LightGray else Color.Gray,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { onNavigateToEditProfile() }
                                     )
                                 }
                             }
@@ -209,7 +214,8 @@ fun ProfileScreen(
                                     ProfileMenuItem(
                                         icon = Icons.Default.Person, 
                                         title = "Personal Information",
-                                        iconTint = Color.Gray
+                                        iconTint = Color.Gray,
+                                        onClick = onNavigateToEditProfile
                                     )
                                     ProfileMenuItem(
                                         icon = Icons.Default.Bookmark, 

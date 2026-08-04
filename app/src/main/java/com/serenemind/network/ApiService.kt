@@ -21,6 +21,16 @@ interface ApiService {
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
 
+    @Multipart
+    @PUT("api/users/me")
+    suspend fun updateUserProfile(
+        @Part("fullname") fullname: RequestBody,
+        @Part("username") username: RequestBody,
+        @Part("birthday") birthday: RequestBody,
+        @Part("bio") bio: RequestBody,
+        @Part avatar: MultipartBody.Part? = null
+    ): Response<UserProfileResponse>
+
     @GET("api/users/activity")
     suspend fun getUserActivity(): Response<UserActivityResponse>
 

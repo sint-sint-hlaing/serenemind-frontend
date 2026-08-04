@@ -227,6 +227,23 @@ fun BottomNavGraph(
                 },
                 onNavigateToSavedPosts = {
                     navController.navigate(Screen.SavedPosts.route)
+                },
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            val editProfileViewModel: EditProfileViewModel = viewModel(
+                factory = EditProfileViewModelFactory(userRepository)
+            )
+            EditProfileScreen(
+                viewModel = editProfileViewModel,
+                onBack = { navController.popBackStack() },
+                onSuccess = {
+                    profileViewModel.fetchUserProfile()
+                    navController.popBackStack()
                 }
             )
         }

@@ -5,6 +5,9 @@ import com.serenemind.network.ApiService
 import com.serenemind.model.response.UserProfileResponse
 import com.serenemind.model.response.UserActivityResponse
 import kotlinx.coroutines.flow.flow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 
 class UserRepository(
@@ -26,6 +29,25 @@ class UserRepository(
             emit(apiService.getUserActivity())
         } catch (e: Exception) {
             emit(Response.error<UserActivityResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    suspend fun updateUserProfile(
+        fullname: String,
+        username: String,
+        birthday: String,
+        bio: String,
+        avatarPart: MultipartBody.Part?
+    ): Response<UserProfileResponse> {
+        return try {
+            val fullnameBody = fullname.toRequestBody("text/plain".toMediaTypeOrNull())
+            val usernameBody = username.toRequestBody("text/plain".toMediaTypeOrNull())
+            val birthdayBody = birthday.toRequestBody("text/plain".toMediaTypeOrNull())
+            val bioBody = bio.toRequestBody("text/plain".toMediaTypeOrNull())
+            
+            apiService.updateUserProfile(fullnameBody, usernameBody, birthdayBody, bioBody, avatarPart)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }
     }
 
