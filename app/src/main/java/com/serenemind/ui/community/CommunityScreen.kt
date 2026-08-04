@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -28,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.PostResponse
 import com.serenemind.ui.community.components.PostItem
+import com.serenemind.ui.profile.ProfileUiState
+import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.theme.*
 import com.serenemind.util.formatPostDate
 import com.serenemind.util.getAvatarResource
@@ -37,11 +40,15 @@ import java.util.*
 @Composable
 fun CommunityScreen(
     viewModel: CommunityViewModel,
+    profileViewModel: ProfileViewModel,
     isDarkMode: Boolean,
     onPostClick: (PostResponse, Boolean) -> Unit,
     onCreatePostClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profileState by profileViewModel.uiState.collectAsState()
+    val currentUsername = (profileState as? ProfileUiState.Success)?.user?.username
+
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Popular", "Recent", "Following")
 
@@ -54,15 +61,16 @@ fun CommunityScreen(
                         Icon(Icons.Default.Notifications, contentDescription = "Notifications")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreatePostClick,
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = Color(0xFF7E57C2),
                 contentColor = Color.White,
-                shape = CircleShape
+                shape = CircleShape,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Post")
             }
@@ -78,7 +86,7 @@ fun CommunityScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.Start
             ) {
                 tabs.forEachIndexed { index, title ->
@@ -90,28 +98,38 @@ fun CommunityScreen(
             when (val state = uiState) {
                 is CommunityUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        CircularProgressIndicator(color = Color(0xFF7E57C2))
                     }
                 }
                 is CommunityUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+                            Text(text = state.message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                            Button(onClick = { viewModel.refresh() }, modifier = Modifier.padding(top = 16.dp)) {
+                                Text("Retry")
+                            }
+                        }
                     }
                 }
                 is CommunityUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(state.posts) { post ->
                             PostItem(
                                 post = post,
+                                isOwnPost = post.username == currentUsername,
                                 onClick = { onPostClick(post, false) },
                                 onCommentClick = { onPostClick(post, true) },
                                 onLikeClick = { viewModel.likePost(post.id) },
-                                onSaveClick = { viewModel.savePost(post.id) }
+                                onSaveClick = { viewModel.savePost(post.id) },
+                                onDeleteClick = { viewModel.deletePost(post.id) }
                             )
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
                 }

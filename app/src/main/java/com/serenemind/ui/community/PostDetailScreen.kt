@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ThumbUpOffAlt
@@ -38,6 +39,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.CommentResponse
 import com.serenemind.model.response.PostResponse
+import com.serenemind.ui.profile.ProfileUiState
+import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.util.getAvatarResource
 import com.serenemind.util.formatPostDate
 
@@ -45,10 +48,14 @@ import com.serenemind.util.formatPostDate
 @Composable
 fun PostDetailScreen(
     viewModel: PostDetailViewModel,
+    profileViewModel: ProfileViewModel,
     focusComments: Boolean = false,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profileState by profileViewModel.uiState.collectAsState()
+    val currentUsername = (profileState as? ProfileUiState.Success)?.user?.username
+
     var commentText by remember { mutableStateOf("") }
     var isAnonymous by remember { mutableStateOf(false) }
 
@@ -196,8 +203,14 @@ fun PostDetailScreen(
                     item {
                         PostHeader(
                             post = state.post,
+                            isOwnPost = state.post.username == currentUsername,
                             onLikeClick = { viewModel.likePost() },
-                            onSaveClick = { viewModel.savePost() }
+                            onSaveClick = { viewModel.savePost() },
+                            onDeleteClick = {
+                                viewModel.deletePost {
+                                    onBack()
+                                }
+                            }
                         )
                     }
                     item {
@@ -245,27 +258,86 @@ fun PostDetailPreview() {
 @Composable
 fun PostHeader(
     post: PostResponse,
+    isOwnPost: Boolean = false,
     onLikeClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Post") },
+            text = { Text("Are you sure you want to delete this post? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteClick?.invoke()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val displayName = post.username
-            val displayAvatar = if (post.anonymous) null else post.userProfilePicture
-            val avatarRes = getAvatarResource(displayAvatar)
-            
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = avatarRes),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val displayName = post.username
+                val displayAvatar = if (post.anonymous) null else post.userProfilePicture
+                
+                AsyncImage(
+                    model = displayAvatar,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = getAvatarResource(null))
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                }
+            }
+
+            if (isOwnPost) {
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Delete Post", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                showMenu = false
+                                showDeleteDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            }
+                        )
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))

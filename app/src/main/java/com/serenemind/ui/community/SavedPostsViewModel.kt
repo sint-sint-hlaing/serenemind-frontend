@@ -82,4 +82,19 @@ class SavedPostsViewModel(
             }
         }
     }
+
+    fun deletePost(postId: Long) {
+        val currentState = _uiState.value
+        if (currentState is CommunityUiState.Success) {
+            val updatedPosts = currentState.posts.filterNot { it.id == postId }
+            _uiState.value = CommunityUiState.Success(updatedPosts)
+
+            viewModelScope.launch {
+                val response = communityRepository.deletePost(postId)
+                if (!response.isSuccessful) {
+                    _uiState.value = currentState
+                }
+            }
+        }
+    }
 }

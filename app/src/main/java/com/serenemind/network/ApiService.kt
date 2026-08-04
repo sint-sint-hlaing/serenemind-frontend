@@ -73,6 +73,9 @@ interface ApiService {
     @GET("api/posts/{id}")
     suspend fun getPostById(@Path("id") postId: Long): Response<PostResponse>
 
+    @DELETE("api/posts/{id}")
+    suspend fun deletePost(@Path("id") postId: Long): Response<Unit>
+
     @GET("api/posts/{id}/comments")
     suspend fun getComments(@Path("id") postId: Long): Response<List<CommentResponse>>
 

@@ -98,4 +98,21 @@ class CommunityViewModel(
             }
         }
     }
+
+    fun deletePost(postId: Long) {
+        val currentState = _uiState.value
+        if (currentState is CommunityUiState.Success) {
+            // Optimistic UI update
+            val updatedPosts = currentState.posts.filterNot { it.id == postId }
+            _uiState.value = CommunityUiState.Success(updatedPosts)
+
+            viewModelScope.launch {
+                val response = communityRepository.deletePost(postId)
+                if (!response.isSuccessful) {
+                    // Rollback on failure
+                    _uiState.value = currentState
+                }
+            }
+        }
+    }
 }

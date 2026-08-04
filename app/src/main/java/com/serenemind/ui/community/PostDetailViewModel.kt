@@ -91,6 +91,15 @@ class PostDetailViewModel(
         }
     }
 
+    fun deletePost(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val response = communityRepository.deletePost(postId)
+            if (response.isSuccessful) {
+                onSuccess()
+            }
+        }
+    }
+
     fun addComment(content: String, isAnonymous: Boolean = false) {
         val currentState = _uiState.value
         if (currentState is PostDetailUiState.Success) {

@@ -160,6 +160,7 @@ fun BottomNavGraph(
         composable(Screen.Community.route) {
             CommunityScreen(
                 viewModel = communityViewModel,
+                profileViewModel = profileViewModel,
                 isDarkMode = isDarkMode,
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
@@ -189,6 +190,7 @@ fun BottomNavGraph(
 
             PostDetailScreen(
                 viewModel = postDetailViewModel,
+                profileViewModel = profileViewModel,
                 focusComments = focusComments,
                 onBack = {
                     communityViewModel.refresh()
@@ -274,6 +276,7 @@ fun BottomNavGraph(
             )
             SavedPostsScreen(
                 viewModel = savedPostsViewModel,
+                profileViewModel = profileViewModel,
                 onBack = { navController.popBackStack() },
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")

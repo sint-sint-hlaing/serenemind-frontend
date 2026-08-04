@@ -93,4 +93,12 @@ class CommunityRepository(
             Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }
     }
+
+    suspend fun deletePost(postId: Long): Response<Unit> {
+        return try {
+            apiService.deletePost(postId)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
 }
