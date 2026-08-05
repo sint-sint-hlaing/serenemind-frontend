@@ -297,6 +297,20 @@ fun BottomNavGraph(
                 },
                 onViewConversation = { conversationId ->
                     navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
+                },
+                onViewAll = {
+                    navController.navigate(Screen.AllConversations.route)
+                }
+            )
+        }
+
+        composable(Screen.AllConversations.route) {
+            val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
+            AllConversationsScreen(
+                viewModel = chatLandingViewModel,
+                onBack = { navController.popBackStack() },
+                onViewConversation = { conversationId ->
+                    navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
                 }
             )
         }

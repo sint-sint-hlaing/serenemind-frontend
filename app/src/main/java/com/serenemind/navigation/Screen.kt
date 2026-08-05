@@ -38,4 +38,5 @@ sealed class Screen(
     object PersonalInfo : Screen("personal_info")
     object ChatLanding : Screen("chat_landing", "AI Chat", Icons.Default.ChatBubble)
     object Chat : Screen("chat")
+    object AllConversations : Screen("all_conversations")
 }

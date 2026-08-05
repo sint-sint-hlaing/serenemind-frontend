@@ -29,7 +29,8 @@ import com.serenemind.model.response.ConversationResponse
 fun ChatLandingScreen(
     viewModel: ChatLandingViewModel,
     onStartChat: (String?) -> Unit,
-    onViewConversation: (Long) -> Unit
+    onViewConversation: (Long) -> Unit,
+    onViewAll: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -142,7 +143,7 @@ fun ChatLandingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Previous conversations", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                TextButton(onClick = { /* View all */ }) {
+                TextButton(onClick = onViewAll) {
                     Text("View all", color = Color(0xFF7E57C2), fontSize = 12.sp)
                 }
             }
