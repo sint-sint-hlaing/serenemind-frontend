@@ -4,6 +4,5 @@ enum class MeditationCategory {
     RELAXATION,
     SLEEP,
     ANXIETY,
-    FOCUS,
-    BREATHING
+    FOCUS
 }

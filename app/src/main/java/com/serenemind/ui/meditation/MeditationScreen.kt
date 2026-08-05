@@ -293,7 +293,6 @@ fun getCategoryBgColor(name: String): Color {
         "sleep" -> ActionJournal
         "anxiety" -> ActionMeditation
         "focus" -> ActionGoals
-        "morning" -> ActionBreathing
         else -> Color(0xFFF5F5F5)
     }
 }

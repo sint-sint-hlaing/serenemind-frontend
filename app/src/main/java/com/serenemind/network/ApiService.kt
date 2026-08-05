@@ -223,28 +223,23 @@ interface ApiService {
         @Body request: CommentRequest
     ): Response<CommentResponse>
 
-    @Multipart
-    @POST("api/posts")
-    suspend fun createPost(
-        @Part("post") post: RequestBody,
-        @Part image: MultipartBody.Part? = null
-    ): Response<PostResponse>
-
-    // --- STREAK (Legacy or Keep) ---
+    // Streak API
     @GET("api/streaks/me")
     suspend fun getStreak(): Response<StreakResponse>
 
     @POST("api/streaks/use-freeze")
     suspend fun useStreakFreeze(): Response<StreakResponse>
 
-    // --- NOTIFICATIONS ---
+    // Notification API
     @GET("api/notifications")
     suspend fun getNotifications(
         @Query("filter") filter: String? = null
     ): Response<List<NotificationResponse>>
 
-    @PATCH("api/notifications/{id}/read")
-    suspend fun markAsRead(@Path("id") id: Long): Response<Unit>
+    @POST("api/notifications/{id}/read")
+    suspend fun markAsRead(
+        @Path("id") id: Long
+    ): Response<Unit>
 
     @POST("api/notifications/{id}/click")
     suspend fun clickNotification(
@@ -279,4 +274,10 @@ interface ApiService {
 
     @POST("api/breathing/session/{sessionId}/complete")
     suspend fun completeBreathingSession(@Path("sessionId") sessionId: String): Response<BreathingSummaryResponse>
+    @Multipart
+    @POST("api/posts")
+    suspend fun createPost(
+        @Part("post") post: RequestBody,
+        @Part image: MultipartBody.Part? = null
+    ): Response<PostResponse>
 }

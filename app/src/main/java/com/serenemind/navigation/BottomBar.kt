@@ -34,7 +34,6 @@ fun BottomBar(navController: NavHostController) {
                     currentRoute == Screen.Goal.route ||
                     currentRoute == Screen.GoalDetail.route ||
                     currentRoute == Screen.Meditation.route ||
-                    currentRoute == Screen.Breathing.route ||
                     currentRoute == Screen.Notifications.route
                 ))
 

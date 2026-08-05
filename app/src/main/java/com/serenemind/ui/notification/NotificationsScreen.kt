@@ -30,7 +30,6 @@ import java.util.*
 fun NotificationsScreen(
     viewModel: NotificationViewModel,
     onNavigateToPost: (Long) -> Unit,
-    onNavigateToReminder: (Long) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +42,6 @@ fun NotificationsScreen(
             when (event) {
                 is NotificationNavigationEvent.NavigateToPost -> onNavigateToPost(event.postId)
                 is NotificationNavigationEvent.NavigateToComment -> onNavigateToPost(event.postId)
-                is NotificationNavigationEvent.NavigateToReminder -> onNavigateToReminder(event.reminderId)
                 is NotificationNavigationEvent.ShowSystemDialog -> { /* Show Dialog */ }
             }
         }
@@ -248,11 +246,6 @@ fun getNotificationTypeDesign(type: String?): NotificationDesign {
             Icons.Default.Favorite, 
             Color(0xFFFCE4EC), 
             Color(0xFFE91E63)
-        )
-        "REMINDER" -> NotificationDesign(
-            Icons.Default.NotificationsNone, 
-            Color(0xFFE8F5E9), 
-            Color(0xFF4CAF50)
         )
         "SYSTEM" -> NotificationDesign(
             Icons.Default.FileUpload, 

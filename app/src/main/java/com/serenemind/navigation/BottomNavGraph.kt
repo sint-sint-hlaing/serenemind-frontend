@@ -50,6 +50,9 @@ fun BottomNavGraph(
     val moodRepository = remember { MoodRepository(apiService) }
     val goalRepository = remember { GoalRepository(apiService) }
     val meditationRepository = remember { MeditationRepository(apiService) }
+    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
 
     // ViewModels
     val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, moodRepository, themeManager))
@@ -57,8 +60,6 @@ fun BottomNavGraph(
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
     val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
-    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
-    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
     val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository))

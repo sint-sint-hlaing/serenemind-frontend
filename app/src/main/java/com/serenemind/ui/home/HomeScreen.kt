@@ -86,7 +86,7 @@ fun HomeScreen(
                     data = state.data,
                     weeklyMood = weeklyMood,
                     onNavigateToBreathing = onNavigateToBreathing,
-                    onActionClick = { 
+                    onActionClick = {
                         android.widget.Toast.makeText(context, "Navigating to $it", android.widget.Toast.LENGTH_SHORT).show()
                         onActionClick(it)
                     },
@@ -98,6 +98,9 @@ fun HomeScreen(
                         android.widget.Toast.makeText(context, "Opening profile menu", android.widget.Toast.LENGTH_SHORT).show()
                         onMenuClick()
                     }
+                    onActionClick = onActionClick,
+                    onNotificationClick = onNotificationClick,
+                    onMenuClick = onMenuClick
                 )
             }
         }
@@ -108,8 +111,6 @@ fun HomeScreen(
 @Composable
 fun DashboardContent(
     data: DashboardResponse,
-    weeklyMood: List<WeeklyMoodResponse>,
-    onNavigateToBreathing: () -> Unit,
     onActionClick: (String) -> Unit,
     onNotificationClick: () -> Unit,
     onMenuClick: () -> Unit
@@ -243,7 +244,7 @@ fun DashboardContent(
                             } else {
                                 "Steady"
                             }
-                            
+
                             Text(
                                 text = moodDisplay,
                                 fontSize = 18.sp,
@@ -301,8 +302,7 @@ fun DashboardContent(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Box(modifier = Modifier.padding(20.dp)) {
-                        val displayWeekly = if (weeklyMood.isNotEmpty()) weeklyMood else data.weeklyOverview
-                        WeeklyChart(displayWeekly)
+                        WeeklyChart(data.weeklyOverview)
                     }
                 }
 
@@ -331,14 +331,15 @@ fun DashboardContent(
     }
 }
 
+
 @Composable
 fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
     val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    
+
     // Map data to days of week for a full 7-day view
     val chartData = daysOfWeek.map { dayName ->
-        weeklyOverview.find { 
-            it.day?.name?.take(3)?.equals(dayName, ignoreCase = true) == true 
+        weeklyOverview.find {
+            it.day?.name?.take(3)?.equals(dayName, ignoreCase = true) == true
         }
     }
 
@@ -365,7 +366,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
                         .height(if (hasData) (percentage.coerceAtLeast(10) * 1.2f).dp else 40.dp)
                         .clip(RoundedCornerShape(9.dp))
                         .background(
-                            if (hasData) getMoodColor(moodType!!) 
+                            if (hasData) getMoodColor(moodType!!)
                             else Color(0xFFF5F5F5)
                         )
                 )
@@ -418,12 +419,7 @@ fun QuickActionsGrid(
                 action = action,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    val route = (action.route ?: "").lowercase()
-                    if (route == "breathing") {
-                        onNavigateToBreathing()
-                    } else {
-                        onActionClick(action.route ?: "")
-                    }
+                    onActionClick(action.route ?: "")
                 }
             )
         }
@@ -484,6 +480,9 @@ fun getBackgroundColorForAction(title: String): Color {
         "meditate", "meditation" -> Color(0xFFE1F5FE)
         "goals", "goal" -> Color(0xFFE8F5E9)
         "breathing" -> Color(0xFFFFF3E0)
+        "journal" -> ActionJournal
+        "meditate", "meditation" -> ActionMeditation
+        "goals" -> ActionGoals
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 }

@@ -33,30 +33,11 @@ class MainActivity : ComponentActivity() {
         // Handle permission result if needed
     }
 
-    private val refreshReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            // Data refresh signal handled via RefreshSignals flow in ViewModels
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
 
         askNotificationPermission()
-        createReminderNotificationChannel()
-
-        // Registration for Android 14+ security compliance
-        try {
-            val filter = IntentFilter("com.serenemind.REFRESH_REMINDERS")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(refreshReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-            } else {
-                registerReceiver(refreshReceiver, filter)
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Receiver registration failed", e)
-        }
 
         val tokenManager = TokenManager(this)
         val api = NetworkModule.provideApiService(this, tokenManager)

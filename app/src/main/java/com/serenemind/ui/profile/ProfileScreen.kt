@@ -42,6 +42,7 @@ fun ProfileScreen(
     onNavigateToReminders: () -> Unit = {},
     onNavigateToStreak: () -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {}
+    onNavigateToStreak: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -200,11 +201,6 @@ fun ProfileScreen(
                                     }
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-                                    ProfileMenuItem(
-                                        icon = Icons.Default.Notifications,
-                                        title = "Reminders",
-                                        onClick = onNavigateToReminders
-                                    )
                                     ProfileMenuItem(
                                         icon = Icons.Default.CardMembership,
                                         title = "Subscription",

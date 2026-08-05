@@ -15,15 +15,9 @@ class NotificationRepository(
         emit(apiService.getNotifications(filter))
     }
 
-    suspend fun markAsRead(id: Long): Response<Unit> {
-        return apiService.markAsRead(id)
-    }
+    suspend fun markAsRead(id: Long): Response<Unit> = apiService.markAsRead(id)
 
-    suspend fun clickNotification(id: Long): Response<NotificationResponse> {
-        return apiService.clickNotification(id)
-    }
+    suspend fun clickNotification(id: Long): Response<NotificationResponse> = apiService.clickNotification(id)
 
-    suspend fun markAllAsRead(): Response<Unit> {
-        return apiService.markAllAsRead()
-    }
+    suspend fun markAllAsRead(): Response<Unit> = apiService.markAllAsRead()
 }
