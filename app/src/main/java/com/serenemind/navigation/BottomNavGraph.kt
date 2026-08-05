@@ -19,6 +19,7 @@ import com.serenemind.ui.goal.*
 import com.serenemind.ui.meditation.*
 import com.serenemind.ui.journal.*
 import com.serenemind.ui.notification.*
+import com.serenemind.ui.chat.*
 
 @Composable
 fun BottomNavGraph(
@@ -34,6 +35,7 @@ fun BottomNavGraph(
     val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
     val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
     val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
+    val chatApiService = remember { NetworkModule.provideChatApiService(context, tokenManager) }
 
     // Repositories
     val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
@@ -43,6 +45,7 @@ fun BottomNavGraph(
     val moodRepository = remember { MoodRepository(apiService, tokenManager) }
     val goalRepository = remember { GoalRepository(goalApiService) }
     val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val chatRepository = remember { ChatRepository(chatApiService) }
 
     // ViewModels
     val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository))
@@ -68,6 +71,7 @@ fun BottomNavGraph(
                         "journal" -> navController.navigate(Screen.Journal.route)
                         "mood" -> navController.navigate(Screen.Mood.route)
                         "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
+                        "chat_landing" -> navController.navigate(Screen.ChatLanding.route)
                     }
                 },
                 onNotificationClick = {
@@ -281,6 +285,45 @@ fun BottomNavGraph(
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
                 }
+            )
+        }
+
+        composable(Screen.ChatLanding.route) {
+            val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
+            ChatLandingScreen(
+                viewModel = chatLandingViewModel,
+                onStartChat = { starter ->
+                    navController.navigate("${Screen.Chat.route}?starter=$starter")
+                },
+                onViewConversation = { conversationId ->
+                    navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.Chat.route}?starter={starter}&historyId={historyId}",
+            arguments = listOf(
+                androidx.navigation.navArgument("starter") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true 
+                },
+                androidx.navigation.navArgument("historyId") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true 
+                }
+            )
+        ) { backStackEntry ->
+            val starter = backStackEntry.arguments?.getString("starter")
+            val historyIdStr = backStackEntry.arguments?.getString("historyId")
+            val historyId = historyIdStr?.toLongOrNull()
+            
+            val chatViewModel: ChatViewModel = viewModel(factory = ChatViewModelFactory(chatRepository))
+            ChatScreen(
+                viewModel = chatViewModel,
+                initialMessage = starter,
+                historyId = historyId,
+                onBack = { navController.popBackStack() }
             )
         }
     }
