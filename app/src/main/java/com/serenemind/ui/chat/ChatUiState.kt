@@ -20,7 +20,8 @@ sealed interface ChatUiState {
     object Loading : ChatUiState
     data class Active(
         val conversationId: Long?,
-        val messages: List<Message>
+        val messages: List<Message>,
+        val isTyping: Boolean = false
     ) : ChatUiState
     data class Error(val message: String) : ChatUiState
 }

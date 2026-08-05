@@ -48,9 +48,9 @@ fun ChatScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is ChatUiState.Active) {
-            val messages = (uiState as ChatUiState.Active).messages
-            if (messages.isNotEmpty()) {
-                listState.animateScrollToItem(messages.size) // +1 for the banner
+            val state = uiState as ChatUiState.Active
+            if (state.messages.isNotEmpty() || state.isTyping) {
+                listState.animateScrollToItem(listState.layoutInfo.totalItemsCount)
             }
         }
     }
@@ -179,6 +179,11 @@ fun ChatScreen(
                     items(state.messages) { message ->
                         MessageBubble(message)
                     }
+                    if (state.isTyping) {
+                        item {
+                            TypingIndicator()
+                        }
+                    }
                 }
                 is ChatUiState.Loading -> {
                     item {
@@ -194,6 +199,40 @@ fun ChatScreen(
                 }
                 else -> {}
             }
+        }
+    }
+}
+
+@Composable
+fun TypingIndicator() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = CircleShape,
+            color = Color(0xFFEDE7F6)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF7E57C2), modifier = Modifier.size(16.dp))
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Surface(
+            color = Color.White,
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp),
+            shadowElevation = 0.5.dp
+        ) {
+            Text(
+                text = "SereneAI is typing...",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
         }
     }
 }

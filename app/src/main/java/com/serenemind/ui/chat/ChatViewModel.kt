@@ -49,7 +49,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
             timestamp = "Just now"
         )
         messages.add(userMessage)
-        _uiState.value = ChatUiState.Active(currentConversationId, messages.toList())
+        _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = true)
 
         viewModelScope.launch {
             repository.sendMessage(text, currentConversationId).collect { response ->
@@ -57,12 +57,19 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                     val data = response.body()!!
                     currentConversationId = data.id
                     
-                    // Sync messages from response
-                    messages.clear()
-                    messages.addAll(data.messages.map { it.toMessage() })
-                    _uiState.value = ChatUiState.Active(currentConversationId, messages.toList())
+                    // Remove the optimistic message and sync from response
+                    messages.remove(userMessage)
+                    
+                    // Filter out existing messages by ID and add new ones
+                    val newMessages = data.messages.map { it.toMessage() }
+                    val existingIds = messages.map { it.id }.toSet()
+                    val uniqueNewMessages = newMessages.filter { it.id !in existingIds }
+                    
+                    messages.addAll(uniqueNewMessages)
+                    _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = false)
                 } else {
-                    _uiState.value = ChatUiState.Error("Failed to send message")
+                    _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = false)
+                    // Optional: You could show a toast or a small error message here instead of switching full state
                 }
             }
         }
