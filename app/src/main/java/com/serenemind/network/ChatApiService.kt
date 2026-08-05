@@ -13,4 +13,9 @@ interface ChatApiService {
 
     @GET("api/chat/conversations")
     suspend fun getConversations(): Response<List<ConversationResponse>>
+
+    @GET("api/chat/conversations/{id}/messages")
+    suspend fun getConversationMessages(
+        @Path("id") conversationId: Long
+    ): Response<List<com.serenemind.model.response.MessageResponse>>
 }
