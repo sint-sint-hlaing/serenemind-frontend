@@ -18,6 +18,24 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     fun setConversationId(id: Long?) {
         currentConversationId = id
+        if (id != null) {
+            fetchMessages(id)
+        }
+    }
+
+    private fun fetchMessages(conversationId: Long) {
+        viewModelScope.launch {
+            _uiState.value = ChatUiState.Loading
+            repository.getConversationMessages(conversationId).collect { response ->
+                if (response.isSuccessful && response.body() != null) {
+                    messages.clear()
+                    messages.addAll(response.body()!!.map { it.toMessage() })
+                    _uiState.value = ChatUiState.Active(currentConversationId, messages.toList())
+                } else {
+                    _uiState.value = ChatUiState.Error("Failed to load previous messages")
+                }
+            }
+        }
     }
 
     fun sendMessage(text: String) {

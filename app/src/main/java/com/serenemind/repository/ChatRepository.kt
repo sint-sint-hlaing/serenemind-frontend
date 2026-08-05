@@ -21,4 +21,12 @@ class ChatRepository(private val apiService: ChatApiService) {
             emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
+
+    fun getConversationMessages(conversationId: Long) = flow {
+        try {
+            emit(apiService.getConversationMessages(conversationId))
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
 }
