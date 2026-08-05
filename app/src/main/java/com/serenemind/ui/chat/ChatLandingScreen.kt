@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -30,7 +31,8 @@ fun ChatLandingScreen(
     viewModel: ChatLandingViewModel,
     onStartChat: (String?) -> Unit,
     onViewConversation: (Long) -> Unit,
-    onViewAll: () -> Unit
+    onViewAll: () -> Unit,
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -50,9 +52,9 @@ fun ChatLandingScreen(
                         Text("Your mindful AI companion", fontSize = 12.sp, color = Color.Gray)
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* Options */ }) {
-                        Icon(Icons.Default.MoreHoriz, contentDescription = "Options")
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)

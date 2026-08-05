@@ -89,11 +89,6 @@ fun ChatScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                actions = {
-                    IconButton(onClick = { /* Privacy Info */ }) {
-                        Icon(Icons.Default.Shield, contentDescription = "Privacy", tint = Color.Gray)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },

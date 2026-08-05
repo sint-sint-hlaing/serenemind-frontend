@@ -300,6 +300,9 @@ fun BottomNavGraph(
                 },
                 onViewAll = {
                     navController.navigate(Screen.AllConversations.route)
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
