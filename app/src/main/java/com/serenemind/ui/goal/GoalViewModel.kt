@@ -61,20 +61,17 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
     fun createGoal(
         title: String, 
         description: String, 
-        target: Int, 
-        unit: String?, 
-        frequency: String?, 
-        color: String?, 
-        reminderTime: String?, 
-        startDate: String?
+        targetDays: Int
     ) {
         viewModelScope.launch {
             try {
-                val request = GoalRequest(title, description, target, unit, frequency, color, reminderTime, startDate)
+                val request = GoalRequest(title, description, targetDays)
                 repository.createGoal(request).collect { response ->
                     if (response.isSuccessful) {
                         _createGoalSuccess.value = true
                         fetchGoals()
+                    } else {
+                        android.util.Log.e("GoalViewModel", "Failed to create goal: ${response.code()} ${response.errorBody()?.string()}")
                     }
                 }
             } catch (e: Exception) {

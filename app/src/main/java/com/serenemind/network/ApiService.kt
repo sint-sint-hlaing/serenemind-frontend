@@ -41,6 +41,9 @@ interface ApiService {
     @GET("api/avatars")
     suspend fun getAvatars(): Response<List<AvatarResponse>>
 
+    @GET("api/avatars/{id}")
+    suspend fun getAvatarById(@Path("id") id: Long): Response<AvatarResponse>
+
     // --- DASHBOARD ---
     @GET("api/dashboard")
     suspend fun getDashboardData(): Response<DashboardResponse>
@@ -52,10 +55,10 @@ interface ApiService {
     @GET("api/mood/summary")
     suspend fun getMoodSummary(): Response<Map<String, Double>>
 
-    @GET("api/mood/history/{year}/{month}")
+    @GET("api/mood/history")
     suspend fun getMoodHistory(
-        @Path("year") year: Int,
-        @Path("month") month: Int
+        @Query("year") year: Int,
+        @Query("month") month: Int
     ): Response<List<DailyMoodResponse>>
 
     @GET("api/mood/date/{date}")
@@ -122,6 +125,43 @@ interface ApiService {
 
     @GET("api/meditations/history")
     suspend fun getMeditationHistory(): Response<List<MeditationResponse>>
+
+    @GET("api/meditations/{id}/download")
+    suspend fun downloadMeditationAudio(@Path("id") id: Long): Response<okhttp3.ResponseBody>
+
+    @POST("api/meditations/{id}/favorite")
+    suspend fun toggleMeditationFavorite(@Path("id") id: Long): Response<FavoriteResponse>
+
+    @POST("api/meditations/{id}/timer")
+    suspend fun saveMeditationTimer(
+        @Path("id") id: Long,
+        @Body request: TimerRequest
+    ): Response<TimerResponse>
+
+    @GET("api/meditations/{id}/share")
+    suspend fun shareMeditation(@Path("id") id: Long): Response<ShareResponse>
+
+    @GET("api/meditations/{id}/previous")
+    suspend fun getPreviousMeditation(@Path("id") id: Long): Response<MeditationResponse>
+
+    @GET("api/meditations/{id}/next")
+    suspend fun getNextMeditation(@Path("id") id: Long): Response<MeditationList>
+
+    @GET("api/meditations/{id}/stream")
+    suspend fun streamMeditationAudio(@Path("id") id: Long): Response<okhttp3.ResponseBody>
+
+    // --- USER MEDITATION ---
+    @GET("api/users/me/recommendations")
+    suspend fun getMeditationRecommendations(): Response<List<MeditationResponse>>
+
+    @GET("api/users/search")
+    suspend fun searchMeditation(@Query("keyword") keyword: String): Response<List<MeditationResponse>>
+
+    @POST("api/users/favorites")
+    suspend fun addFavoriteMeditation(@Body request: FavoriteRequest): Response<Unit>
+
+    @GET("api/users/me/continue-listening")
+    suspend fun getContinueListening(): Response<List<MeditationResponse>>
 
     // --- JOURNAL ---
     @POST("api/journals")
@@ -205,13 +245,7 @@ interface ApiService {
 
     @PATCH("api/notifications/{id}/read")
     suspend fun markAsRead(@Path("id") id: Long): Response<Unit>
-    @POST("api/notifications/{id}/read")
-    suspend fun markAsRead(
-        @Path("id") id: Long
-    ): Response<Unit>
 
-    @GET("api/notifications/{id}/click")
-    suspend fun clickNotification(@Path("id") id: Long): Response<NotificationResponse>
     @POST("api/notifications/{id}/click")
     suspend fun clickNotification(
         @Path("id") id: Long

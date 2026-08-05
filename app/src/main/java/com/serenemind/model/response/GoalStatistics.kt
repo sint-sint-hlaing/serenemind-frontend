@@ -1,8 +1,12 @@
 package com.serenemind.model.response
 
 data class GoalStatistics(
-    val totalGoals: Int,
-    val activeGoals: Int,
-    val completedGoals: Int,
-    val overallProgress: Int
+    val total: Long,
+    val active: Long,
+    val paused: Long,
+    val completed: Long,
+    val expired: Long,
+    val cancelled: Long,
+    val completionRate: Double,
+    val totalProgress: Long
 )

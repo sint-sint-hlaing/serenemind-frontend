@@ -40,4 +40,92 @@ class MeditationRepository(private val apiService: ApiService) {
             emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }
+
+    fun getRecommendations() = flow {
+        try {
+            emit(apiService.getMeditationRecommendations())
+        } catch (e: Exception) {
+            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    fun search(keyword: String) = flow {
+        try {
+            emit(apiService.searchMeditation(keyword))
+        } catch (e: Exception) {
+            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    suspend fun addFavorite(meditationId: Long): Response<Unit> {
+        return try {
+            apiService.addFavoriteMeditation(com.serenemind.model.request.FavoriteRequest(meditationId))
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun toggleFavorite(id: Long): Response<com.serenemind.model.response.FavoriteResponse> {
+        return try {
+            apiService.toggleMeditationFavorite(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun saveTimer(id: Long, minutes: Int): Response<com.serenemind.model.response.TimerResponse> {
+        return try {
+            apiService.saveMeditationTimer(id, com.serenemind.model.request.TimerRequest(minutes))
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun getShareLink(id: Long): Response<com.serenemind.model.response.ShareResponse> {
+        return try {
+            apiService.shareMeditation(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun getPrevious(id: Long): Response<MeditationResponse> {
+        return try {
+            apiService.getPreviousMeditation(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun getNext(id: Long): Response<com.serenemind.model.response.MeditationList> {
+        return try {
+            apiService.getNextMeditation(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun download(id: Long): Response<okhttp3.ResponseBody> {
+        return try {
+            apiService.downloadMeditationAudio(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun stream(id: Long): Response<okhttp3.ResponseBody> {
+        return try {
+            apiService.streamMeditationAudio(id)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    fun getContinueListening() = flow {
+        try {
+            emit(apiService.getContinueListening())
+        } catch (e: Exception) {
+            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
 }

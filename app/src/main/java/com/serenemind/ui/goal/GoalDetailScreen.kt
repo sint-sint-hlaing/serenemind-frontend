@@ -9,11 +9,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -64,7 +67,7 @@ fun GoalDetailScreen(
                 // Progress Circle
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
                     CircularProgressIndicator(
-                        progress = { g.progress.toFloat() / g.target.toFloat() },
+                        progress = { g.progress.toFloat() / g.targetDays.toFloat().coerceAtLeast(1f) },
                         modifier = Modifier.fillMaxSize(),
                         color = Success,
                         strokeWidth = 10.dp,
@@ -80,7 +83,7 @@ fun GoalDetailScreen(
                         )
                         HorizontalDivider(modifier = Modifier.width(30.dp).padding(vertical = 4.dp), thickness = 2.dp, color = Color(0xFFEEEEEE))
                         Text(
-                            text = g.target.toString(),
+                            text = g.targetDays.toString(),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary
@@ -109,9 +112,25 @@ fun GoalDetailScreen(
 
                 // Progress Info Row
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    InfoCard(label = "Progress", value = "${g.progress} / ${g.target} days", modifier = Modifier.weight(1f))
+                    InfoCard(label = "Progress", value = "${g.progress} / ${g.targetDays} days", modifier = Modifier.weight(1f))
                     Spacer(modifier = Modifier.width(16.dp))
                     InfoCard(label = "Streak", value = "${g.streak} days", modifier = Modifier.weight(1f))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Streak Fire Icons (Small fire row)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    repeat(7) { i ->
+                        Text(
+                            text = "🔥", 
+                            fontSize = 18.sp,
+                            modifier = Modifier.alpha(if (i < g.streak) 1f else 0.2f)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -122,8 +141,12 @@ fun GoalDetailScreen(
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     val days = listOf("May 6", "May 7", "May 8", "May 9", "May 10", "May 11", "May 12")
-                    days.forEach { day ->
-                        HistoryItem(day)
+                    days.forEachIndexed { index, day ->
+                        // Simulate data from UserGoal history if available, else use dummy logic
+                        val historyEntry = g.history?.find { it.date.contains(day) }
+                        val isCompleted = historyEntry?.completed ?: (index < 3 || index == 5)
+                        val isToday = index == 6
+                        HistoryItem(day, isCompleted, isToday)
                     }
                 }
 
@@ -181,21 +204,38 @@ fun InfoCard(label: String, value: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HistoryItem(day: String) {
+fun HistoryItem(day: String, isCompleted: Boolean, isToday: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(if (day == "May 12") Color(0xFFF5F5F5) else Success.copy(alpha = 0.1f)),
+                .background(
+                    if (isCompleted) Success.copy(alpha = 0.1f) 
+                    else if (isToday) Color(0xFFF5F5F5) 
+                    else Color.Transparent
+                )
+                .then(
+                    if (!isCompleted && !isToday) Modifier.border(1.dp, Color(0xFFEEEEEE), CircleShape)
+                    else Modifier
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = if (day == "May 12") Icons.Default.MoreVert else Icons.AutoMirrored.Filled.ArrowBack, // Should be checkmark
-                contentDescription = null,
-                tint = if (day == "May 12") TextSecondary else Success,
-                modifier = Modifier.size(16.dp)
-            )
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Success,
+                    modifier = Modifier.size(16.dp)
+                )
+            } else if (isToday) {
+                Icon(
+                    imageVector = Icons.Default.MoreHoriz,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = day, fontSize = 10.sp, color = TextSecondary)

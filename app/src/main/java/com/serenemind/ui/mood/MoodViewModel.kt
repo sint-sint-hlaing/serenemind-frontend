@@ -7,6 +7,7 @@ import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.repository.MoodRepository
+import com.serenemind.util.RefreshSignals
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -89,8 +90,10 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
                 if (response.isSuccessful) {
                     _uiState.value = MoodUiState.Success
-                    // Refresh data
+                    // Refresh data locally
                     refresh()
+                    // Signal Home to refresh
+                    RefreshSignals.signalRefreshDashboard()
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     _uiState.value = MoodUiState.Error("Server error ${response.code()}: $errorBody")

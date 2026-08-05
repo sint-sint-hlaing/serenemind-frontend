@@ -44,6 +44,7 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -60,7 +61,10 @@ fun ProfileScreen(
             ) {
                 Spacer(modifier = Modifier.size(48.dp))
                 Text("My Profile", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onNavigateToSettings) {
+                IconButton(onClick = {
+                    android.widget.Toast.makeText(context, "Opening settings...", android.widget.Toast.LENGTH_SHORT).show()
+                    onNavigateToSettings()
+                }) {
                     Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                 }
             }

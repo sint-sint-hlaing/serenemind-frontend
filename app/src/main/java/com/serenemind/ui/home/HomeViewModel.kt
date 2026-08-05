@@ -4,23 +4,40 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.datastore.ThemeManager
 import com.serenemind.repository.DashboardRepository
+import com.serenemind.util.RefreshSignals
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val dashboardRepository: DashboardRepository,
+    private val moodRepository: com.serenemind.repository.MoodRepository,
     private val themeManager: ThemeManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val _weeklyMood = MutableStateFlow<List<com.serenemind.model.response.WeeklyMoodResponse>>(emptyList())
+    val weeklyMood = _weeklyMood.asStateFlow()
+
     init {
         fetchDashboardData()
+        fetchWeeklyMood()
+        observeRefreshSignals()
+    }
+
+    private fun observeRefreshSignals() {
+        viewModelScope.launch {
+            RefreshSignals.refreshDashboard.collectLatest {
+                fetchDashboardData(isSilent = true)
+                fetchWeeklyMood()
+            }
+        }
     }
 
     fun fetchDashboardData(isSilent: Boolean = false) {
@@ -40,6 +57,16 @@ class HomeViewModel(
                         _uiState.value = HomeUiState.Error("Error ${response.code()}: $errorDetail")
                     }
                 }
+        }
+    }
+
+    fun fetchWeeklyMood() {
+        viewModelScope.launch {
+            moodRepository.getWeeklyMood().collect { response ->
+                if (response.isSuccessful) {
+                    _weeklyMood.value = response.body() ?: emptyList()
+                }
+            }
         }
     }
 

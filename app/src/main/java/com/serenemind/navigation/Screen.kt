@@ -29,12 +29,17 @@ sealed class Screen(
 
     // Sub Screens
     object MoodHistory : Screen("mood_history")
+    object MoodInsights : Screen("mood_insights")
     object GoalDetail : Screen("goal_detail")
+    object AddGoal : Screen("add_goal")
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
     object Reminders : Screen("reminders")
     object AddReminder : Screen("add_reminder")
     object Breathing : Screen("breathing")
     object Meditation : Screen("meditation")
+    object MeditationTimer : Screen("meditation_timer")
     object EditProfile : Screen("edit_profile")
+    object Focus : Screen("focus")
+    object Insights : Screen("insights")
 }

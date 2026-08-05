@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.ui.theme.*
@@ -36,17 +38,18 @@ fun AddGoalScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val createGoalSuccess by viewModel.createGoalSuccess.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var target by remember { mutableIntStateOf(10) }
     var unit by remember { mutableStateOf("") }
     var frequency by remember { mutableStateOf("Daily") }
-    var selectedColor by remember { mutableStateOf(MoodHappy) }
     var startDate by remember { mutableStateOf("May 12, 2024") }
     var reminderTime by remember { mutableStateOf("9:00 PM") }
 
-    val colors = listOf(MoodHappy, MoodCalm, MoodNeutral, MoodAnxious, MoodSad, MoodAngry)
+    var showFrequencyMenu by remember { mutableStateOf(false) }
+    val frequencies = listOf("Daily", "Weekly", "Monthly")
 
     LaunchedEffect(createGoalSuccess) {
         if (createGoalSuccess) {
@@ -66,7 +69,11 @@ fun AddGoalScreen(
                 },
                 actions = {
                     TextButton(onClick = {
-                        viewModel.createGoal(title, description, target, unit, frequency, selectedColor.toString(), reminderTime, startDate)
+                        if (title.isBlank()) {
+                            android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.createGoal(title, description, target)
+                        }
                     }) {
                         Text("Save", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
@@ -90,7 +97,9 @@ fun AddGoalScreen(
                     .size(80.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .clickable { /* Change Icon */ },
+                    .clickable { 
+                        android.widget.Toast.makeText(context, "Icon picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -116,43 +125,73 @@ fun AddGoalScreen(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedCard(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFF9F9F9)),
-                    border = BorderStroke(1.dp, Color(0xFFEEEEEE))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                Box {
+                    OutlinedCard(
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showFrequencyMenu = true },
+                        colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFF9F9F9)),
+                        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
                     ) {
-                        Text(frequency, color = TextPrimary, fontSize = 15.sp)
-                        Icon(Icons.Default.Add, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(frequency, color = TextPrimary, fontSize = 15.sp)
+                            Icon(Icons.Default.Add, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = showFrequencyMenu,
+                        onDismissRequest = { showFrequencyMenu = false }
+                    ) {
+                        frequencies.forEach { f ->
+                            DropdownMenuItem(
+                                text = { Text(f) },
+                                onClick = {
+                                    frequency = f
+                                    showFrequencyMenu = false
+                                }
+                            )
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Target
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            // Target & Unit
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color(0xFFF9F9F9))
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(
                             onClick = { if (target > 1) target-- },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFF5F5F5))
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White)
                         ) {
-                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
                         }
-                        Text(target.toString(), modifier = Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            target.toString(), 
+                            modifier = Modifier.weight(1f), 
+                            textAlign = TextAlign.Center, 
+                            fontWeight = FontWeight.Bold, 
+                            fontSize = 16.sp
+                        )
                         IconButton(
                             onClick = { target++ },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFF5F5F5))
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
                         }
                     }
                 }
@@ -165,7 +204,7 @@ fun AddGoalScreen(
                         onValueChange = { unit = it },
                         placeholder = { Text("e.g. pages", fontSize = 14.sp) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color(0xFFEEEEEE),
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -187,10 +226,13 @@ fun AddGoalScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFFF9F9F9))
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp))
-                            .padding(12.dp),
+                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                            .clickable {
+                                android.widget.Toast.makeText(context, "Date picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -204,10 +246,13 @@ fun AddGoalScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFFF9F9F9))
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp))
-                            .padding(12.dp),
+                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                            .clickable {
+                                android.widget.Toast.makeText(context, "Reminder picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -218,26 +263,6 @@ fun AddGoalScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Choose Color
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Choose Color", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    colors.forEach { color ->
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .clickable { selectedColor = color }
-                                .then(if (selectedColor == color) Modifier.border(2.dp, Color.Gray, CircleShape) else Modifier)
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

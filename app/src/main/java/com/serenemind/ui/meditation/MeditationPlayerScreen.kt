@@ -1,6 +1,8 @@
 package com.serenemind.ui.meditation
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,9 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,11 +32,13 @@ import com.serenemind.ui.theme.*
 @Composable
 fun MeditationPlayerScreen(
     viewModel: MeditationViewModel,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNavigateToTimer: () -> Unit = {}
 ) {
     val meditation by viewModel.selectedMeditation.collectAsState()
     var isPlaying by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0.35f) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -57,7 +63,7 @@ fun MeditationPlayerScreen(
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Meditation Image Card
+                // Meditation Image/Video Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -65,29 +71,36 @@ fun MeditationPlayerScreen(
                     shape = RoundedCornerShape(24.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        AsyncImage(
-                            model = m.imageUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            error = painterResource(R.drawable.ic_launcher_background)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                                        startY = 300f
+                        if (isPlaying && m.audioUrl.isNotEmpty()) {
+                            VideoPlayer(videoUrl = m.audioUrl, isPlaying = isPlaying)
+                        } else {
+                            AsyncImage(
+                                model = m.imageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                error = painterResource(R.drawable.ic_launcher_background)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                                            startY = 300f
+                                        )
                                     )
-                                )
-                        )
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(24.dp),
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            Text(m.title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            Text("10 min • Guided Meditation", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                            )
+                        }
+                        
+                        if (!isPlaying) {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(24.dp),
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                Text(m.title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                Text("${m.duration} min • Guided Meditation", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                            }
                         }
                     }
                 }
@@ -97,7 +110,7 @@ fun MeditationPlayerScreen(
                 // Progress Slider
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("02:35", fontSize = 12.sp, color = TextSecondary)
-                    Text("10:00", fontSize = 12.sp, color = TextSecondary)
+                    Text("${m.duration}:00", fontSize = 12.sp, color = TextSecondary)
                 }
                 Slider(
                     value = progress,
@@ -117,8 +130,17 @@ fun MeditationPlayerScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { /* Rewind 15s */ }) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(28.dp), tint = TextPrimary)
+                    IconButton(onClick = { 
+                        viewModel.navigateToPrevious()
+                        Toast.makeText(context, "Previous session", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(32.dp), tint = TextPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    IconButton(onClick = { 
+                        Toast.makeText(context, "Rewinding 15s", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Rewind", modifier = Modifier.size(28.dp), tint = TextPrimary)
                     }
                     Spacer(modifier = Modifier.width(24.dp))
                     Surface(
@@ -130,15 +152,26 @@ fun MeditationPlayerScreen(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = null,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
                                 modifier = Modifier.size(36.dp),
                                 tint = Color.White
                             )
                         }
                     }
                     Spacer(modifier = Modifier.width(24.dp))
-                    IconButton(onClick = { /* Forward 15s */ }) {
-                        Icon(Icons.Default.FastForward, contentDescription = null, modifier = Modifier.size(28.dp), tint = TextPrimary)
+                    IconButton(onClick = { 
+                        // Simulate progress for UI responsiveness
+                        progress = (progress + 0.1f).coerceAtMost(1f)
+                        Toast.makeText(context, "Fast Forward 15s", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Default.FastForward, contentDescription = "Fast Forward", modifier = Modifier.size(28.dp), tint = TextPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    IconButton(onClick = { 
+                        viewModel.navigateToNext()
+                        Toast.makeText(context, "Next session", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(32.dp), tint = TextPrimary)
                     }
                 }
 
@@ -146,10 +179,44 @@ fun MeditationPlayerScreen(
 
                 // Bottom Actions
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    PlayerAction(Icons.Default.FileDownload, "Download")
-                    PlayerAction(Icons.Default.FavoriteBorder, "Favorite")
-                    PlayerAction(Icons.Default.Timer, "Timer")
-                    PlayerAction(Icons.Default.Share, "Share")
+                    PlayerAction(
+                        icon = Icons.Default.FileDownload, 
+                        label = "Download",
+                        onClick = { 
+                            viewModel.downloadAudio(m.id) { msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                    PlayerAction(
+                        icon = if (m.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, 
+                        label = "Favorite",
+                        color = if (m.favorite) Color.Red else TextPrimary,
+                        onClick = { 
+                            viewModel.toggleFavorite(m.id)
+                            val msg = if (!m.favorite) "Added to favorites" else "Removed from favorites"
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    PlayerAction(
+                        icon = Icons.Default.Timer, 
+                        label = "Timer",
+                        onClick = onNavigateToTimer
+                    )
+                    PlayerAction(
+                        icon = Icons.Default.Share, 
+                        label = "Share",
+                        onClick = { 
+                            viewModel.getShareLink(m.id) { url ->
+                                // Trigger Android Share Intent
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, "Check out this meditation: $url")
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, "Share Meditation"))
+                            }
+                        }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(48.dp))
@@ -171,9 +238,20 @@ fun MeditationPlayerScreen(
 }
 
 @Composable
-fun PlayerAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = TextPrimary)
+fun PlayerAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector, 
+    label: String,
+    color: Color = TextPrimary,
+    onClick: () -> Unit = {}
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = color)
         Spacer(modifier = Modifier.height(8.dp))
         Text(label, fontSize = 11.sp, color = TextSecondary)
     }

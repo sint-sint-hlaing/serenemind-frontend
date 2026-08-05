@@ -10,7 +10,9 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.91.235:8080/"
+    // IMPORTANT: If using emulator, use 10.0.2.2. If physical device, use your PC's local IP.
+    const val BASE_URL = "http://192.168.1.11:8080/"
+    // Example: "http://192.168.1.5:8080/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {

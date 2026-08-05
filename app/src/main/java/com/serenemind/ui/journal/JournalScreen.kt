@@ -25,22 +25,33 @@ import com.serenemind.ui.theme.*
 @Composable
 fun JournalScreen(
     onAddClick: () -> Unit = {},
-    onJournalClick: (Long) -> Unit = {}
+    onJournalClick: (Long) -> Unit = {},
+    onMenuClick: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("My Journal", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Open menu */ }) {
+                    IconButton(onClick = { 
+                        android.widget.Toast.makeText(context, "Opening profile menu", android.widget.Toast.LENGTH_SHORT).show()
+                        onMenuClick() 
+                    }) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Search */ }) {
+                    IconButton(onClick = { 
+                        android.widget.Toast.makeText(context, "Search journals", android.widget.Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
-                    IconButton(onClick = onAddClick) {
+                    IconButton(onClick = {
+                        android.widget.Toast.makeText(context, "Create new entry", android.widget.Toast.LENGTH_SHORT).show()
+                        onAddClick()
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(28.dp))
                     }
                 },

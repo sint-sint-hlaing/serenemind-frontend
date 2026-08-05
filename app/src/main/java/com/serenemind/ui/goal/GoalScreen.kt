@@ -8,11 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.LocalDrink
-import androidx.compose.material.icons.outlined.ModeEditOutline
 import androidx.compose.material.icons.outlined.Nightlight
 import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.*
@@ -39,18 +39,24 @@ fun GoalScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(1) } // 0: All, 1: Active, 2: Completed
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("My Goals", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Open menu */ }) {
+                    IconButton(onClick = { 
+                        android.widget.Toast.makeText(context, "Opening menu...", android.widget.Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
                 },
                 actions = {
-                    IconButton(onClick = onAddGoalClick) {
+                    IconButton(onClick = {
+                        android.widget.Toast.makeText(context, "Add new goal", android.widget.Toast.LENGTH_SHORT).show()
+                        onAddGoalClick()
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = "Add")
                     }
                 },
@@ -202,10 +208,10 @@ fun GoalItem(goal: UserGoal, onClick: (UserGoal) -> Unit) {
             Spacer(modifier = Modifier.width(18.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(goal.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
-                Text("${goal.progress} / ${goal.target} days", color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text("${goal.progress} / ${goal.targetDays} days", color = TextSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(10.dp))
                 LinearProgressIndicator(
-                    progress = { goal.progress.toFloat() / goal.target.toFloat().coerceAtLeast(1f) },
+                    progress = { goal.progress.toFloat() / goal.targetDays.toFloat().coerceAtLeast(1f) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
@@ -221,7 +227,7 @@ fun GoalItem(goal: UserGoal, onClick: (UserGoal) -> Unit) {
 fun getGoalIcon(title: String): ImageVector {
     return when {
         title.contains("meditate", ignoreCase = true) -> Icons.Outlined.SelfImprovement
-        title.contains("journal", ignoreCase = true) -> Icons.Outlined.ModeEditOutline
+        title.contains("journal", ignoreCase = true) -> Icons.AutoMirrored.Outlined.Assignment
         title.contains("water", ignoreCase = true) -> Icons.Outlined.LocalDrink
         title.contains("sleep", ignoreCase = true) -> Icons.Outlined.Nightlight
         else -> Icons.Outlined.CheckCircle
