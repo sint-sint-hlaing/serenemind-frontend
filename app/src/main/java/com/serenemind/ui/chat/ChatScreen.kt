@@ -99,18 +99,6 @@ fun ChatScreen(
         },
         bottomBar = {
             Column {
-                // Quick suggestion chips
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SuggestionChip("Yes, please") { viewModel.sendMessage("Yes, please") }
-                    SuggestionChip("Not now") { viewModel.sendMessage("Not now") }
-                    SuggestionChip("Tell me more") { viewModel.sendMessage("Tell me more") }
-                }
-
                 // Message input
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -238,23 +226,6 @@ fun TypingIndicator() {
                 color = Color.Gray
             )
         }
-    }
-}
-
-@Composable
-fun SuggestionChip(text: String, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = Color.White,
-        shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            fontSize = 12.sp,
-            color = Color(0xFF7E57C2)
-        )
     }
 }
 

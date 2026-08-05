@@ -29,4 +29,8 @@ class ChatLandingViewModel(private val repository: ChatRepository) : ViewModel()
             }
         }
     }
+
+    fun refresh() {
+        fetchConversations()
+    }
 }

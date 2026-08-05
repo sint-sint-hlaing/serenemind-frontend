@@ -333,11 +333,14 @@ fun BottomNavGraph(
             val historyId = historyIdStr?.toLongOrNull()
             
             val chatViewModel: ChatViewModel = viewModel(factory = ChatViewModelFactory(chatRepository))
+            
             ChatScreen(
                 viewModel = chatViewModel,
                 initialMessage = starter,
                 historyId = historyId,
-                onBack = { navController.popBackStack() }
+                onBack = { 
+                    navController.popBackStack() 
+                }
             )
         }
     }

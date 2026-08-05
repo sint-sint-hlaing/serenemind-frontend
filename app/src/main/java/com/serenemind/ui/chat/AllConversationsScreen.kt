@@ -24,6 +24,11 @@ fun AllConversationsScreen(
     onViewConversation: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
