@@ -18,7 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.R
@@ -294,6 +298,10 @@ fun MessageBubble(message: Message) {
         RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp)
     }
 
+    val annotatedText = remember(message.text) {
+        parseMarkdown(message.text)
+    }
+
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = alignment) {
         Surface(
             color = containerColor,
@@ -301,7 +309,12 @@ fun MessageBubble(message: Message) {
             shadowElevation = if (message.isUser) 0.dp else 0.5.dp
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = message.text, color = contentColor, fontSize = 14.sp, lineHeight = 20.sp)
+                Text(
+                    text = annotatedText, 
+                    color = contentColor, 
+                    fontSize = 14.sp, 
+                    lineHeight = 20.sp
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.align(Alignment.End),
@@ -315,6 +328,22 @@ fun MessageBubble(message: Message) {
                         Icon(Icons.Default.DoneAll, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
                     }
                 }
+            }
+        }
+    }
+}
+
+fun parseMarkdown(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        val parts = text.split("**")
+        parts.forEachIndexed { index, part ->
+            if (index % 2 == 1) {
+                // Odd indices are the text between ** **
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(part)
+                }
+            } else {
+                append(part)
             }
         }
     }
