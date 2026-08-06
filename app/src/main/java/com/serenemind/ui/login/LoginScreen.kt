@@ -7,6 +7,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,6 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.messaging.FirebaseMessaging
 import com.serenemind.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,9 +43,27 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var fcmToken by remember { mutableStateOf("") }
 
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    fcmToken = task.result
+                    android.util.Log.d("FCM", "Token successfully fetched: $fcmToken")
+                } else {
+                    android.util.Log.e("FCM", "Fetching FCM registration token failed", task.exception)
+                    fcmToken = "DUMMY_TOKEN_FETCH_FAILED" // Fallback to allow login during dev
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FCM", "Firebase not initialized", e)
+            fcmToken = "DUMMY_TOKEN_NOT_INITIALIZED" // Fallback
+        }
+    }
 
     LaunchedEffect(state) {
         if (state is LoginUiState.Success) {
@@ -48,21 +74,10 @@ fun LoginScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -85,54 +100,34 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Welcome to",
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "SereneMind",
+                text = "Welcome Back 👋",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text(
-                text = "Your mental well-being\nis our priority.",
+                text = "Log in to continue your\nSereneMind journey.",
                 fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Email Field
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Email or Phone",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 8.dp)
+            // Email
+            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
+            TextField(
+                value = email,
+                onValueChange = { email = it },
+                placeholder = { Text("Enter your email or phone") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    placeholder = { Text("Enter your email or phone", fontSize = 14.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
-                )
-            }
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -197,14 +192,14 @@ fun LoginScreen(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    viewModel.login(email, password)
+                    viewModel.login(email, password, fcmToken)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = state !is LoginUiState.Loading
+                enabled = state !is LoginUiState.Loading && fcmToken.isNotEmpty()
             ) {
                 if (state is LoginUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)

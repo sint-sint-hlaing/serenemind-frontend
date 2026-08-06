@@ -2,6 +2,7 @@ package com.serenemind.ui.goal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serenemind.model.request.GoalRequest
 import com.serenemind.model.response.UserGoal
 import com.serenemind.repository.GoalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,9 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
     private val _selectedGoal = MutableStateFlow<UserGoal?>(null)
     val selectedGoal = _selectedGoal.asStateFlow()
 
+    private val _createGoalSuccess = MutableStateFlow(false)
+    val createGoalSuccess = _createGoalSuccess.asStateFlow()
+
     init {
         fetchGoals()
     }
@@ -23,15 +27,12 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
     fun fetchGoals() {
         viewModelScope.launch {
             _uiState.value = GoalUiState.Loading
-            try {
-                val response = repository.getAllGoals()
+            repository.getAllGoals().collect { response ->
                 if (response.isSuccessful) {
                     _uiState.value = GoalUiState.Success(response.body() ?: emptyList())
                 } else {
                     _uiState.value = GoalUiState.Error("Failed to fetch goals: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.value = GoalUiState.Error(e.localizedMessage ?: "Unknown error")
             }
         }
     }
@@ -55,5 +56,31 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                 // Handle error
             }
         }
+    }
+
+    fun createGoal(
+        title: String, 
+        description: String, 
+        targetDays: Int
+    ) {
+        viewModelScope.launch {
+            try {
+                val request = GoalRequest(title, description, targetDays)
+                repository.createGoal(request).collect { response ->
+                    if (response.isSuccessful) {
+                        _createGoalSuccess.value = true
+                        fetchGoals()
+                    } else {
+                        android.util.Log.e("GoalViewModel", "Failed to create goal: ${response.code()} ${response.errorBody()?.string()}")
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    fun resetCreateGoalSuccess() {
+        _createGoalSuccess.value = false
     }
 }

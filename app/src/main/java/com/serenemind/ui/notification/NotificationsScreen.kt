@@ -29,8 +29,8 @@ import java.util.*
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationViewModel,
+    isDarkMode: Boolean,
     onNavigateToPost: (Long) -> Unit,
-    onNavigateToReminder: (Long) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +43,6 @@ fun NotificationsScreen(
             when (event) {
                 is NotificationNavigationEvent.NavigateToPost -> onNavigateToPost(event.postId)
                 is NotificationNavigationEvent.NavigateToComment -> onNavigateToPost(event.postId)
-                is NotificationNavigationEvent.NavigateToReminder -> onNavigateToReminder(event.reminderId)
                 is NotificationNavigationEvent.ShowSystemDialog -> { /* Show Dialog */ }
             }
         }
@@ -115,6 +114,7 @@ fun NotificationsScreen(
                 is NotificationUiState.Success -> {
                     NotificationList(
                         notifications = state.notifications,
+                        isDarkMode = isDarkMode,
                         onNotificationClick = { notification ->
                             viewModel.onNotificationClicked(notification.id)
                         },
@@ -129,6 +129,7 @@ fun NotificationsScreen(
 @Composable
 fun NotificationList(
     notifications: List<NotificationResponse>,
+    isDarkMode: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -154,6 +155,7 @@ fun NotificationList(
             items(items) { notification ->
                 NotificationItem(
                     notification = notification,
+                    isDarkMode = isDarkMode,
                     onClick = { onNotificationClick(notification) }
                 )
             }
@@ -164,6 +166,7 @@ fun NotificationList(
 @Composable
 fun NotificationItem(
     notification: NotificationResponse,
+    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     Row(
@@ -174,7 +177,7 @@ fun NotificationItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Icon
-        val (icon, bgColor, iconColor) = getNotificationTypeDesign(notification.type)
+        val (icon, bgColor, iconColor) = getNotificationTypeDesign(notification.type, isDarkMode)
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -236,43 +239,33 @@ fun NotificationItem(
 data class NotificationDesign(val icon: ImageVector, val bgColor: Color, val iconColor: Color)
 
 @Composable
-fun getNotificationTypeDesign(type: String?): NotificationDesign {
+fun getNotificationTypeDesign(type: String?, isDarkMode: Boolean): NotificationDesign {
     val safeType = type?.uppercase() ?: "DEFAULT"
     return when (safeType) {
         "LIKE" -> NotificationDesign(
             Icons.Default.ThumbUp, 
-            Color(0xFFEDE7F6), 
-            Color(0xFF673AB7)
+            if (isDarkMode) Color(0xFF311B92).copy(alpha = 0.3f) else Color(0xFFEDE7F6), 
+            if (isDarkMode) Color(0xFFB39DDB) else Color(0xFF673AB7)
         )
         "COMMENT" -> NotificationDesign(
             Icons.Default.Favorite, 
-            Color(0xFFFCE4EC), 
-            Color(0xFFE91E63)
-        )
-        "REMINDER" -> NotificationDesign(
-            Icons.Default.NotificationsNone, 
-            Color(0xFFE8F5E9), 
-            Color(0xFF4CAF50)
+            if (isDarkMode) Color(0xFF880E4F).copy(alpha = 0.3f) else Color(0xFFFCE4EC), 
+            if (isDarkMode) Color(0xFFF48FB1) else Color(0xFFE91E63)
         )
         "SYSTEM" -> NotificationDesign(
             Icons.Default.FileUpload, 
-            Color(0xFFE3F2FD), 
-            Color(0xFF2196F3)
+            if (isDarkMode) Color(0xFF0D47A1).copy(alpha = 0.3f) else Color(0xFFE3F2FD), 
+            if (isDarkMode) Color(0xFF90CAF9) else Color(0xFF2196F3)
         )
         "GOAL" -> NotificationDesign(
             Icons.Default.Star, 
-            Color(0xFFFFF8E1), 
-            Color(0xFFFFC107)
-        )
-        "STREAK" -> NotificationDesign(
-            Icons.Default.Whatshot, 
-            Color(0xFFFBE9E7), 
-            Color(0xFFFF5722)
+            if (isDarkMode) Color(0xFFF57F17).copy(alpha = 0.3f) else Color(0xFFFFF8E1), 
+            if (isDarkMode) Color(0xFFFFF59D) else Color(0xFFFFC107)
         )
         "QUOTE" -> NotificationDesign(
             Icons.Default.FormatQuote, 
-            Color(0xFFF3E5F5), 
-            Color(0xFF9C27B0)
+            if (isDarkMode) Color(0xFF4A148C).copy(alpha = 0.3f) else Color(0xFFF3E5F5), 
+            if (isDarkMode) Color(0xFFCE93D8) else Color(0xFF9C27B0)
         )
         else -> NotificationDesign(
             Icons.Default.Notifications, 

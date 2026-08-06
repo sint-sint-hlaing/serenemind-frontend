@@ -23,9 +23,17 @@ class ProfileViewModel(
         viewModelScope.launch {
             try {
                 _uiState.value = ProfileUiState.Loading
-                userRepository.getUserProfile().collect { response ->
-                    if (response.isSuccessful && response.body() != null) {
-                        _uiState.value = ProfileUiState.Success(response.body()!!)
+                userRepository.getUserProfile().collect { profileResponse ->
+                    if (profileResponse.isSuccessful && profileResponse.body() != null) {
+                        val user = profileResponse.body()!!
+                        _uiState.value = ProfileUiState.Success(user)
+                        
+                        // Fetch activity
+                        userRepository.getUserActivity().collect { activityResponse ->
+                            if (activityResponse.isSuccessful && activityResponse.body() != null) {
+                                _uiState.value = ProfileUiState.Success(user, activityResponse.body())
+                            }
+                        }
                     } else {
                         _uiState.value = ProfileUiState.Error("Failed to load profile details.")
                     }

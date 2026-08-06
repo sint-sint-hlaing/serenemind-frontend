@@ -18,9 +18,9 @@ class CommunityRepository(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
 ) {
-    fun getPosts(): Flow<Response<List<PostResponse>>> = flow {
+    fun getPosts(filter: String? = null): Flow<Response<List<PostResponse>>> = flow {
         try {
-            emit(apiService.getPosts())
+            emit(apiService.getPosts(filter))
         } catch (e: Exception) {
             emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
@@ -50,19 +50,53 @@ class CommunityRepository(
         }
     }
 
-    suspend fun addComment(postId: Long, content: String, isAnonymous: Boolean = false): Response<CommentResponse> {
+    suspend fun toggleSavePost(postId: Long): Response<Unit> {
         return try {
-            apiService.addComment(postId, CommentRequest(content, isAnonymous))
+            apiService.toggleSavePost(postId)
         } catch (e: Exception) {
             Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }
     }
 
-    suspend fun createPost(request: CreatePostRequest, imagePart: MultipartBody.Part?): Response<PostResponse> {
+    fun getSavedPosts(): Flow<Response<List<PostResponse>>> = flow {
+        try {
+            emit(apiService.getSavedPosts())
+        } catch (e: Exception) {
+            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+        }
+    }
+
+    suspend fun addComment(
+        postId: Long,
+        content: String,
+        isAnonymous: Boolean = false
+    ): Response<CommentResponse> {
+        return try {
+            apiService.addComment(
+                postId,
+                CommentRequest(content, isAnonymous)
+            )
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun createPost(
+        request: CreatePostRequest,
+        imagePart: MultipartBody.Part?
+    ): Response<PostResponse> {
         return try {
             val json = Gson().toJson(request)
             val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())
             apiService.createPost(postPart, imagePart)
+        } catch (e: Exception) {
+            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
+        }
+    }
+
+    suspend fun deletePost(postId: Long): Response<Unit> {
+        return try {
+            apiService.deletePost(postId)
         } catch (e: Exception) {
             Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
         }

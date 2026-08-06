@@ -32,6 +32,7 @@ import com.serenemind.R
 import com.serenemind.ui.profile.ProfileUiState
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.util.FileUtils
+import com.serenemind.util.getAvatarResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,21 +116,17 @@ fun CreatePostScreen(
                 // User Info
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val user = (profileState as? ProfileUiState.Success)?.user
-                    val avatar = if (isAnonymous) null else user?.avatar
-                    val name = if (isAnonymous) "Anonymous" else (user?.fullname ?: user?.username ?: "User")
+                    val avatarUrl = if (isAnonymous) com.serenemind.R.drawable.anonymous_avatar else user?.avatar
+                    val name = if (isAnonymous) "Anonymous (You)" else (user?.fullname ?: user?.username ?: "User")
                     
-                    val avatarRes = when (avatar) {
-                        "avatar-1" -> R.drawable.avatar_1
-                        "avatar-2" -> R.drawable.avatar_2
-                        else -> R.drawable.default_avatar
-                    }
-                    Image(
-                        painter = painterResource(id = avatarRes),
+                    AsyncImage(
+                        model = avatarUrl,
                         contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = getAvatarResource(null))
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {

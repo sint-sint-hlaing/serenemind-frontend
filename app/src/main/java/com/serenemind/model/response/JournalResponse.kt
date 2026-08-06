@@ -14,3 +14,8 @@ data class JournalResponse(
     @SerializedName("updatedAt") val updatedAt: String?,
     @SerializedName("analysis") val analysis: JournalAnalysisResponse?
 )
+
+data class JournalPhotoResponse(
+    @SerializedName("id") val id: Int,
+    @SerializedName("photoUrl") val photoUrl: String
+)

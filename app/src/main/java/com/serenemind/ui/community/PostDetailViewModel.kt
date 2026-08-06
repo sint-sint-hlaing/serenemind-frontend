@@ -73,6 +73,33 @@ class PostDetailViewModel(
         }
     }
 
+    fun savePost() {
+        val currentState = _uiState.value
+        if (currentState is PostDetailUiState.Success) {
+            val currentPost = currentState.post
+            val isSaved = !currentPost.isSavedByMe
+            val updatedPost = currentPost.copy(isSavedByMe = isSaved)
+            
+            _uiState.value = currentState.copy(post = updatedPost)
+
+            viewModelScope.launch {
+                val response = communityRepository.toggleSavePost(postId)
+                if (!response.isSuccessful) {
+                    _uiState.value = currentState
+                }
+            }
+        }
+    }
+
+    fun deletePost(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val response = communityRepository.deletePost(postId)
+            if (response.isSuccessful) {
+                onSuccess()
+            }
+        }
+    }
+
     fun addComment(content: String, isAnonymous: Boolean = false) {
         val currentState = _uiState.value
         if (currentState is PostDetailUiState.Success) {

@@ -17,20 +17,19 @@ class CommunityViewModel(
     private val _uiState = MutableStateFlow<CommunityUiState>(CommunityUiState.Loading)
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
 
-    init {
-        fetchPosts(isInitialLoad = true)
-    }
+    private var currentFilter: String? = null
 
     fun refresh() {
-        fetchPosts(isInitialLoad = false)
+        fetchPosts(isInitialLoad = false, filter = currentFilter)
     }
 
-    fun fetchPosts(isInitialLoad: Boolean = false) {
+    fun fetchPosts(isInitialLoad: Boolean = false, filter: String? = null) {
+        currentFilter = filter
         viewModelScope.launch {
             if (isInitialLoad) {
                 _uiState.value = CommunityUiState.Loading
             }
-            communityRepository.getPosts()
+            communityRepository.getPosts(filter)
                 .catch { e ->
                     if (isInitialLoad) _uiState.value = CommunityUiState.Error("Exception: ${e.message}")
                 }
@@ -68,6 +67,49 @@ class CommunityViewModel(
                 } else {
                     // Refresh silently to sync with server
                     fetchPosts(isInitialLoad = false)
+                }
+            }
+        }
+    }
+
+    fun savePost(postId: Long) {
+        val currentState = _uiState.value
+        if (currentState is CommunityUiState.Success) {
+            // Optimistic UI update
+            val updatedPosts = currentState.posts.map { post ->
+                if (post.id == postId) {
+                    post.copy(isSavedByMe = !post.isSavedByMe)
+                } else {
+                    post
+                }
+            }
+            _uiState.value = CommunityUiState.Success(updatedPosts)
+
+            viewModelScope.launch {
+                val response = communityRepository.toggleSavePost(postId)
+                if (!response.isSuccessful) {
+                    // Rollback on failure
+                    _uiState.value = currentState
+                } else {
+                    // Refresh silently to sync with server
+                    fetchPosts(isInitialLoad = false)
+                }
+            }
+        }
+    }
+
+    fun deletePost(postId: Long) {
+        val currentState = _uiState.value
+        if (currentState is CommunityUiState.Success) {
+            // Optimistic UI update
+            val updatedPosts = currentState.posts.filterNot { it.id == postId }
+            _uiState.value = CommunityUiState.Success(updatedPosts)
+
+            viewModelScope.launch {
+                val response = communityRepository.deletePost(postId)
+                if (!response.isSuccessful) {
+                    // Rollback on failure
+                    _uiState.value = currentState
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.serenemind.ui.profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,17 +10,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Whatshot
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,11 +24,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.serenemind.R
+import com.serenemind.ui.theme.*
+import com.serenemind.util.getAvatarResource
 
 @Composable
 fun ProfileScreen(
@@ -43,10 +42,13 @@ fun ProfileScreen(
     onDarkModeToggle: (Boolean) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onLogout: () -> Unit = {},
-    onNavigateToReminders: () -> Unit = {},
-    onNavigateToStreak: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToSavedPosts: () -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToPersonalInfo: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -63,7 +65,10 @@ fun ProfileScreen(
             ) {
                 Spacer(modifier = Modifier.size(48.dp))
                 Text("My Profile", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onNavigateToSettings) {
+                IconButton(onClick = {
+                    android.widget.Toast.makeText(context, "Opening settings...", android.widget.Toast.LENGTH_SHORT).show()
+                    onNavigateToSettings()
+                }) {
                     Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                 }
             }
@@ -112,12 +117,15 @@ fun ProfileScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = getDrawableIdForAvatar(user.avatar)),
+                                    AsyncImage(
+                                        model = user.avatar,
                                         contentDescription = "User Avatar",
                                         modifier = Modifier
                                             .size(72.dp)
                                             .clip(CircleShape)
+                                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                        contentScale = ContentScale.Crop,
+                                        error = painterResource(id = getAvatarResource(null))
                                     )
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
@@ -134,7 +142,7 @@ fun ProfileScreen(
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "\"Be kind to your mind.\"",
+                                            text = user.bio?.let { "\"$it\"" } ?: "\"Be kind to your mind.\"",
                                             fontSize = 13.sp,
                                             color = if (isDarkMode) MaterialTheme.colorScheme.primary else Color(0xFF673AB7)
                                         )
@@ -143,8 +151,58 @@ fun ProfileScreen(
                                         imageVector = Icons.Default.Edit,
                                         contentDescription = "Edit Profile",
                                         tint = if (isDarkMode) Color.LightGray else Color.Gray,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { onNavigateToEditProfile() }
                                     )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Your Activity Section
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    "Your Activity",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0))
+                                ) {
+                                    val activity = state.activity
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceAround
+                                    ) {
+                                        ActivityItem(
+                                            icon = Icons.AutoMirrored.Filled.Assignment, 
+                                            label = "Journals", 
+                                            value = activity?.totalJournals?.toString() ?: "0", 
+                                            subValue = "entries", 
+                                            color = Color(0xFF9C27B0)
+                                        )
+                                        ActivityItem(
+                                            icon = Icons.Default.Flag, 
+                                            label = "Goals Completed", 
+                                            value = activity?.goalsCompleted?.toString() ?: "0", 
+                                            subValue = "goals", 
+                                            color = Color(0xFF4CAF50)
+                                        )
+                                        ActivityItem(
+                                            icon = Icons.Default.Create, 
+                                            label = "Posts", 
+                                            value = activity?.totalPosts?.toString() ?: "0", 
+                                            subValue = "posts", 
+                                            color = Color(0xFFFF9800)
+                                        )
+                                    }
                                 }
                             }
 
@@ -158,14 +216,19 @@ fun ProfileScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column {
-                                    ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
                                     ProfileMenuItem(
-                                        icon = Icons.Default.Whatshot,
-                                        title = "My Streaks",
-                                        onClick = onNavigateToStreak
+                                        icon = Icons.Default.Person, 
+                                        title = "Personal Information",
+                                        iconTint = Color.Gray,
+                                        onClick = onNavigateToPersonalInfo
                                     )
-                                    ProfileMenuItem(icon = Icons.Default.Lock, title = "Privacy & Security")
-                                    
+                                    ProfileMenuItem(
+                                        icon = Icons.Default.Bookmark, 
+                                        title = "Saved Post",
+                                        iconTint = Color(0xFF2196F3),
+                                        onClick = onNavigateToSavedPosts
+                                    )
+
                                     // Dark Mode Toggle
                                     Row(
                                         modifier = Modifier
@@ -178,7 +241,7 @@ fun ProfileScreen(
                                             Icon(
                                                 imageVector = Icons.Default.DarkMode,
                                                 contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                tint = Color(0xFF7C4DFF),
                                                 modifier = Modifier.size(24.dp)
                                             )
                                             Spacer(modifier = Modifier.width(16.dp))
@@ -196,18 +259,19 @@ fun ProfileScreen(
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
                                     ProfileMenuItem(
-                                        icon = Icons.Default.Notifications,
-                                        title = "Reminders",
-                                        onClick = onNavigateToReminders
+                                        icon = Icons.Default.Info, 
+                                        title = "About SereneMind",
+                                        iconTint = Color(0xFF2196F3),
+                                        onClick = onNavigateToAbout
                                     )
-                                    ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Help & Support")
-                                    ProfileMenuItem(icon = Icons.Default.Info, title = "About SereneMind")
-                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                                     ProfileMenuItem(
                                         icon = Icons.AutoMirrored.Filled.Logout,
                                         title = "Logout",
+                                        iconTint = Color(0xFFF44336),
                                         isLast = true,
-                                        onClick = onLogout
+                                        onClick = {
+                                            viewModel.logout { onLogout() }
+                                        }
                                     )
                                 }
                             }
@@ -221,11 +285,55 @@ fun ProfileScreen(
 }
 
 @Composable
+fun ActivityItem(icon: ImageVector, label: String, value: String, subValue: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(80.dp)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = color.copy(alpha = 0.15f),
+            modifier = Modifier.size(48.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon, 
+                    contentDescription = null, 
+                    tint = color, 
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = label, 
+            fontSize = 11.sp, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+            textAlign = TextAlign.Center,
+            lineHeight = 14.sp,
+            modifier = Modifier.height(28.dp)
+        )
+        Text(
+            text = value, 
+            fontSize = 18.sp, 
+            fontWeight = FontWeight.Bold, 
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = subValue, 
+            fontSize = 11.sp, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 fun ProfileMenuItem(
     icon: ImageVector,
     title: String,
     badge: String? = null,
     isLast: Boolean = false,
+    iconTint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     onClick: () -> Unit = {}
 ) {
     Column {
@@ -236,34 +344,45 @@ fun ProfileMenuItem(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = icon, contentDescription = title, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = iconTint,
+                modifier = Modifier.size(24.dp)
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
 
             if (badge != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    Text(text = badge, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = badge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
                 }
             }
 
-            Icon(imageVector = Icons.Default.ArrowForwardIos, contentDescription = "Go", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Go",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(14.dp)
+            )
         }
         if (!isLast) {
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
         }
-    }
-}
-
-fun getDrawableIdForAvatar(avatarName: String?): Int {
-    return when (avatarName) {
-        "avatar-1" -> R.drawable.avatar_1
-        "avatar-2" -> R.drawable.avatar_2
-        else -> R.drawable.default_avatar
     }
 }

@@ -4,19 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.NotificationResponse
 import com.serenemind.repository.NotificationRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 sealed class NotificationNavigationEvent {
     data class NavigateToPost(val postId: Long) : NotificationNavigationEvent()
     data class NavigateToComment(val postId: Long) : NotificationNavigationEvent()
-    data class NavigateToReminder(val reminderId: Long) : NotificationNavigationEvent()
     object ShowSystemDialog : NotificationNavigationEvent()
 }
 
@@ -37,7 +30,8 @@ class NotificationViewModel(
     }
 
     fun fetchNotifications(filter: String? = null) {
-        currentFilter = if (filter == "all" || filter == null) null else filter
+        currentFilter = filter?.takeIf { it != "all" }
+        
         viewModelScope.launch {
             _uiState.value = NotificationUiState.Loading
             notificationRepository.getNotifications(currentFilter)
@@ -45,8 +39,9 @@ class NotificationViewModel(
                     _uiState.value = NotificationUiState.Error(e.message ?: "Unknown error")
                 }
                 .collect { response ->
-                    if (response.isSuccessful && response.body() != null) {
-                        _uiState.value = NotificationUiState.Success(response.body()!!)
+                    if (response.isSuccessful) {
+                        _uiState.value = response.body()?.let { NotificationUiState.Success(it) } 
+                            ?: NotificationUiState.Error("Empty response")
                     } else {
                         _uiState.value = NotificationUiState.Error("Failed to fetch notifications")
                     }
@@ -58,9 +53,8 @@ class NotificationViewModel(
         viewModelScope.launch {
             try {
                 val response = notificationRepository.clickNotification(id)
-                if (response.isSuccessful && response.body() != null) {
-                    val noti = response.body()!!
-                    handleNavigation(noti)
+                if (response.isSuccessful) {
+                    response.body()?.let { handleNavigation(it) }
                     refreshNotifications()
                 }
             } catch (e: Exception) {
@@ -71,19 +65,19 @@ class NotificationViewModel(
 
     private suspend fun handleNavigation(noti: NotificationResponse) {
         val targetId = noti.targetId ?: return
-        when (noti.targetType) {
-            "POST" -> _navigationEvent.emit(NotificationNavigationEvent.NavigateToPost(targetId))
-            "COMMENT" -> _navigationEvent.emit(NotificationNavigationEvent.NavigateToComment(targetId))
-            "REMINDER" -> _navigationEvent.emit(NotificationNavigationEvent.NavigateToReminder(targetId))
-            "SYSTEM" -> _navigationEvent.emit(NotificationNavigationEvent.ShowSystemDialog)
+        val event = when (noti.targetType) {
+            "POST" -> NotificationNavigationEvent.NavigateToPost(targetId)
+            "COMMENT" -> NotificationNavigationEvent.NavigateToComment(targetId)
+            "SYSTEM" -> NotificationNavigationEvent.ShowSystemDialog
+            else -> null
         }
+        event?.let { _navigationEvent.emit(it) }
     }
 
     fun markAllAsRead() {
         viewModelScope.launch {
             try {
-                val response = notificationRepository.markAllAsRead()
-                if (response.isSuccessful) {
+                if (notificationRepository.markAllAsRead().isSuccessful) {
                     refreshNotifications()
                 }
             } catch (e: Exception) {
@@ -97,8 +91,8 @@ class NotificationViewModel(
             notificationRepository.getNotifications(currentFilter)
                 .catch { /* ignore silent refresh error */ }
                 .collect { response ->
-                    if (response.isSuccessful && response.body() != null) {
-                        _uiState.value = NotificationUiState.Success(response.body()!!)
+                    if (response.isSuccessful) {
+                        response.body()?.let { _uiState.value = NotificationUiState.Success(it) }
                     }
                 }
         }

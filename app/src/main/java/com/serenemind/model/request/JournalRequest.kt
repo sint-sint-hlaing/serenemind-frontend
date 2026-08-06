@@ -6,5 +6,6 @@ data class JournalRequest(
     @SerializedName("title") val title: String,
     @SerializedName("content") val content: String,
     @SerializedName("tags") val tags: List<String> = emptyList(),
-    @SerializedName("favourite") val favourite: Boolean = false
+    @SerializedName("favourite") val favourite: Boolean = false,
+    @SerializedName("mood") val mood: String? = null
 )

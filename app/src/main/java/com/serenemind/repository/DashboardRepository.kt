@@ -5,6 +5,7 @@ import com.serenemind.network.ApiService
 import com.serenemind.model.response.DashboardResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import retrofit2.Response
 
 class DashboardRepository(
@@ -17,7 +18,12 @@ class DashboardRepository(
             val response = apiService.getDashboardData()
             emit(response)
         } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
+            // Log error if possible or emit a custom error response
+            val errorBody = okhttp3.ResponseBody.create(
+                "application/json".toMediaTypeOrNull(),
+                "{\"message\": \"${e.localizedMessage ?: "Unknown Network Error"}\"}"
+            )
+            emit(Response.error(500, errorBody))
         }
     }
 }

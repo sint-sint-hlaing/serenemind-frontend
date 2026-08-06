@@ -57,4 +57,8 @@ object NetworkModule {
     fun provideMeditationApiService(context: Context, tokenManager: TokenManager): MeditationApiService {
         return provideRetrofit(context, tokenManager).create(MeditationApiService::class.java)
     }
+
+    fun provideChatApiService(context: Context, tokenManager: TokenManager): ChatApiService {
+        return provideRetrofit(context, tokenManager).create(ChatApiService::class.java)
+    }
 }

@@ -2,6 +2,7 @@ package com.serenemind.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
@@ -19,22 +20,30 @@ sealed class Screen(
 
     // Bottom Tabs
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Journal : Screen("journal", "Journal", Icons.Default.DateRange)
+    object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Filled.Assignment)
     object Mood : Screen("mood", "Mood", Icons.Default.Face)
-    object Streak : Screen("streak", "Streak", Icons.Default.Whatshot)
-    object Goal : Screen("goal", "Goal", Icons.Default.Attribution)
-    object Community : Screen("community", "Community", Icons.Default.People)
+    object Goal : Screen("goal", "Goal", Icons.Default.Flag)
+    object Community : Screen("community", "Community", Icons.Default.Groups)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 
     // Sub Screens
     object MoodHistory : Screen("mood_history")
+    object MoodInsights : Screen("mood_insights")
     object GoalDetail : Screen("goal_detail")
+    object AddGoal : Screen("add_goal")
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
-    object Reminders : Screen("reminders")
-    object AddReminder : Screen("add_reminder")
-    object Breathing : Screen("breathing")
     object Meditation : Screen("meditation")
+    object MeditationTimer : Screen("meditation_timer")
+    object About : Screen("about")
+    object SavedPosts : Screen("saved_posts")
+    object EditProfile : Screen("edit_profile")
+    object PersonalInfo : Screen("personal_info")
+    object ChatLanding : Screen("chat_landing", "AI Chat", Icons.Default.ChatBubble)
+    object Chat : Screen("chat")
+    object AllConversations : Screen("all_conversations")
+    object Focus : Screen("focus")
+    object Insights : Screen("insights")
 
     // Journal Flow
     object JournalEditor : Screen("journal_editor/{id}?isEdit={isEdit}") {

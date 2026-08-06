@@ -15,7 +15,10 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ThumbUpOffAlt
@@ -36,15 +39,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.serenemind.R
 import com.serenemind.model.response.CommentResponse
 import com.serenemind.model.response.PostResponse
+import com.serenemind.ui.profile.ProfileUiState
+import com.serenemind.ui.profile.ProfileViewModel
+import com.serenemind.util.getAvatarResource
+import com.serenemind.util.formatPostDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
     viewModel: PostDetailViewModel,
+    profileViewModel: ProfileViewModel,
     focusComments: Boolean = false,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profileState by profileViewModel.uiState.collectAsState()
+    val currentUsername = (profileState as? ProfileUiState.Success)?.user?.username
+
     var commentText by remember { mutableStateOf("") }
     var isAnonymous by remember { mutableStateOf(false) }
 
@@ -104,7 +115,7 @@ fun PostDetailScreen(
                         Text(
                             text = "Comment as",
                             fontSize = 12.sp,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                         
@@ -179,7 +190,7 @@ fun PostDetailScreen(
             }
             is PostDetailUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message, color = Color.Red)
+                    Text(text = state.message, color = MaterialTheme.colorScheme.error)
                 }
             }
             is PostDetailUiState.Success -> {
@@ -192,7 +203,14 @@ fun PostDetailScreen(
                     item {
                         PostHeader(
                             post = state.post,
-                            onLikeClick = { viewModel.likePost() }
+                            isOwnPost = state.post.username == currentUsername || state.post.username.endsWith("(You)"),
+                            onLikeClick = { viewModel.likePost() },
+                            onSaveClick = { viewModel.savePost() },
+                            onDeleteClick = {
+                                viewModel.deletePost {
+                                    onBack()
+                                }
+                            }
                         )
                     }
                     item {
@@ -204,7 +222,10 @@ fun PostDetailScreen(
                         )
                     }
                     items(state.comments) { comment ->
-                        CommentItem(comment)
+                        CommentItem(
+                            comment = comment,
+                            isOwnComment = comment.username == currentUsername || comment.username.endsWith("(You)") || (comment.id == -1L && !comment.anonymous)
+                        )
                     }
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -228,36 +249,102 @@ fun PostDetailPreview() {
             likeCount = 24,
             commentCount = 6,
             isLikedByMe = true,
+            isSavedByMe = false,
             createdAt = "2 hours ago",
             anonymous = false
         ),
-        onLikeClick = {}
+        onLikeClick = {},
+        onSaveClick = {}
     )
 }
 
 @Composable
 fun PostHeader(
     post: PostResponse,
-    onLikeClick: () -> Unit
+    isOwnPost: Boolean = false,
+    onLikeClick: () -> Unit,
+    onSaveClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Post") },
+            text = { Text("Are you sure you want to delete this post? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteClick?.invoke()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val displayName = post.username
-            val displayAvatar = if (post.anonymous) null else post.userProfilePicture
-            val avatarRes = getAvatarResource(displayAvatar)
-            
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = avatarRes),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val displayName = when {
+                    post.anonymous && isOwnPost -> "Anonymous (You)"
+                    post.anonymous -> "Anonymous"
+                    else -> post.username
+                }
+                val displayAvatar = if (post.anonymous) com.serenemind.R.drawable.anonymous_avatar else post.userProfilePicture
+                
+                AsyncImage(
+                    model = displayAvatar,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = getAvatarResource(null))
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(text = displayName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = formatPostDate(post.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                }
+            }
+
+            if (isOwnPost) {
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Delete Post", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                showMenu = false
+                                showDeleteDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            }
+                        )
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -310,12 +397,14 @@ fun PostHeader(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Icon(
-                imageVector = Icons.Outlined.BookmarkBorder,
-                contentDescription = "Bookmark",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-            )
+            IconButton(onClick = onSaveClick) {
+                Icon(
+                    imageVector = if (post.isSavedByMe) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                    contentDescription = "Bookmark",
+                    tint = if (post.isSavedByMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp)
@@ -323,7 +412,10 @@ fun PostHeader(
 }
 
 @Composable
-fun CommentItem(comment: CommentResponse) {
+fun CommentItem(
+    comment: CommentResponse,
+    isOwnComment: Boolean = false
+) {
     val isPending = comment.id == -1L // Local pending state
     
     Row(
@@ -332,17 +424,21 @@ fun CommentItem(comment: CommentResponse) {
             .padding(16.dp)
             .alpha(if (isPending) 0.6f else 1f) // Grey out while sending
     ) {
-        val displayName = comment.username
-        val displayAvatar = if (comment.anonymous) null else comment.userProfilePicture
-        val avatarRes = getAvatarResource(displayAvatar)
+        val displayName = when {
+            comment.anonymous && isOwnComment -> "Anonymous (You)"
+            comment.anonymous -> "Anonymous"
+            else -> comment.username
+        }
+        val displayAvatar = if (comment.anonymous) com.serenemind.R.drawable.anonymous_avatar else comment.userProfilePicture
         
-        androidx.compose.foundation.Image(
-            painter = painterResource(id = avatarRes),
+        AsyncImage(
+            model = displayAvatar,
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            error = painterResource(id = getAvatarResource(null))
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column {

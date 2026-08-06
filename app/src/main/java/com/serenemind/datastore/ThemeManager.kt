@@ -20,14 +20,14 @@ class ThemeManager(private val context: Context) {
         prefs[DARK_MODE_KEY]
     }
 
-    val lastCelebratedStreak: Flow<Int> = context.themeDataStore.data.map { prefs ->
-        prefs[LAST_CELEBRATED_STREAK_KEY] ?: -1
-    }
-
     suspend fun setDarkMode(enabled: Boolean) {
         context.themeDataStore.edit { prefs ->
             prefs[DARK_MODE_KEY] = enabled
         }
+    }
+
+    val lastCelebratedStreak: Flow<Int> = context.themeDataStore.data.map { prefs ->
+        prefs[LAST_CELEBRATED_STREAK_KEY] ?: 0
     }
 
     suspend fun saveLastCelebratedStreak(streak: Int) {

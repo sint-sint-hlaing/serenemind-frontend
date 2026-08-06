@@ -1,57 +1,51 @@
 package com.serenemind.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryPurple,
-    secondary = OnSurfaceGray,
-    tertiary = MoodCalm,
-    background = DeepDarkBlue,
-    surface = SurfaceDarkBlue,
     onPrimary = Color.White,
+    secondary = PrimaryPurple.copy(alpha = 0.7f),
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = OnSurfaceWhite,
-    onSurface = OnSurfaceWhite,
-    surfaceVariant = SurfaceDarkBlue.copy(alpha = 0.7f),
-    onSurfaceVariant = OnSurfaceGray
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
+    onBackground = Color.White,
+    onSurface = Color.White,
+    error = Error,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = PrimaryPurple,
     onPrimary = Color.White,
+    secondary = PrimaryPurple.copy(alpha = 0.5f),
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    surfaceVariant = Color(0xFFF3F3F3),
-    onSurfaceVariant = Color.Gray
+    background = BackgroundColor,
+    surface = SurfaceColor,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
+    error = Error,
+    onError = Color.White,
+    surfaceVariant = Color(0xFFF5F5F5),
+    onSurfaceVariant = TextSecondary
 )
 
 @Composable
 fun SerenemindclientTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
     }
 
     MaterialTheme(

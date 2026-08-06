@@ -1,12 +1,7 @@
 package com.serenemind.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -17,19 +12,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.serenemind.datastore.TokenManager
 import com.serenemind.network.NetworkModule
-import com.serenemind.repository.BreathingRepository
 import com.serenemind.repository.CommunityRepository
 import com.serenemind.repository.DashboardRepository
-
-import com.serenemind.repository.ReminderRepository
-import com.serenemind.repository.StreakRepository
 
 import com.serenemind.repository.JournalRepository
 
 import com.serenemind.repository.UserRepository
-import com.serenemind.ui.breathing.BreathingScreen
-import com.serenemind.ui.breathing.BreathingViewModel
-import com.serenemind.ui.breathing.BreathingViewModelFactory
 import com.serenemind.ui.community.CommunityScreen
 import com.serenemind.ui.community.CommunityViewModel
 import com.serenemind.ui.community.CommunityViewModelFactory
@@ -46,24 +34,16 @@ import com.serenemind.ui.home.HomeViewModelFactory
 import com.serenemind.ui.notification.NotificationViewModel
 import com.serenemind.ui.notification.NotificationViewModelFactory
 import com.serenemind.ui.notification.NotificationsScreen
-import com.serenemind.ui.profile.AddReminderScreen
 
 import com.serenemind.ui.journal.*
 
 import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
-import com.serenemind.ui.profile.ReminderViewModel
-import com.serenemind.ui.profile.ReminderViewModelFactory
-import com.serenemind.ui.profile.RemindersScreen
-import com.serenemind.ui.streak.StreakScreen
-import com.serenemind.ui.streak.StreakViewModel
-import com.serenemind.ui.streak.StreakViewModelFactory
 
 import com.serenemind.datastore.ThemeManager
 
 import com.serenemind.repository.*
-import com.serenemind.ui.breathing.*
 import com.serenemind.ui.community.*
 import com.serenemind.ui.home.*
 import com.serenemind.ui.profile.*
@@ -72,7 +52,9 @@ import com.serenemind.ui.goal.*
 import com.serenemind.ui.meditation.*
 import com.serenemind.ui.journal.*
 import com.serenemind.ui.notification.*
-import com.serenemind.ui.streak.*
+import com.serenemind.ui.chat.*
+import com.serenemind.ui.focus.*
+import com.serenemind.ui.insights.*
 
 
 @Composable
@@ -84,36 +66,34 @@ fun BottomNavGraph(
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    
+    val themeManager = remember { ThemeManager(context) }
+
     val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
     val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
     val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
     val journalApiService = remember { NetworkModule.provideJournalApiService(context, tokenManager) }
-    val themeManager = remember { ThemeManager(context) }
+    val chatApiService = remember { NetworkModule.provideChatApiService(context, tokenManager) }
 
     // Repositories
     val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
     val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
     val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
-    val streakRepository = remember { StreakRepository(apiService, tokenManager) }
-    val reminderRepository = remember { ReminderRepository(apiService, tokenManager) }
-    val breathingRepository = remember { BreathingRepository(apiService, tokenManager) }
-    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
-    val goalRepository = remember { GoalRepository(goalApiService) }
-    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val moodRepository = remember { MoodRepository(apiService) }
+    val goalRepository = remember { GoalRepository(apiService) }
+    val meditationRepository = remember { MeditationRepository(apiService) }
     val journalRepository = remember { JournalRepository(journalApiService) }
+    val chatRepository = remember { ChatRepository(chatApiService) }
     
     // ViewModels
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, moodRepository, themeManager))
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
-    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, themeManager))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
-    val streakViewModel: StreakViewModel = viewModel(factory = StreakViewModelFactory(streakRepository))
-    val reminderViewModel: ReminderViewModel = viewModel(factory = ReminderViewModelFactory(reminderRepository))
-    val breathingViewModel: BreathingViewModel = viewModel(factory = BreathingViewModelFactory(breathingRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
+    val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository))
+    val focusViewModel: FocusViewModel = viewModel(factory = FocusViewModelFactory())
 
     NavHost(
         navController = navController,
@@ -122,25 +102,26 @@ fun BottomNavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 viewModel = homeViewModel,
+                isDarkMode = isDarkMode,
                 onLogout = onLogout,
-                onNavigateToBreathing = {
-                    navController.navigate(Screen.Breathing.route)
-                },
-                onNavigateToStreak = {
-                    navController.navigate(Screen.Streak.route)
-                },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications.route)
-                },
                 onActionClick = { action ->
                     when (action.lowercase()) {
                         "meditate", "meditation" -> navController.navigate(Screen.Meditation.route)
                         "goals", "goal" -> navController.navigate(Screen.Goal.route)
                         "journal" -> navController.navigate(Screen.Journal.route)
                         "mood" -> navController.navigate(Screen.Mood.route)
-                        "breathing" -> navController.navigate(Screen.Breathing.route)
+                        "focus" -> navController.navigate(Screen.Focus.route)
+                        "insights" -> navController.navigate(Screen.Insights.route)
+                        "mood_insights" -> navController.navigate(Screen.MoodInsights.route)
                         "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
+                        "chat_landing" -> navController.navigate(Screen.ChatLanding.route)
                     }
+                },
+                onNotificationClick = {
+                    navController.navigate(Screen.Notifications.route)
+                },
+                onMenuClick = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }
@@ -148,19 +129,10 @@ fun BottomNavGraph(
         composable(Screen.Notifications.route) {
             NotificationsScreen(
                 viewModel = notificationViewModel,
+                isDarkMode = isDarkMode,
                 onNavigateToPost = { postId ->
                     navController.navigate("post_detail/$postId")
                 },
-                onNavigateToReminder = {
-                    navController.navigate(Screen.Reminders.route)
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Breathing.route) {
-            BreathingScreen(
-                viewModel = breathingViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -216,6 +188,7 @@ fun BottomNavGraph(
         composable(Screen.Mood.route) {
             MoodTrackerScreen(
                 viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onViewHistory = { navController.navigate(Screen.MoodHistory.route) }
             )
@@ -224,6 +197,15 @@ fun BottomNavGraph(
         composable(Screen.MoodHistory.route) {
             MoodHistoryScreen(
                 viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MoodInsights.route) {
+            MoodInsightsScreen(
+                viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -231,33 +213,58 @@ fun BottomNavGraph(
         composable(Screen.Goal.route) {
             GoalScreen(
                 viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onGoalClick = { goal ->
                     goalViewModel.selectGoal(goal)
                     navController.navigate(Screen.GoalDetail.route)
+                },
+                onAddGoalClick = {
+                    navController.navigate(Screen.AddGoal.route)
                 }
+            )
+        }
+
+        composable(Screen.AddGoal.route) {
+            AddGoalScreen(
+                viewModel = goalViewModel,
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
 
         composable(Screen.GoalDetail.route) {
             GoalDetailScreen(
                 viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Meditation.route) {
-            val meditationViewModel: MeditationViewModel = viewModel(
-                factory = MeditationViewModelFactory(meditationRepository)
-            )
             MeditationScreen(
                 viewModel = meditationViewModel,
-                onBack = { navController.popBackStack() }
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() },
+                onMeditationClick = { meditation ->
+                    meditationViewModel.selectMeditation(meditation)
+                    navController.navigate("meditation_player")
+                }
             )
         }
 
-        composable(Screen.Streak.route) {
-            StreakScreen(
-                viewModel = streakViewModel,
+        composable("meditation_player") {
+            MeditationPlayerScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToTimer = {
+                    navController.navigate(Screen.MeditationTimer.route)
+                }
+            )
+        }
+
+        composable(Screen.MeditationTimer.route) {
+            MeditationTimerScreen(
+                viewModel = meditationViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -265,6 +272,8 @@ fun BottomNavGraph(
         composable(Screen.Community.route) {
             CommunityScreen(
                 viewModel = communityViewModel,
+                profileViewModel = profileViewModel,
+                isDarkMode = isDarkMode,
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
                 },
@@ -286,18 +295,18 @@ fun BottomNavGraph(
             val postIdStr = backStackEntry.arguments?.getString("postId")
             val postId = postIdStr?.toLongOrNull() ?: -1L
             val focusComments = backStackEntry.arguments?.getBoolean("focusComments") ?: false
-            
+
             val postDetailViewModel: PostDetailViewModel = viewModel(
                 factory = PostDetailViewModelFactory(communityRepository, postId)
             )
 
             PostDetailScreen(
                 viewModel = postDetailViewModel,
+                profileViewModel = profileViewModel,
                 focusComments = focusComments,
                 onBack = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
-                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack()
                 }
             )
@@ -315,7 +324,6 @@ fun BottomNavGraph(
                 onPostSuccess = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
-                    streakViewModel.fetchStreak(isSilent = true)
                     navController.popBackStack()
                 }
             )
@@ -328,36 +336,136 @@ fun BottomNavGraph(
                 onDarkModeToggle = onDarkModeToggle,
                 onNavigateToSettings = { },
                 onLogout = onLogout,
-                onNavigateToReminders = {
-                    navController.navigate(Screen.Reminders.route)
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
                 },
-                onNavigateToStreak = {
-                    navController.navigate(Screen.Streak.route)
+                onNavigateToSavedPosts = {
+                    navController.navigate(Screen.SavedPosts.route)
+                },
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToPersonalInfo = {
+                    navController.navigate(Screen.PersonalInfo.route)
                 }
             )
         }
 
-        composable(Screen.Reminders.route) {
-            RemindersScreen(
-                viewModel = reminderViewModel,
-                onBackClick = { navController.popBackStack() },
-                onAddClick = { navController.navigate(Screen.AddReminder.route) }
+        composable(Screen.PersonalInfo.route) {
+            val personalInfoViewModel: PersonalInfoViewModel = viewModel(
+                factory = PersonalInfoViewModelFactory(userRepository)
+            )
+            PersonalInfoScreen(
+                viewModel = personalInfoViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
-        composable(Screen.AddReminder.route) {
-            AddReminderScreen(
-                viewModel = reminderViewModel,
-                onBackClick = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
+        composable(Screen.EditProfile.route) {
+            val editProfileViewModel: EditProfileViewModel = viewModel(
+                factory = EditProfileViewModelFactory(userRepository)
+            )
+            EditProfileScreen(
+                viewModel = editProfileViewModel,
+                onBack = { navController.popBackStack() },
+                onSuccess = {
+                    profileViewModel.fetchUserProfile()
+                    navController.popBackStack()
+                }
             )
         }
-    }
-}
 
-@Composable
-fun SampleScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
+        composable(Screen.About.route) {
+            AboutScreen(
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.SavedPosts.route) {
+            val savedPostsViewModel: SavedPostsViewModel = viewModel(
+                factory = SavedPostsViewModelFactory(communityRepository)
+            )
+            SavedPostsScreen(
+                viewModel = savedPostsViewModel,
+                profileViewModel = profileViewModel,
+                onBack = { navController.popBackStack() },
+                onPostClick = { post, focusComments ->
+                    navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
+                }
+            )
+        }
+
+        composable(Screen.ChatLanding.route) {
+            val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
+            ChatLandingScreen(
+                viewModel = chatLandingViewModel,
+                onStartChat = { starter ->
+                    navController.navigate("${Screen.Chat.route}?starter=$starter")
+                },
+                onViewConversation = { conversationId ->
+                    navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
+                },
+                onViewAll = {
+                    navController.navigate(Screen.AllConversations.route)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.AllConversations.route) {
+            val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
+            AllConversationsScreen(
+                viewModel = chatLandingViewModel,
+                onBack = { navController.popBackStack() },
+                onViewConversation = { conversationId ->
+                    navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.Chat.route}?starter={starter}&historyId={historyId}",
+            arguments = listOf(
+                androidx.navigation.navArgument("starter") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true 
+                },
+                androidx.navigation.navArgument("historyId") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true 
+                }
+            )
+        ) { backStackEntry ->
+            val starter = backStackEntry.arguments?.getString("starter")
+            val historyIdStr = backStackEntry.arguments?.getString("historyId")
+            val historyId = historyIdStr?.toLongOrNull()
+            
+            val chatViewModel: ChatViewModel = viewModel(factory = ChatViewModelFactory(chatRepository))
+            
+            ChatScreen(
+                viewModel = chatViewModel,
+                initialMessage = starter,
+                historyId = historyId,
+                onBack = { 
+                    navController.popBackStack() 
+                }
+            )
+        }
+
+        composable(Screen.Focus.route) {
+            FocusScreen(
+                viewModel = focusViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Insights.route) {
+            InsightsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }

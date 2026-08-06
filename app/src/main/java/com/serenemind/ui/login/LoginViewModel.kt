@@ -18,15 +18,21 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, fcmToken: String) {
         if (email.isBlank() || password.isBlank()) {
-            _uiState.value = LoginUiState.Error("Empty fields")
+            _uiState.value = LoginUiState.Error("Email and password are required")
+            return
+        }
+
+        if (fcmToken.isBlank()) {
+            _uiState.value = LoginUiState.Error("FCM Token is required by the server. Please check your internet or Firebase setup.")
             return
         }
 
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
-            val result = repository.login(LoginRequest(email, password))
+            
+            val result = repository.login(LoginRequest(email.trim(), password, fcmToken))
             result.onSuccess { response ->
                 tokenManager.saveTokens(response.accessToken, response.refreshToken)
                 _uiState.value = LoginUiState.Success
