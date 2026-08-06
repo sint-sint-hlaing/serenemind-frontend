@@ -1,6 +1,6 @@
 package com.serenemind.ui.meditation
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,7 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,14 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.serenemind.R
-import com.serenemind.model.response.Meditation
 import com.serenemind.model.response.MeditationCategory
 import com.serenemind.model.response.MeditationDashboardResponse
+import com.serenemind.model.response.MeditationResponse
 import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,14 +38,19 @@ import com.serenemind.ui.theme.*
 fun MeditationScreen(
     viewModel: MeditationViewModel,
     isDarkMode: Boolean,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onMeditationClick: (MeditationResponse) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val continueListening by viewModel.continueListening.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
         if (uiState is MeditationUiState.Idle) {
             viewModel.fetchMeditationDashboard()
         }
+        viewModel.fetchContinueListening()
+        viewModel.fetchRecommendations()
     }
 
     Scaffold(
@@ -74,7 +78,7 @@ fun MeditationScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                             Text(text = "Error", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Text(text = state.message, color = Color.Gray, textAlign = TextAlign.Center)
+                            Text(text = state.message, color = Color.Gray)
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.fetchMeditationDashboard() }) {
                                 Text("Retry")
@@ -83,16 +87,33 @@ fun MeditationScreen(
                     }
                 }
                 is MeditationUiState.Success -> {
-                    MeditationContent(state.data, isDarkMode)
+                    MeditationContent(
+                        data = state.data,
+                        continueListening = continueListening,
+                        isDarkMode = isDarkMode,
+                        onMeditationClick = onMeditationClick,
+                        onCategoryClick = { 
+                            android.widget.Toast.makeText(context, "Category: $it", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        onViewAllClick = {
+                            android.widget.Toast.makeText(context, "Viewing all meditations", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
-                else -> {}
             }
         }
     }
 }
 
 @Composable
-fun MeditationContent(data: MeditationDashboardResponse, isDarkMode: Boolean) {
+fun MeditationContent(
+    data: MeditationDashboardResponse,
+    continueListening: List<MeditationResponse>,
+    isDarkMode: Boolean,
+    onMeditationClick: (MeditationResponse) -> Unit,
+    onCategoryClick: (String) -> Unit = {},
+    onViewAllClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -100,19 +121,43 @@ fun MeditationContent(data: MeditationDashboardResponse, isDarkMode: Boolean) {
             .padding(16.dp)
     ) {
         // Featured Card
-        FeaturedMeditationCard(data.featured)
+        FeaturedMeditationCard(data.featured, onClick = { onMeditationClick(data.featured) })
+
+        if (continueListening.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text("Continue Listening", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(continueListening) { meditation ->
+                    ContinueListeningItem(meditation, onClick = { onMeditationClick(meditation) })
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Categories
-        Text("Popular Categories", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Popular Categories", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                text = "View all",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable { onViewAllClick() }
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             items(data.categories) { category ->
-                CategoryItem(category, isDarkMode)
+                CategoryItem(category, isDarkMode, onClick = { onCategoryClick(category.name) })
             }
         }
 
@@ -125,12 +170,18 @@ fun MeditationContent(data: MeditationDashboardResponse, isDarkMode: Boolean) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Recommended for you", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
-            Text("View all", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "View all",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable { onViewAllClick() }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             data.recommended.forEach { meditation ->
-                RecommendedItem(meditation)
+                RecommendedItem(meditation, onClick = { onMeditationClick(meditation) })
             }
         }
         Spacer(modifier = Modifier.height(32.dp))
@@ -138,13 +189,41 @@ fun MeditationContent(data: MeditationDashboardResponse, isDarkMode: Boolean) {
 }
 
 @Composable
-fun FeaturedMeditationCard(meditation: Meditation) {
+fun ContinueListeningItem(meditation: MeditationResponse, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(220.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, Color(0xFFF0F0F0))
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = meditation.imageUrl,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop,
+                error = painterResource(R.drawable.ic_launcher_background)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(meditation.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
+                Text("${meditation.duration} min left", fontSize = 12.sp, color = TextSecondary)
+            }
+        }
+    }
+}
+
+@Composable
+fun FeaturedMeditationCard(meditation: MeditationResponse, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
-        shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .height(200.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -152,42 +231,34 @@ fun FeaturedMeditationCard(meditation: Meditation) {
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                error = painterResource(R.drawable.ic_launcher_background),
-                placeholder = painterResource(R.drawable.ic_launcher_background)
+                error = painterResource(R.drawable.ic_launcher_background)
             )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                            startY = 100f
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+                            startY = 200f
                         )
                     )
             )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
                     text = meditation.title,
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                val durationDisplay = try {
-                    val seconds = meditation.duration.toInt()
-                    "${seconds / 60} min"
-                } catch (e: Exception) {
-                    meditation.duration
-                }
-                val categoryDisplay = meditation.category.lowercase().replaceFirstChar { it.uppercase() }
                 Text(
-                    text = "$durationDisplay • $categoryDisplay",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 15.sp,
+                    text = "${meditation.duration} • ${meditation.category.lowercase().replaceFirstChar { it.uppercase() }}",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -196,84 +267,69 @@ fun FeaturedMeditationCard(meditation: Meditation) {
 }
 
 @Composable
-fun CategoryItem(category: MeditationCategory, isDarkMode: Boolean) {
+fun CategoryItem(category: MeditationCategory, isDarkMode: Boolean, onClick: () -> Unit = {}) {
+    val categoryInfo = when (category.name.lowercase()) {
+        "sleep", "sleeps", "sleep_meditation" -> Triple(Color(0xFFF3E5F5), Color(0xFF7E57C2), Icons.Default.NightsStay)
+        "anxiety", "anxious", "anxiety_relief" -> Triple(Color(0xFFE8EAF6), Color(0xFF5C6BC0), Icons.Default.Psychology)
+        "focus", "focused" -> Triple(Color(0xFFE1F5FE), Color(0xFF29B6F6), Icons.Default.TrackChanges)
+        "morning", "morning_breath", "relaxation" -> Triple(Color(0xFFFFF3E0), Color(0xFFFF9800), Icons.Default.WbSunny)
+        else -> Triple(Color(0xFFF5F5F5), Color.Gray, Icons.Default.SelfImprovement)
+    }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
-        Card(
+        Surface(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier.border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0), RoundedCornerShape(20.dp))
+            color = if (isDarkMode) categoryInfo.first.copy(alpha = 0.2f) else categoryInfo.first,
+            modifier = Modifier
+                .size(64.dp)
+                .clickable { onClick() }
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(getCategoryBgColor(category.name, isDarkMode))
-                    .clickable { /* Select category */ },
-                contentAlignment = Alignment.Center
-            ) {
-                val emoji = when(category.name.lowercase()) {
-                    "sleep" -> "🌙"
-                    "anxiety" -> "⚙️"
-                    "focus" -> "🎯"
-                    "morning" -> "☀️"
-                    else -> category.emoji.ifEmpty { "🧘" }
-                }
-                Text(emoji, fontSize = 30.sp)
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = categoryInfo.third,
+                    contentDescription = null,
+                    tint = categoryInfo.second,
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = category.name.lowercase().replaceFirstChar { it.uppercase() }, 
-            fontSize = 13.sp, 
-            color = MaterialTheme.colorScheme.onSurface, 
+            text = category.name.lowercase().replaceFirstChar { it.uppercase() },
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold
         )
     }
 }
 
-fun getCategoryBgColor(name: String, isDarkMode: Boolean): Color {
-    val baseColor = when(name.lowercase()) {
-        "sleep" -> ActionJournal
-        "anxiety" -> ActionMeditation
-        "focus" -> ActionGoals
-        else -> Color(0xFFF5F5F5)
-    }
-    return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor
-}
-
 @Composable
-fun RecommendedItem(meditation: Meditation) {
+fun RecommendedItem(meditation: MeditationResponse, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Start meditation */ },
+            .clickable { onClick() }
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             model = meditation.imageUrl,
             contentDescription = null,
             modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(20.dp)),
+                .size(64.dp)
+                .clip(RoundedCornerShape(16.dp)),
             contentScale = ContentScale.Crop,
-            error = painterResource(R.drawable.ic_launcher_background),
-            placeholder = painterResource(R.drawable.ic_launcher_background)
+            error = painterResource(R.drawable.ic_launcher_background)
         )
-        Spacer(modifier = Modifier.width(20.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(meditation.title, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurface)
-            val durationDisplay = try {
-                val seconds = meditation.duration.toInt()
-                "${seconds / 60} min"
-            } catch (e: Exception) {
-                meditation.duration
-            }
-            Text(durationDisplay, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(meditation.duration, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
         IconButton(
-            onClick = { /* Play */ },
+            onClick = onClick,
             modifier = Modifier
-                .size(40.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
         ) {
@@ -281,7 +337,7 @@ fun RecommendedItem(meditation: Meditation) {
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Play",
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
     }

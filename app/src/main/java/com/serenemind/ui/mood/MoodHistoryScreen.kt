@@ -3,9 +3,6 @@ package com.serenemind.ui.mood
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,12 +13,15 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +43,7 @@ fun MoodHistoryScreen(
     val selectedMood by viewModel.selectedDateMood.collectAsState()
     
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
+    val context = LocalContext.current
     
     val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.ENGLISH) }
     val dayFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -61,21 +62,11 @@ fun MoodHistoryScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
+                    IconButton(onClick = { 
+                        viewModel.refresh()
+                        android.widget.Toast.makeText(context, "Refreshing mood history...", android.widget.Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                    var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
-                    }
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text("Refresh Data") },
-                            onClick = { 
-                                viewModel.refresh()
-                                showMenu = false
-                            }
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -132,7 +123,7 @@ fun MoodHistoryScreen(
 
                         // Calendar Grid Header
                         val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
                             daysOfWeek.forEach { day ->
                                 Text(
                                     text = day, 
@@ -149,32 +140,47 @@ fun MoodHistoryScreen(
                         val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
                         val firstDayOfMonth = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }
                         val firstDayOfWeek = firstDayOfMonth.get(Calendar.DAY_OF_WEEK)
-                        val offset = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - 2
-                        val totalCells = daysInMonth + offset
                         
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(7),
-                            modifier = Modifier.height(300.dp),
-                            userScrollEnabled = false
-                        ) {
-                            items(totalCells) { index ->
-                                if (index >= offset) {
-                                    val day = index - offset + 1
-                                    val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
-                                    val dateString = dayFormat.format(cellDate.time)
-                                    val moodData = history.find { it.date == dateString }
-                                    
-                                    val isSelected = selectedMood?.date == dateString
-                                    
-                                    CalendarDayItem(
-                                        day = day,
-                                        mood = moodData?.mood,
-                                        isSelected = isSelected,
-                                        isDarkMode = isDarkMode,
-                                        onClick = { viewModel.selectDateMood(dateString) }
-                                    )
-                                } else {
-                                    Box(modifier = Modifier.aspectRatio(1f))
+                        // Convert Calendar.DAY_OF_WEEK (Sun=1, Mon=2...) to offset (Mon=0...Sun=6)
+                        val offset = when(firstDayOfWeek) {
+                            Calendar.MONDAY -> 0
+                            Calendar.TUESDAY -> 1
+                            Calendar.WEDNESDAY -> 2
+                            Calendar.THURSDAY -> 3
+                            Calendar.FRIDAY -> 4
+                            Calendar.SATURDAY -> 5
+                            Calendar.SUNDAY -> 6
+                            else -> 0
+                        }
+                        
+                        val totalCells = daysInMonth + offset
+                        val rows = (totalCells + 6) / 7
+                        
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            repeat(rows) { rowIndex ->
+                                Row(modifier = Modifier.fillMaxWidth()) {
+                                    repeat(7) { colIndex ->
+                                        val cellIndex = rowIndex * 7 + colIndex
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            if (cellIndex >= offset && cellIndex < totalCells) {
+                                                val day = cellIndex - offset + 1
+                                                val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
+                                                val dateString = dayFormat.format(cellDate.time)
+                                                val moodData = history.find { it.date == dateString }
+                                                
+                                                val isSelected = selectedMood?.date == dateString
+                                                
+                                                CalendarDayItem(
+                                                    day = day,
+                                                    mood = moodData?.mood,
+                                                    isSelected = isSelected,
+                                                    onClick = { viewModel.selectDateMood(dateString) }
+                                                )
+                                            } else {
+                                                Box(modifier = Modifier.aspectRatio(1f))
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -282,7 +288,6 @@ fun CalendarDayItem(
     day: Int, 
     mood: MoodType?, 
     isSelected: Boolean,
-    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     Box(
@@ -372,27 +377,10 @@ fun SummaryItem(label: String, percentage: Int, color: Color) {
     }
 }
 
-fun getEmojiForMood(mood: MoodType): String {
-    return when (mood) {
-        MoodType.HAPPY -> "😊"
-        MoodType.SAD -> "😢"
-        MoodType.CALM -> "😌"
-        MoodType.ANXIOUS -> "😰"
-        MoodType.ANGRY -> "😠"
-        MoodType.NEUTRAL -> "😐"
-    }
-}
+fun getEmojiForMood(mood: MoodType): String = mood.emoji
 
 fun getMoodBgColor(mood: MoodType): Color {
-    val color = when (mood) {
-        MoodType.HAPPY -> MoodHappy
-        MoodType.CALM -> MoodCalm
-        MoodType.NEUTRAL -> MoodNeutral
-        MoodType.SAD -> MoodSad
-        MoodType.ANXIOUS -> MoodAnxious
-        MoodType.ANGRY -> MoodAngry
-    }
-    return color.copy(alpha = 0.15f)
+    return getMoodColor(mood).copy(alpha = 0.15f)
 }
 
 fun formatDateNicely(dateStr: String): String {

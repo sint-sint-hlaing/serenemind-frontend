@@ -4,10 +4,10 @@ data class ConversationResponse(
     val id: Long,
     val title: String?,
     val createdAt: String?,
-    val messages: List<MessageResponse>
+    val messages: List<ChatMessageResponse>
 )
 
-data class MessageResponse(
+data class ChatMessageResponse(
     val id: Long,
     val sender: String, // "user" or "assistant"
     val content: String,

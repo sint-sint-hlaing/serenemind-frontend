@@ -89,19 +89,31 @@ fun MoodTrackerScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.height(220.dp),
-                    userScrollEnabled = false
-                ) {
-                    items(MoodType.entries.toList()) { mood ->
-                        MoodItemView(
-                            mood = mood,
-                            isSelected = selectedMood == mood,
-                            onClick = { selectedMood = mood }
-                        )
+                val moods = MoodType.entries.toList()
+                val chunkedMoods = moods.chunked(3)
+                
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    chunkedMoods.forEach { rowMoods ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            rowMoods.forEach { mood ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    MoodItemView(
+                                        mood = mood,
+                                        isSelected = selectedMood == mood,
+                                        onClick = { selectedMood = mood }
+                                    )
+                                }
+                            }
+                            // Fill empty slots in the last row if needed
+                            if (rowMoods.size < 3) {
+                                repeat(3 - rowMoods.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
                     }
                 }
 

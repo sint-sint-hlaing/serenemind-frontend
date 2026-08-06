@@ -13,11 +13,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,15 +35,17 @@ import com.serenemind.ui.theme.*
 fun HomeScreen(
     viewModel: HomeViewModel,
     isDarkMode: Boolean,
+    onLogout: () -> Unit = {},
     onActionClick: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onMenuClick: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onMenuClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.fetchDashboardData(isSilent = true)
+        viewModel.fetchWeeklyMood()
     }
 
     Surface(
@@ -165,6 +169,7 @@ fun DashboardContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Today's Mood Card
+                val isMoodRecorded = !data.mood.isNullOrBlank()
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -191,11 +196,11 @@ fun DashboardContent(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(getMoodBgColor(moodType)),
+                                .background(if (isMoodRecorded) getMoodBgColor(moodType) else Color(0xFFF1F8E9)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = getEmojiForMood(moodType),
+                                text = if (isMoodRecorded) moodType.emoji else "🌱",
                                 fontSize = 36.sp
                             )
                         }
@@ -203,24 +208,31 @@ fun DashboardContent(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            val moodDisplay = (data.mood ?: "Steady")
-                                .lowercase().replaceFirstChar { it.uppercase() }
+                            val moodDisplay = if (isMoodRecorded) {
+                                (data.mood ?: "").lowercase().replaceFirstChar { it.uppercase() }
+                            } else {
+                                "Steady"
+                            }
+
                             Text(
                                 text = moodDisplay,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+                            val moodTypeEnum = remember(data.mood) {
+                                MoodType.entries.find { it.name.equals(data.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
+                            }
                             Text(
-                                text = "How are you feeling today?",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = if (isMoodRecorded) moodTypeEnum.message else "How are you feeling today?",
+                                color = TextSecondary,
                                 fontSize = 13.sp
                             )
                         }
 
                         Text(
                             text = "${data.percentage ?: 0}%",
-                            color = Success,
+                            color = if (isMoodRecorded) Success else Color(0xFF4CAF50).copy(alpha = 0.6f),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -305,7 +317,7 @@ fun DashboardContent(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.SmartToy,
+                                    imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = null,
                                     tint = Color(0xFF7E57C2)
                                 )
@@ -343,18 +355,28 @@ fun DashboardContent(
 
 @Composable
 fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
+    val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+    // Map data to days of week for a full 7-day view
+    val chartData = daysOfWeek.map { dayName ->
+        weeklyOverview.find {
+            it.day?.name?.take(3)?.equals(dayName, ignoreCase = true) == true
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .height(140.dp)
+            .padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.Bottom
     ) {
-        weeklyOverview.take(7).forEach { item ->
-            val moodType = remember(item.mood) {
-                MoodType.entries.find { it.name.equals(item.mood, ignoreCase = true) } ?: MoodType.NEUTRAL
-            }
-            val percentage = item.percentage ?: 0
+        chartData.forEachIndexed { index, item ->
+            val moodType = item?.mood
+            val percentage = item?.percentage ?: 0
+            val hasData = item != null
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
@@ -362,36 +384,31 @@ fun WeeklyChart(weeklyOverview: List<WeeklyMoodResponse>) {
                 Box(
                     modifier = Modifier
                         .width(18.dp)
-                        .height((percentage.coerceAtLeast(10) * 1.2f).dp)
+                        .height(if (hasData) (percentage.coerceAtLeast(10) * 1.2f).dp else 40.dp)
                         .clip(RoundedCornerShape(9.dp))
-                        .background(getMoodColor(moodType))
+                        .background(
+                            if (hasData) getMoodColor(moodType!!)
+                            else Color(0xFFF5F5F5)
+                        )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = item.day?.take(3)?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "",
+                    text = daysOfWeek[index],
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
+                    color = if (hasData) TextPrimary else TextSecondary.copy(alpha = 0.6f),
+                    fontWeight = if (hasData) FontWeight.Bold else FontWeight.Medium
                 )
                 Text(
-                    text = getEmojiForMood(moodType),
-                    fontSize = 14.sp
+                    text = if (hasData) moodType!!.emoji else "•",
+                    fontSize = 14.sp,
+                    color = if (hasData) Color.Unspecified else TextSecondary.copy(alpha = 0.3f)
                 )
             }
         }
     }
 }
 
-fun getEmojiForMood(mood: MoodType): String {
-    return when (mood) {
-        MoodType.HAPPY -> "😊"
-        MoodType.SAD -> "😢"
-        MoodType.CALM -> "😌"
-        MoodType.ANXIOUS -> "😰"
-        MoodType.ANGRY -> "😠"
-        MoodType.NEUTRAL -> "😐"
-    }
-}
+fun getEmojiForMood(mood: MoodType): String = mood.emoji
 
 fun getMoodColor(mood: MoodType): Color {
     return when (mood) {
@@ -484,7 +501,8 @@ fun getBackgroundColorForAction(title: String, isDarkMode: Boolean): Color {
     val baseColor = when (title.lowercase()) {
         "journal" -> ActionJournal
         "meditate", "meditation" -> ActionMeditation
-        "goals" -> ActionGoals
+        "goals", "goal" -> ActionGoals
+        "breathing" -> Color(0xFFFFF3E0)
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor

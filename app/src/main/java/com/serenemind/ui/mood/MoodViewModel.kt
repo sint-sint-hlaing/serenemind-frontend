@@ -7,6 +7,7 @@ import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.repository.MoodRepository
+import com.serenemind.util.RefreshSignals
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -42,32 +43,27 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun fetchMoodSummary() {
         viewModelScope.launch {
-            try {
-                val data = repository.getMoodSummary()
-                _summaryState.value = data
-            } catch (e: Exception) {
-                // Handle error
+            repository.getMoodSummary().collect { response ->
+                if (response.isSuccessful) {
+                    _summaryState.value = response.body() ?: emptyMap()
+                }
             }
         }
     }
 
     fun fetchWeeklySummary() {
         viewModelScope.launch {
-            try {
-                val response = repository.getWeeklySummary()
+            repository.getWeeklySummary().collect { response ->
                 if (response.isSuccessful) {
                     _weeklySummary.value = response.body()
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }
 
     fun fetchMoodHistory(year: Int, month: Int) {
         viewModelScope.launch {
-            try {
-                val response = repository.getMoodHistory(year, month)
+            repository.getMoodHistory(year, month).collect { response ->
                 if (response.isSuccessful) {
                     val history = response.body() ?: emptyList()
                     _historyState.value = history
@@ -77,8 +73,6 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
                     val today = sdf.format(Date())
                     _selectedDateMood.value = history.find { it.date == today }
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }
@@ -96,8 +90,10 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
                 if (response.isSuccessful) {
                     _uiState.value = MoodUiState.Success
-                    // Refresh data
+                    // Refresh data locally
                     refresh()
+                    // Signal Home to refresh
+                    RefreshSignals.signalRefreshDashboard()
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     _uiState.value = MoodUiState.Error("Server error ${response.code()}: $errorBody")

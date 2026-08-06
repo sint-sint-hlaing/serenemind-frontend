@@ -28,10 +28,13 @@ sealed class Screen(
 
     // Sub Screens
     object MoodHistory : Screen("mood_history")
+    object MoodInsights : Screen("mood_insights")
     object GoalDetail : Screen("goal_detail")
+    object AddGoal : Screen("add_goal")
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
     object Meditation : Screen("meditation")
+    object MeditationTimer : Screen("meditation_timer")
     object About : Screen("about")
     object SavedPosts : Screen("saved_posts")
     object EditProfile : Screen("edit_profile")
@@ -39,4 +42,6 @@ sealed class Screen(
     object ChatLanding : Screen("chat_landing", "AI Chat", Icons.Default.ChatBubble)
     object Chat : Screen("chat")
     object AllConversations : Screen("all_conversations")
+    object Focus : Screen("focus")
+    object Insights : Screen("insights")
 }

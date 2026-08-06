@@ -1,10 +1,10 @@
 package com.serenemind.repository
 
 import com.serenemind.datastore.TokenManager
-import com.serenemind.network.ApiService
 import com.serenemind.model.response.UserProfileResponse
 import com.serenemind.model.response.UserActivityResponse
 import com.serenemind.model.response.PersonalInfoResponse
+import com.serenemind.network.ApiService
 import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -20,7 +20,6 @@ class UserRepository(
             val response = apiService.getUserProfile()
             emit(response)
         } catch (e: Exception) {
-            // Rethrow or emit specific error response. Emitting error response to keep Flow alive.
             emit(Response.error<UserProfileResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
         }
     }

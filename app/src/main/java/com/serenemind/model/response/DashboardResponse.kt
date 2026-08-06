@@ -18,16 +18,8 @@ data class TodayMoodResponse(
     val message: String
 )
 
-data class WeeklyMoodResponse(
-    val day: String? = null,
-    val mood: String? = null,
-    @SerializedName("value") val percentage: Int? = null,
-    val dailyMoods: Map<String, Int>? = null,
-    val averageIntensity: Double? = null
-)
-
 data class QuickActionResponse(
     @SerializedName("name") val title: String? = "",
     val route: String? = "",
-    @SerializedName("iconUrl") val icon: String? = ""
+    val icon: String? = ""
 )

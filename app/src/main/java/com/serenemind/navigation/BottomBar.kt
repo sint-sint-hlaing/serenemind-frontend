@@ -37,38 +37,16 @@ fun BottomBar(navController: NavHostController) {
                     currentRoute == Screen.Notifications.route
                 ))
 
-            val isExactlyOnRoute = currentRoute == screen.route ||
-                (screen == Screen.Goal && (currentRoute == screen.route || currentRoute == Screen.GoalDetail.route))
-
             NavigationBarItem(
                 selected = isConceptuallySelected,
                 onClick = {
-                    if (isExactlyOnRoute) {
-                        // Refresh logic could go here, e.g. notify current screen
-                        // For now, we just navigate to it again to ensure LaunchedEffect(Unit) might re-run
+                    if (currentRoute != screen.route) {
                         navController.navigate(screen.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                             launchSingleTop = true
                             restoreState = true
-                        }
-                    } else {
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                        if (currentRoute != screen.route) {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = false // Set to false to prevent potential restoration crashes
-                            }
                         }
                     }
                 },

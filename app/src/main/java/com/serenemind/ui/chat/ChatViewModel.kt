@@ -2,7 +2,7 @@ package com.serenemind.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.serenemind.model.response.MessageResponse
+import com.serenemind.model.response.ChatMessageResponse
 import com.serenemind.repository.ChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,7 +75,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
         }
     }
 
-    private fun MessageResponse.toMessage() = Message(
+    private fun ChatMessageResponse.toMessage() = Message(
         id = id,
         text = content,
         isUser = sender == "user",

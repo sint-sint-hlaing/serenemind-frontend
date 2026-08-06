@@ -9,5 +9,6 @@ data class UserProfileResponse(
     @SerializedName("bio") val bio: String?,
     @SerializedName("birthday") val birthday: String?,
     @SerializedName("username") val username: String?,
+    @SerializedName("location") val location: String?,
     @SerializedName("profileCompletionPercentage") val profileCompletionPercentage: Int?
 )

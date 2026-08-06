@@ -20,6 +20,8 @@ import com.serenemind.ui.meditation.*
 import com.serenemind.ui.journal.*
 import com.serenemind.ui.notification.*
 import com.serenemind.ui.chat.*
+import com.serenemind.ui.focus.*
+import com.serenemind.ui.insights.*
 
 @Composable
 fun BottomNavGraph(
@@ -42,18 +44,20 @@ fun BottomNavGraph(
     val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
     val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
-    val moodRepository = remember { MoodRepository(apiService, tokenManager) }
-    val goalRepository = remember { GoalRepository(goalApiService) }
-    val meditationRepository = remember { MeditationRepository(meditationApiService) }
+    val moodRepository = remember { MoodRepository(apiService) }
+    val goalRepository = remember { GoalRepository(apiService) }
+    val meditationRepository = remember { MeditationRepository(apiService) }
     val chatRepository = remember { ChatRepository(chatApiService) }
 
     // ViewModels
-    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository))
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, moodRepository, themeManager))
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
+    val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository))
+    val focusViewModel: FocusViewModel = viewModel(factory = FocusViewModelFactory())
 
     NavHost(
         navController = navController,
@@ -70,6 +74,9 @@ fun BottomNavGraph(
                         "goals", "goal" -> navController.navigate(Screen.Goal.route)
                         "journal" -> navController.navigate(Screen.Journal.route)
                         "mood" -> navController.navigate(Screen.Mood.route)
+                        "focus" -> navController.navigate(Screen.Focus.route)
+                        "insights" -> navController.navigate(Screen.Insights.route)
+                        "mood_insights" -> navController.navigate(Screen.MoodInsights.route)
                         "mood_history", "history" -> navController.navigate(Screen.MoodHistory.route)
                         "chat_landing" -> navController.navigate(Screen.ChatLanding.route)
                     }
@@ -98,10 +105,12 @@ fun BottomNavGraph(
             JournalScreen(
                 isDarkMode = isDarkMode,
                 onAddClick = { /* Navigate to New Journal */ },
-                onJournalClick = { /* Navigate to Detail */ }
+                onJournalClick = { /* Navigate to Detail */ },
+                onMenuClick = {
+                    navController.navigate(Screen.Profile.route)
+                }
             )
         }
-
 
         composable(Screen.Mood.route) {
             MoodTrackerScreen(
@@ -120,6 +129,14 @@ fun BottomNavGraph(
             )
         }
 
+        composable(Screen.MoodInsights.route) {
+            MoodInsightsScreen(
+                viewModel = moodViewModel,
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Goal.route) {
             GoalScreen(
                 viewModel = goalViewModel,
@@ -129,12 +146,12 @@ fun BottomNavGraph(
                     navController.navigate(Screen.GoalDetail.route)
                 },
                 onAddGoalClick = {
-                    navController.navigate("add_goal")
+                    navController.navigate(Screen.AddGoal.route)
                 }
             )
         }
 
-        composable("add_goal") {
+        composable(Screen.AddGoal.route) {
             AddGoalScreen(
                 viewModel = goalViewModel,
                 onBack = { navController.popBackStack() },
@@ -151,12 +168,30 @@ fun BottomNavGraph(
         }
 
         composable(Screen.Meditation.route) {
-            val meditationViewModel: MeditationViewModel = viewModel(
-                factory = MeditationViewModelFactory(meditationRepository)
-            )
             MeditationScreen(
                 viewModel = meditationViewModel,
                 isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() },
+                onMeditationClick = { meditation ->
+                    meditationViewModel.selectMeditation(meditation)
+                    navController.navigate("meditation_player")
+                }
+            )
+        }
+
+        composable("meditation_player") {
+            MeditationPlayerScreen(
+                viewModel = meditationViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToTimer = {
+                    navController.navigate(Screen.MeditationTimer.route)
+                }
+            )
+        }
+
+        composable(Screen.MeditationTimer.route) {
+            MeditationTimerScreen(
+                viewModel = meditationViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -344,6 +379,19 @@ fun BottomNavGraph(
                 onBack = { 
                     navController.popBackStack() 
                 }
+            )
+        }
+
+        composable(Screen.Focus.route) {
+            FocusScreen(
+                viewModel = focusViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Insights.route) {
+            InsightsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.serenemind.R
+import com.serenemind.ui.theme.TextPrimary
+import com.serenemind.ui.theme.TextSecondary
 import com.serenemind.util.getAvatarResource
 import java.text.SimpleDateFormat
 import java.util.*
@@ -49,6 +51,7 @@ fun EditProfileScreen(
     var email by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(Unit) {
@@ -61,6 +64,7 @@ fun EditProfileScreen(
             username = it.username ?: ""
             email = it.email ?: ""
             bio = it.bio ?: ""
+            location = it.location ?: ""
             
             // Normalize birthday format: try to handle yyyy.M.d or yyyy-M-d to yyyy-MM-dd
             val rawBirthday = it.birthday ?: ""
@@ -110,7 +114,7 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text("Edit Profile", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -124,7 +128,7 @@ fun EditProfileScreen(
                         Text("Save", color = Color(0xFF7E57C2), fontWeight = FontWeight.Bold)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         },
         containerColor = Color.White
@@ -223,6 +227,12 @@ fun EditProfileScreen(
                     label = "Bio",
                     value = bio,
                     onValueChange = { bio = it }
+                )
+                EditField(
+                    icon = Icons.Outlined.LocationOn,
+                    label = "Location",
+                    value = location,
+                    onValueChange = { location = it }
                 )
                 EditField(
                     icon = Icons.Outlined.CalendarToday,

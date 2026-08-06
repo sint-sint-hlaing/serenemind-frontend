@@ -56,10 +56,12 @@ fun LoginScreen(
                     android.util.Log.d("FCM", "Token successfully fetched: $fcmToken")
                 } else {
                     android.util.Log.e("FCM", "Fetching FCM registration token failed", task.exception)
+                    fcmToken = "DUMMY_TOKEN_FETCH_FAILED" // Fallback to allow login during dev
                 }
             }
         } catch (e: Exception) {
             android.util.Log.e("FCM", "Firebase not initialized", e)
+            fcmToken = "DUMMY_TOKEN_NOT_INITIALIZED" // Fallback
         }
     }
 
@@ -197,7 +199,7 @@ fun LoginScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = state !is LoginUiState.Loading
+                enabled = state !is LoginUiState.Loading && fcmToken.isNotEmpty()
             ) {
                 if (state is LoginUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
