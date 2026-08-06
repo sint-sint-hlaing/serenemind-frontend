@@ -1,5 +1,6 @@
 package com.serenemind.ui.journal
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -40,15 +41,14 @@ class JournalEditorViewModel(private val repository: JournalRepository) : ViewMo
         id: Int? = null,
         title: String,
         content: String,
-        tags: List<String>?,
-        isPrivate: Boolean,
+        tags: List<String>,
         favourite: Boolean,
         photoPart: MultipartBody.Part? = null
     ) {
         viewModelScope.launch {
             _uiState.value = JournalEditorUiState.Loading
             try {
-                val request = JournalRequest(title, content, tags, isPrivate, favourite)
+                val request = JournalRequest(title, content, tags, favourite)
                 val response = if (id == null) {
                     repository.createJournal(request)
                 } else {
@@ -57,16 +57,36 @@ class JournalEditorViewModel(private val repository: JournalRepository) : ViewMo
 
                 if (response.isSuccessful) {
                     val savedJournal = response.body()
-                    if (photoPart != null && savedJournal != null) {
-                        repository.uploadPhoto(savedJournal.id, photoPart)
+                    // Robust ID detection: Prefer response body ID, then the ID passed to the function
+                    val targetId = savedJournal?.id ?: id
+                    
+                    Log.d("JournalEditor", "Save text successful. ID: $targetId. Has photo: ${photoPart != null}")
+
+                    if (photoPart != null && targetId != null) {
+                        Log.d("JournalEditor", "Uploading photo to: api/journals/$targetId/photo")
+                        val photoResponse = repository.uploadPhoto(targetId, photoPart)
+                        
+                        if (photoResponse.isSuccessful) {
+                            Log.d("JournalEditor", "Photo upload successful")
+                            _uiState.value = JournalEditorUiState.Success
+                        } else {
+                            val errorCode = photoResponse.code()
+                            val errorBody = photoResponse.errorBody()?.string() ?: "No error body"
+                            Log.e("JournalEditor", "Photo upload failed. Code: $errorCode, Body: $errorBody")
+                            _uiState.value = JournalEditorUiState.Error("Text saved, but photo failed: $errorBody")
+                        }
+                    } else {
+                        _uiState.value = JournalEditorUiState.Success
                     }
-                    _uiState.value = JournalEditorUiState.Success
                 } else {
-                    val errorMsg = response.errorBody()?.string() ?: "Error ${response.code()}: ${response.message()}"
-                    _uiState.value = JournalEditorUiState.Error(errorMsg)
+                    val code = response.code()
+                    val errorBody = response.errorBody()?.string() ?: response.message()
+                    Log.e("JournalEditor", "Text save failed. Code: $code, Body: $errorBody")
+                    _uiState.value = JournalEditorUiState.Error("Save failed ($code): $errorBody")
                 }
             } catch (e: Exception) {
-                _uiState.value = JournalEditorUiState.Error(e.message ?: "Unknown error")
+                Log.e("JournalEditor", "Save exception", e)
+                _uiState.value = JournalEditorUiState.Error("An exception occurred: ${e.localizedMessage}")
             }
         }
     }

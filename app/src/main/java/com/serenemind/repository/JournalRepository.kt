@@ -1,6 +1,5 @@
 package com.serenemind.repository
 
-import com.serenemind.datastore.TokenManager
 import com.serenemind.model.request.JournalRequest
 import com.serenemind.model.response.JournalAnalysisResponse
 import com.serenemind.model.response.JournalResponse
@@ -9,59 +8,54 @@ import okhttp3.MultipartBody
 import retrofit2.Response
 
 class JournalRepository(
-    private val apiService: JournalApiService,
-    private val tokenManager: TokenManager
+    private val apiService: JournalApiService
 ) {
 
-    private suspend fun getAuthToken(): String {
-        return "Bearer ${tokenManager.getToken() ?: ""}"
-    }
-
     suspend fun createJournal(request: JournalRequest): Response<JournalResponse> {
-        return apiService.createJournal(getAuthToken(), request)
+        return apiService.createJournal(request)
     }
 
-    suspend fun uploadPhoto(id: Int, photo: MultipartBody.Part): Response<JournalResponse> {
-        return apiService.uploadPhoto(getAuthToken(), id, photo)
+    suspend fun uploadPhoto(id: Int, photo: MultipartBody.Part): Response<Unit> {
+        return apiService.uploadPhoto(id, photo)
     }
 
     suspend fun listJournals(filter: String = "all"): Response<List<JournalResponse>> {
-        return apiService.listJournals(getAuthToken(), filter)
+        return apiService.listJournals(filter)
     }
 
     suspend fun searchJournals(query: String): Response<List<JournalResponse>> {
-        return apiService.searchJournals(getAuthToken(), query)
+        return apiService.searchJournals(query)
     }
 
     suspend fun getJournal(id: Int): Response<JournalResponse> {
-        return apiService.getJournal(getAuthToken(), id)
+        return apiService.getJournal(id)
     }
 
     suspend fun updateJournal(id: Int, request: JournalRequest): Response<JournalResponse> {
-        return apiService.updateJournal(getAuthToken(), id, request)
+        return apiService.updateJournal(id, request)
     }
 
     suspend fun deleteJournal(id: Int): Response<Unit> {
-        return apiService.deleteJournal(getAuthToken(), id)
+        return apiService.deleteJournal(id)
     }
 
     suspend fun toggleFavorite(id: Int): Response<Unit> {
-        return apiService.toggleFavorite(getAuthToken(), id)
+        return apiService.toggleFavorite(id)
     }
 
     suspend fun togglePrivate(id: Int): Response<Unit> {
-        return apiService.togglePrivate(getAuthToken(), id)
+        return apiService.togglePrivate(id)
     }
 
     suspend fun triggerAnalysis(id: Int): Response<Unit> {
-        return apiService.triggerAnalysis(getAuthToken(), id)
+        return apiService.triggerAnalysis(id)
     }
 
     suspend fun getAnalysis(id: Int): Response<JournalAnalysisResponse> {
-        return apiService.getAnalysis(getAuthToken(), id)
+        return apiService.getAnalysis(id)
     }
 
     suspend fun deletePhoto(id: Int): Response<Unit> {
-        return apiService.deletePhoto(getAuthToken(), id)
+        return apiService.deletePhoto(id)
     }
 }

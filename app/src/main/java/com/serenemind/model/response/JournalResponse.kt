@@ -6,9 +6,11 @@ data class JournalResponse(
     @SerializedName("id") val id: Int,
     @SerializedName("title") val title: String,
     @SerializedName("content") val content: String,
+    @SerializedName("preview") val preview: String?,
     @SerializedName("tags") val tags: List<String>?,
-    @SerializedName("isPrivate") val isPrivate: Boolean,
     @SerializedName("favourite") val favourite: Boolean,
     @SerializedName("photoUrl") val photoUrl: String?,
-    @SerializedName("createdAt") val createdAt: String
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("updatedAt") val updatedAt: String?,
+    @SerializedName("analysis") val analysis: JournalAnalysisResponse?
 )

@@ -2,6 +2,8 @@ package com.serenemind.network
 
 import android.content.Context
 import com.serenemind.datastore.TokenManager
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -10,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.89.211:8080/"
+    const val BASE_URL = "http://192.168.100.153:8080/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -18,9 +20,9 @@ object NetworkModule {
         }
         
         return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthInterceptor(tokenManager))
             .authenticator(TokenAuthenticator(context, tokenManager))
+            .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -28,10 +30,15 @@ object NetworkModule {
     }
 
     fun provideRetrofit(context: Context, tokenManager: TokenManager): Retrofit {
+        val gson = GsonBuilder()
+            .setLenient()
+            .disableHtmlEscaping()
+            .create()
+            
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(provideOkHttpClient(context, tokenManager))
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

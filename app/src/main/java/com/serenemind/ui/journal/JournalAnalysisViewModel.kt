@@ -1,10 +1,12 @@
 package com.serenemind.ui.journal
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.JournalAnalysisResponse
 import com.serenemind.repository.JournalRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,43 +23,69 @@ class JournalAnalysisViewModel(private val repository: JournalRepository) : View
         viewModelScope.launch {
             _uiState.value = JournalAnalysisUiState.Loading
             try {
+                Log.d("JournalAnalysis", "Fetching analysis for journal ID: $id")
                 val response = repository.getAnalysis(id)
                 if (response.isSuccessful) {
-                    _analysis.value = response.body()
-                    _uiState.value = JournalAnalysisUiState.Idle
+                    val body = response.body()
+                    if (body != null && body.emotion != null) {
+                        Log.d("JournalAnalysis", "Analysis found: $body")
+                        _analysis.value = body
+                        _uiState.value = JournalAnalysisUiState.Idle
+                    } else {
+                        // Analysis object exists but it's empty (maybe still processing)
+                        Log.d("JournalAnalysis", "Analysis object is empty, triggering/retrying...")
+                        triggerAndRetry(id)
+                    }
                 } else if (response.code() == 404) {
-                    // Trigger analysis if not found
-                    triggerAnalysis(id)
+                    Log.d("JournalAnalysis", "Analysis not found (404), triggering...")
+                    triggerAndRetry(id)
                 } else {
-                    _uiState.value = JournalAnalysisUiState.Error("Failed to load analysis")
+                    val error = response.errorBody()?.string() ?: response.message()
+                    Log.e("JournalAnalysis", "Error loading analysis: $error")
+                    _uiState.value = JournalAnalysisUiState.Error("Failed to load analysis ($error)")
                 }
             } catch (e: Exception) {
-                _uiState.value = JournalAnalysisUiState.Error(e.message ?: "Unknown error")
+                Log.e("JournalAnalysis", "Exception loading analysis", e)
+                _uiState.value = JournalAnalysisUiState.Error(e.localizedMessage ?: "Unknown error")
             }
         }
     }
 
-    private fun triggerAnalysis(id: Int) {
-        viewModelScope.launch {
-            _uiState.value = JournalAnalysisUiState.Loading
-            try {
-                val response = repository.triggerAnalysis(id)
-                if (response.isSuccessful) {
-                    // Wait a bit and then reload or the backend might handle it
-                    // For now, try to get it again
-                    val analysisResponse = repository.getAnalysis(id)
-                    if (analysisResponse.isSuccessful) {
-                        _analysis.value = analysisResponse.body()
-                        _uiState.value = JournalAnalysisUiState.Idle
-                    } else {
-                        _uiState.value = JournalAnalysisUiState.Error("Analysis triggered but failed to retrieve")
+    private suspend fun triggerAndRetry(id: Int) {
+        try {
+            val triggerResponse = repository.triggerAnalysis(id)
+            if (triggerResponse.isSuccessful) {
+                Log.d("JournalAnalysis", "Analysis triggered successfully. Starting poll...")
+                
+                // Polling mechanism: Try up to 3 times with a delay
+                var retryCount = 0
+                val maxRetries = 5
+                val delayMs = 3000L // 3 seconds between retries
+                
+                while (retryCount < maxRetries) {
+                    delay(delayMs)
+                    Log.d("JournalAnalysis", "Polling analysis (Attempt ${retryCount + 1})...")
+                    val pollResponse = repository.getAnalysis(id)
+                    if (pollResponse.isSuccessful) {
+                        val pollBody = pollResponse.body()
+                        if (pollBody != null && pollBody.emotion != null) {
+                            Log.d("JournalAnalysis", "Analysis retrieved successfully during poll!")
+                            _analysis.value = pollBody
+                            _uiState.value = JournalAnalysisUiState.Idle
+                            return
+                        }
                     }
-                } else {
-                    _uiState.value = JournalAnalysisUiState.Error("Failed to trigger analysis")
+                    retryCount++
                 }
-            } catch (e: Exception) {
-                _uiState.value = JournalAnalysisUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = JournalAnalysisUiState.Error("AI is still thinking. Please come back in a moment!")
+            } else {
+                val error = triggerResponse.errorBody()?.string() ?: triggerResponse.message()
+                Log.e("JournalAnalysis", "Trigger failed: $error")
+                _uiState.value = JournalAnalysisUiState.Error("Failed to start AI analysis: $error")
             }
+        } catch (e: Exception) {
+            Log.e("JournalAnalysis", "Exception in triggerAndRetry", e)
+            _uiState.value = JournalAnalysisUiState.Error("Failed to process analysis: ${e.localizedMessage}")
         }
     }
 }

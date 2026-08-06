@@ -102,7 +102,7 @@ fun BottomNavGraph(
     val moodRepository = remember { MoodRepository(apiService, tokenManager) }
     val goalRepository = remember { GoalRepository(goalApiService) }
     val meditationRepository = remember { MeditationRepository(meditationApiService) }
-    val journalRepository = remember { JournalRepository(journalApiService, tokenManager) }
+    val journalRepository = remember { JournalRepository(journalApiService) }
     
     // ViewModels
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
