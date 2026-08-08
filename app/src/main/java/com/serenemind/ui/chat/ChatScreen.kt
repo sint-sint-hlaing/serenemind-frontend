@@ -34,6 +34,7 @@ fun ChatScreen(
     viewModel: ChatViewModel,
     initialMessage: String? = null,
     historyId: Long? = null,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()

@@ -29,6 +29,7 @@ import com.serenemind.model.response.ConversationResponse
 @Composable
 fun ChatLandingScreen(
     viewModel: ChatLandingViewModel,
+    isDarkMode: Boolean,
     onStartChat: (String?) -> Unit,
     onViewConversation: (Long) -> Unit,
     onViewAll: () -> Unit,
@@ -47,9 +48,9 @@ fun ChatLandingScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("SereneMind AI ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                            Text("✦", color = Color(0xFF7E57C2), fontSize = 18.sp)
+                            Text("✦", color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
                         }
-                        Text("Your mindful AI companion", fontSize = 12.sp, color = Color.Gray)
+                        Text("Your mindful AI companion", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 navigationIcon = {
@@ -57,7 +58,7 @@ fun ChatLandingScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { padding ->
@@ -65,7 +66,7 @@ fun ChatLandingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFFBFBFE))
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
@@ -74,21 +75,27 @@ fun ChatLandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(Brush.verticalGradient(listOf(Color(0xFFEDE7F6), Color(0xFFF3E5F5))))
+                    .background(
+                        if (isDarkMode) {
+                            Brush.verticalGradient(listOf(Color(0xFF2A2A4E), Color(0xFF1A1A2E)))
+                        } else {
+                            Brush.verticalGradient(listOf(Color(0xFFEDE7F6), Color(0xFFF3E5F5)))
+                        }
+                    )
                     .padding(24.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
                         modifier = Modifier.size(80.dp),
                         shape = CircleShape,
-                        color = Color.White
+                        color = if (isDarkMode) Color.White.copy(alpha = 0.1f) else Color.White
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = null,
                                 modifier = Modifier.size(48.dp),
-                                tint = Color(0xFF7E57C2)
+                                tint = if (isDarkMode) Color.White else Color(0xFF7E57C2)
                             )
                         }
                     }
@@ -98,12 +105,12 @@ fun ChatLandingScreen(
                             text = "Hi, I'm SereneAI 💜",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = Color(0xFF4527A0)
+                            color = if (isDarkMode) Color.White else Color(0xFF4527A0)
                         )
                         Text(
                             text = "I'm here to listen, support, and help you feel better.",
                             fontSize = 13.sp,
-                            color = Color(0xFF4527A0).copy(alpha = 0.7f),
+                            color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color(0xFF4527A0).copy(alpha = 0.7f),
                             lineHeight = 18.sp
                         )
                     }
@@ -117,9 +124,9 @@ fun ChatLandingScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                FeaturePill(Icons.Outlined.FavoriteBorder, "Non-judgmental")
-                FeaturePill(Icons.Outlined.AccessTime, "Always here")
-                FeaturePill(Icons.Outlined.Shield, "100% Private")
+                FeaturePill(Icons.Outlined.FavoriteBorder, "Non-judgmental", isDarkMode)
+                FeaturePill(Icons.Outlined.AccessTime, "Always here", isDarkMode)
+                FeaturePill(Icons.Outlined.Shield, "100% Private", isDarkMode)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -137,7 +144,7 @@ fun ChatLandingScreen(
             )
 
             prompts.forEach { prompt ->
-                PromptCard(prompt) { onStartChat(prompt.title) }
+                PromptCard(prompt, isDarkMode) { onStartChat(prompt.title) }
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -159,7 +166,7 @@ fun ChatLandingScreen(
                 is ChatLandingUiState.Error -> Text(state.message, color = Color.Red)
                 is ChatLandingUiState.Success -> {
                     state.conversations.take(3).forEach { item ->
-                        HistoryItem(item) { onViewConversation(item.id) }
+                        HistoryItem(item, isDarkMode) { onViewConversation(item.id) }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
@@ -171,25 +178,26 @@ fun ChatLandingScreen(
 }
 
 @Composable
-fun FeaturePill(icon: ImageVector, label: String) {
+fun FeaturePill(icon: ImageVector, label: String, isDarkMode: Boolean = false) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF7E57C2), modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, fontSize = 10.sp, color = Color.Gray)
+        Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 data class PromptData(val emoji: String, val title: String, val subtitle: String)
 
 @Composable
-fun PromptCard(data: PromptData, onClick: () -> Unit) {
+fun PromptCard(data: PromptData, isDarkMode: Boolean = false, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        border = if (isDarkMode) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF333333)) else null
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -199,7 +207,7 @@ fun PromptCard(data: PromptData, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF5F5F5)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(data.emoji, fontSize = 20.sp)
@@ -207,27 +215,28 @@ fun PromptCard(data: PromptData, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(data.title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                Text(data.subtitle, color = Color.Gray, fontSize = 12.sp)
+                Text(data.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos, 
                 contentDescription = null, 
                 modifier = Modifier.size(14.dp), 
-                tint = Color.LightGray
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         }
     }
 }
 
 @Composable
-fun HistoryItem(item: ConversationResponse, onClick: () -> Unit) {
+fun HistoryItem(item: ConversationResponse, isDarkMode: Boolean = false, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        border = if (isDarkMode) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF333333)) else null
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -237,10 +246,10 @@ fun HistoryItem(item: ConversationResponse, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFEDE7F6)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color(0xFF7E57C2), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -249,10 +258,10 @@ fun HistoryItem(item: ConversationResponse, onClick: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(item.title ?: "New Chat", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Text(item.createdAt?.take(10) ?: "", color = Color.LightGray, fontSize = 11.sp)
+                    Text(item.createdAt?.take(10) ?: "", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                 }
                 val lastMsg = item.messages.lastOrNull()?.content ?: "No messages"
-                Text(lastMsg, color = Color.Gray, fontSize = 12.sp, maxLines = 1)
+                Text(lastMsg, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, maxLines = 1)
             }
         }
     }

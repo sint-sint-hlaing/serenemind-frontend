@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.MoreVert
 @Composable
 fun FocusScreen(
     viewModel: FocusViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val timeLeft by viewModel.timeLeft.collectAsState()

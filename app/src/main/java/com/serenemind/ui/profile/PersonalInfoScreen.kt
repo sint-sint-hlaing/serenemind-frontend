@@ -28,6 +28,7 @@ import java.util.*
 @Composable
 fun PersonalInfoScreen(
     viewModel: PersonalInfoViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()

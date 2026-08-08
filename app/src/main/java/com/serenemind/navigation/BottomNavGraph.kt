@@ -143,6 +143,7 @@ fun BottomNavGraph(
             )
             JournalListScreen(
                 viewModel = journalListViewModel,
+                isDarkMode = isDarkMode,
                 onNavigateToEditor = { id ->
                     navController.navigate(Screen.JournalEditor.createRoute(id, id != null))
                 },
@@ -166,6 +167,7 @@ fun BottomNavGraph(
             JournalEditorScreen(
                 id = id,
                 viewModel = journalEditorViewModel,
+                isDarkMode = isDarkMode,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -181,6 +183,7 @@ fun BottomNavGraph(
             JournalAnalysisScreen(
                 id = id,
                 viewModel = journalAnalysisViewModel,
+                isDarkMode = isDarkMode,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -227,6 +230,7 @@ fun BottomNavGraph(
         composable(Screen.AddGoal.route) {
             AddGoalScreen(
                 viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onSuccess = { navController.popBackStack() }
             )
@@ -255,6 +259,7 @@ fun BottomNavGraph(
         composable("meditation_player") {
             MeditationPlayerScreen(
                 viewModel = meditationViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onNavigateToTimer = {
                     navController.navigate(Screen.MeditationTimer.route)
@@ -265,6 +270,7 @@ fun BottomNavGraph(
         composable(Screen.MeditationTimer.route) {
             MeditationTimerScreen(
                 viewModel = meditationViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -304,6 +310,7 @@ fun BottomNavGraph(
                 viewModel = postDetailViewModel,
                 profileViewModel = profileViewModel,
                 focusComments = focusComments,
+                isDarkMode = isDarkMode,
                 onBack = {
                     communityViewModel.refresh()
                     homeViewModel.fetchDashboardData(isSilent = true)
@@ -320,6 +327,7 @@ fun BottomNavGraph(
             CreatePostScreen(
                 viewModel = createPostViewModel,
                 profileViewModel = profileViewModel,
+                isDarkMode = isDarkMode,
                 onBackClick = { navController.popBackStack() },
                 onPostSuccess = {
                     communityViewModel.refresh()
@@ -357,6 +365,7 @@ fun BottomNavGraph(
             )
             PersonalInfoScreen(
                 viewModel = personalInfoViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -367,6 +376,7 @@ fun BottomNavGraph(
             )
             EditProfileScreen(
                 viewModel = editProfileViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onSuccess = {
                     profileViewModel.fetchUserProfile()
@@ -389,6 +399,7 @@ fun BottomNavGraph(
             SavedPostsScreen(
                 viewModel = savedPostsViewModel,
                 profileViewModel = profileViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onPostClick = { post, focusComments ->
                     navController.navigate("post_detail/${post.id}?focusComments=$focusComments")
@@ -400,6 +411,7 @@ fun BottomNavGraph(
             val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
             ChatLandingScreen(
                 viewModel = chatLandingViewModel,
+                isDarkMode = isDarkMode,
                 onStartChat = { starter ->
                     navController.navigate("${Screen.Chat.route}?starter=$starter")
                 },
@@ -419,6 +431,7 @@ fun BottomNavGraph(
             val chatLandingViewModel: ChatLandingViewModel = viewModel(factory = ChatLandingViewModelFactory(chatRepository))
             AllConversationsScreen(
                 viewModel = chatLandingViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() },
                 onViewConversation = { conversationId ->
                     navController.navigate("${Screen.Chat.route}?historyId=$conversationId")
@@ -449,6 +462,7 @@ fun BottomNavGraph(
                 viewModel = chatViewModel,
                 initialMessage = starter,
                 historyId = historyId,
+                isDarkMode = isDarkMode,
                 onBack = { 
                     navController.popBackStack() 
                 }
@@ -458,12 +472,14 @@ fun BottomNavGraph(
         composable(Screen.Focus.route) {
             FocusScreen(
                 viewModel = focusViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Insights.route) {
             InsightsScreen(
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }

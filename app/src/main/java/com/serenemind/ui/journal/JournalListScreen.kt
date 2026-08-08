@@ -45,6 +45,7 @@ import java.util.*
 @Composable
 fun JournalListScreen(
     viewModel: JournalListViewModel,
+    isDarkMode: Boolean,
     onNavigateToEditor: (Int?) -> Unit,
     onNavigateToAnalysis: (Int) -> Unit
 ) {
@@ -242,7 +243,7 @@ fun JournalListScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(count = 5) {
-                                ShimmerJournalItem()
+                                ShimmerJournalItem(isDarkMode = isDarkMode)
                             }
                         }
                     } else if (error != null && journals.isEmpty()) {
@@ -288,7 +289,7 @@ fun JournalListScreen(
                             // Show shimmer placeholder at top if we are refreshing background
                             if (isLoading && journals.isNotEmpty()) {
                                 item {
-                                    ShimmerJournalItem()
+                                    ShimmerJournalItem(isDarkMode = isDarkMode)
                                 }
                             }
 
@@ -299,9 +300,11 @@ fun JournalListScreen(
                                 SwipeToDismissJournal(
                                     journal = journal,
                                     onDeleteRequest = { journalToDelete = journal },
+                                    isDarkMode = isDarkMode,
                                     content = {
                                         JournalItem(
                                             journal = journal,
+                                            isDarkMode = isDarkMode,
                                             onClick = { onNavigateToEditor(journal.id) },
                                             onFavoriteClick = { viewModel.toggleFavorite(journal.id) },
                                             onAnalysisClick = { onNavigateToAnalysis(journal.id) }
@@ -322,6 +325,7 @@ fun JournalListScreen(
 fun SwipeToDismissJournal(
     journal: JournalResponse,
     onDeleteRequest: () -> Unit,
+    isDarkMode: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -373,6 +377,7 @@ fun SwipeToDismissJournal(
 @Composable
 fun JournalItem(
     journal: JournalResponse,
+    isDarkMode: Boolean,
     onClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     onAnalysisClick: () -> Unit
@@ -382,8 +387,9 @@ fun JournalItem(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = if (isDarkMode) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF333333)) else null
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -397,7 +403,7 @@ fun JournalItem(
                     text = journal.title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333),
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -490,12 +496,20 @@ fun JournalItem(
 }
 
 @Composable
-fun shimmerBrush(): Brush {
-    val shimmerColors = listOf(
-        Color.LightGray.copy(alpha = 0.6f),
-        Color.LightGray.copy(alpha = 0.2f),
-        Color.LightGray.copy(alpha = 0.6f),
-    )
+fun shimmerBrush(isDarkMode: Boolean): Brush {
+    val shimmerColors = if (isDarkMode) {
+        listOf(
+            Color(0xFF2A2A2A),
+            Color(0xFF3A3A3A),
+            Color(0xFF2A2A2A),
+        )
+    } else {
+        listOf(
+            Color.LightGray.copy(alpha = 0.6f),
+            Color.LightGray.copy(alpha = 0.2f),
+            Color.LightGray.copy(alpha = 0.6f),
+        )
+    }
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim = transition.animateFloat(
@@ -519,13 +533,15 @@ fun shimmerBrush(): Brush {
 }
 
 @Composable
-fun ShimmerJournalItem() {
+fun ShimmerJournalItem(isDarkMode: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FE))
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF8F9FE)
+        )
     ) {
-        val brush = shimmerBrush()
+        val brush = shimmerBrush(isDarkMode)
         Column(modifier = Modifier.padding(16.dp)) {
             Box(
                 modifier = Modifier

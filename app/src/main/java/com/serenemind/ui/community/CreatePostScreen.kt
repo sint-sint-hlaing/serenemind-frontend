@@ -39,6 +39,7 @@ import com.serenemind.util.getAvatarResource
 fun CreatePostScreen(
     viewModel: CreatePostViewModel,
     profileViewModel: ProfileViewModel,
+    isDarkMode: Boolean,
     onBackClick: () -> Unit,
     onPostSuccess: () -> Unit
 ) {

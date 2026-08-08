@@ -24,6 +24,7 @@ import com.serenemind.ui.theme.TextSecondary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsightsScreen(
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     Scaffold(

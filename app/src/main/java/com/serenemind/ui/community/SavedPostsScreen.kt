@@ -31,6 +31,7 @@ import com.serenemind.ui.profile.ProfileViewModel
 fun SavedPostsScreen(
     viewModel: SavedPostsViewModel,
     profileViewModel: ProfileViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit,
     onPostClick: (PostResponse, Boolean) -> Unit
 ) {
@@ -53,11 +54,11 @@ fun SavedPostsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
-        containerColor = Color(0xFFFBFBFE) // Very light blue-ish white
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -143,7 +144,7 @@ fun SavedPostsScreen(
                 }
                 is CommunityUiState.Success -> {
                     if (state.posts.isEmpty()) {
-                        EmptySavedState()
+                        EmptySavedState(isDarkMode = isDarkMode)
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
@@ -170,7 +171,7 @@ fun SavedPostsScreen(
 }
 
 @Composable
-fun EmptySavedState() {
+fun EmptySavedState(isDarkMode: Boolean = false) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -181,14 +182,14 @@ fun EmptySavedState() {
         Surface(
             modifier = Modifier.size(140.dp),
             shape = CircleShape,
-            color = Color(0xFFF3E5F5)
+            color = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF3E5F5)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Default.Bookmark,
                     contentDescription = null,
                     modifier = Modifier.size(70.dp),
-                    tint = Color(0xFF7E57C2).copy(alpha = 0.3f)
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 )
             }
         }
@@ -197,7 +198,7 @@ fun EmptySavedState() {
             text = "Your collection is empty",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4527A0)
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(

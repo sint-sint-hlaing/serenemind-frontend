@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun AllConversationsScreen(
     viewModel: ChatLandingViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit,
     onViewConversation: (Long) -> Unit
 ) {
@@ -45,10 +46,12 @@ fun AllConversationsScreen(
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
-        containerColor = Color(0xFFFBFBFE)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier

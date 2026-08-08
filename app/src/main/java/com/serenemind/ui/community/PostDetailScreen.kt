@@ -50,6 +50,7 @@ fun PostDetailScreen(
     viewModel: PostDetailViewModel,
     profileViewModel: ProfileViewModel,
     focusComments: Boolean = false,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -204,6 +205,7 @@ fun PostDetailScreen(
                         PostHeader(
                             post = state.post,
                             isOwnPost = state.post.username == currentUsername || state.post.username.endsWith("(You)"),
+                            isDarkMode = isDarkMode,
                             onLikeClick = { viewModel.likePost() },
                             onSaveClick = { viewModel.savePost() },
                             onDeleteClick = {
@@ -262,6 +264,7 @@ fun PostDetailPreview() {
 fun PostHeader(
     post: PostResponse,
     isOwnPost: Boolean = false,
+    isDarkMode: Boolean = false,
     onLikeClick: () -> Unit,
     onSaveClick: () -> Unit,
     onDeleteClick: (() -> Unit)? = null

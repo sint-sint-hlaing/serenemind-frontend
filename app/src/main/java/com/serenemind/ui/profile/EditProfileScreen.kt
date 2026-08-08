@@ -39,6 +39,7 @@ import java.util.*
 @Composable
 fun EditProfileScreen(
     viewModel: EditProfileViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit,
     onSuccess: () -> Unit
 ) {
@@ -128,10 +129,10 @@ fun EditProfileScreen(
                         Text("Save", color = Color(0xFF7E57C2), fontWeight = FontWeight.Bold)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -207,18 +208,21 @@ fun EditProfileScreen(
                     icon = Icons.Outlined.Person,
                     label = "Full Name",
                     value = fullname,
+                    isDarkMode = isDarkMode,
                     onValueChange = { fullname = it }
                 )
                 EditField(
                     icon = Icons.Outlined.AlternateEmail,
                     label = "Username",
                     value = username,
+                    isDarkMode = isDarkMode,
                     onValueChange = { username = it }
                 )
                 EditField(
                     icon = Icons.Outlined.Email,
                     label = "Email",
                     value = email,
+                    isDarkMode = isDarkMode,
                     onValueChange = { },
                     readOnly = true
                 )
@@ -226,18 +230,21 @@ fun EditProfileScreen(
                     icon = Icons.Outlined.Edit,
                     label = "Bio",
                     value = bio,
+                    isDarkMode = isDarkMode,
                     onValueChange = { bio = it }
                 )
                 EditField(
                     icon = Icons.Outlined.LocationOn,
                     label = "Location",
                     value = location,
+                    isDarkMode = isDarkMode,
                     onValueChange = { location = it }
                 )
                 EditField(
                     icon = Icons.Outlined.CalendarToday,
                     label = "Birthday",
                     value = birthday,
+                    isDarkMode = isDarkMode,
                     onValueChange = { birthday = it },
                     showArrow = true,
                     onClick = { datePickerDialog.show() },
@@ -318,6 +325,7 @@ fun EditField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    isDarkMode: Boolean = false,
     readOnly: Boolean = false,
     showArrow: Boolean = false,
     onClick: (() -> Unit)? = null
@@ -328,23 +336,23 @@ fun EditField(
             .padding(bottom = 12.dp)
             .let { if (onClick != null) it.clickable { onClick() } else it },
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFF5F5F5)),
-        color = Color.White
+        border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)),
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = Color(0xFF7E57C2), modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(label, fontSize = 11.sp, color = Color.Gray)
+                Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (readOnly) {
                     Text(
                         text = value, 
                         fontSize = 14.sp, 
                         fontWeight = FontWeight.Medium, 
-                        color = if (onClick != null) Color.Black else Color.Gray
+                        color = if (onClick != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
                     BasicTextField(
@@ -353,14 +361,14 @@ fun EditField(
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
             if (showArrow) {
-                Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
             }
         }
     }

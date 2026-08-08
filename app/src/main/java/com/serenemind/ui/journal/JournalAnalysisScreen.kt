@@ -29,6 +29,7 @@ import com.serenemind.model.response.JournalAnalysisResponse
 fun JournalAnalysisScreen(
     id: Int,
     viewModel: JournalAnalysisViewModel,
+    isDarkMode: Boolean,
     onNavigateBack: () -> Unit
 ) {
     val analysis by viewModel.analysis.collectAsState()
@@ -54,12 +55,12 @@ fun JournalAnalysisScreen(
             uiState is JournalAnalysisUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = Color(0xFF673AB7))
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             "AI is analyzing your thoughts...",
                             fontWeight = FontWeight.Medium,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -92,27 +93,27 @@ fun JournalAnalysisScreen(
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    AnalysisHeader()
+                    AnalysisHeader(isDarkMode)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    AnalysisSection("Detected Emotion", analysis!!.emotion ?: "Neutral")
+                    AnalysisSection("Detected Emotion", analysis!!.emotion ?: "Neutral", isDarkMode)
                     LinearProgressIndicator(
-                        progress = 0.8f, // Visual filler
+                        progress = { 0.8f }, // Visual filler
                         modifier = Modifier.fillMaxWidth().height(8.dp).padding(vertical = 8.dp).clip(RoundedCornerShape(4.dp)),
                         color = Color(0xFF4CAF50),
-                        trackColor = Color(0xFFE8F5E9)
+                        trackColor = if (isDarkMode) Color(0xFF1B5E20).copy(alpha = 0.3f) else Color(0xFFE8F5E9)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    AnalysisSection("Stress Level", analysis!!.stressLevel ?: "Low")
+                    AnalysisSection("Stress Level", analysis!!.stressLevel ?: "Low", isDarkMode)
                     val stressProgress = (analysis!!.stressScore ?: 0).toFloat() / 100f
                     LinearProgressIndicator(
-                        progress = stressProgress,
+                        progress = { stressProgress },
                         modifier = Modifier.fillMaxWidth().height(8.dp).padding(vertical = 8.dp).clip(RoundedCornerShape(4.dp)),
                         color = if (stressProgress > 0.6f) Color.Red else Color(0xFFFFC107),
-                        trackColor = Color(0xFFFFF8E1)
+                        trackColor = if (isDarkMode) Color(0xFF424242) else Color(0xFFFFF8E1)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -120,7 +121,7 @@ fun JournalAnalysisScreen(
                     Text("AI Perspective", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Card(
                         modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
@@ -128,7 +129,7 @@ fun JournalAnalysisScreen(
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
                             modifier = Modifier.padding(16.dp),
-                            color = Color(0xFF333333)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -149,20 +150,20 @@ fun JournalAnalysisScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF7B1FA2))
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Suggested Action", fontWeight = FontWeight.Bold, color = Color(0xFF7B1FA2))
+                                Text("Suggested Action", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = analysis!!.aiSuggestion ?: "Keep writing to get personalized suggestions!",
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp,
-                                color = Color(0xFF4A148C)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -173,26 +174,26 @@ fun JournalAnalysisScreen(
 }
 
 @Composable
-fun AnalysisHeader() {
+fun AnalysisHeader(isDarkMode: Boolean = false) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Icon(
             Icons.Default.AutoAwesome,
             contentDescription = null,
             modifier = Modifier.size(48.dp),
-            tint = Color(0xFF6750A4)
+            tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Insight Ready", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF6750A4))
+        Text("Insight Ready", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
     }
 }
 
 @Composable
-fun AnalysisSection(title: String, value: String) {
+fun AnalysisSection(title: String, value: String, isDarkMode: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.DarkGray)
+        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (isDarkMode) Color.LightGray else Color.DarkGray)
     }
 }

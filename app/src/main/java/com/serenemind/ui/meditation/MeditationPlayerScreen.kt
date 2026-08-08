@@ -32,6 +32,7 @@ import com.serenemind.ui.theme.*
 @Composable
 fun MeditationPlayerScreen(
     viewModel: MeditationViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit = {},
     onNavigateToTimer: () -> Unit = {}
 ) {
@@ -49,10 +50,10 @@ fun MeditationPlayerScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         meditation?.let { m ->
             Column(
@@ -118,7 +119,7 @@ fun MeditationPlayerScreen(
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = Color(0xFFF5F5F5)
+                        inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
                     )
                 )
 
@@ -134,13 +135,13 @@ fun MeditationPlayerScreen(
                         viewModel.navigateToPrevious()
                         Toast.makeText(context, "Previous session", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(32.dp), tint = TextPrimary)
+                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(32.dp))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     IconButton(onClick = { 
                         Toast.makeText(context, "Rewinding 15s", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Rewind", modifier = Modifier.size(28.dp), tint = TextPrimary)
+                        Icon(Icons.Default.Refresh, contentDescription = "Rewind", modifier = Modifier.size(28.dp))
                     }
                     Spacer(modifier = Modifier.width(24.dp))
                     Surface(
@@ -164,14 +165,14 @@ fun MeditationPlayerScreen(
                         progress = (progress + 0.1f).coerceAtMost(1f)
                         Toast.makeText(context, "Fast Forward 15s", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.FastForward, contentDescription = "Fast Forward", modifier = Modifier.size(28.dp), tint = TextPrimary)
+                        Icon(Icons.Default.FastForward, contentDescription = "Fast Forward", modifier = Modifier.size(28.dp))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     IconButton(onClick = { 
                         viewModel.navigateToNext()
                         Toast.makeText(context, "Next session", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(32.dp), tint = TextPrimary)
+                        Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(32.dp))
                     }
                 }
 
@@ -241,7 +242,7 @@ fun MeditationPlayerScreen(
 fun PlayerAction(
     icon: androidx.compose.ui.graphics.vector.ImageVector, 
     label: String,
-    color: Color = TextPrimary,
+    color: Color = MaterialTheme.colorScheme.onSurface,
     onClick: () -> Unit = {}
 ) {
     Column(
@@ -253,6 +254,6 @@ fun PlayerAction(
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = color)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(label, fontSize = 11.sp, color = TextSecondary)
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

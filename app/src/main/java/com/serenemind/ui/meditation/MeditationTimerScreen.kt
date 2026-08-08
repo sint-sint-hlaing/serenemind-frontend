@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun MeditationTimerScreen(
     viewModel: MeditationViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val meditation by viewModel.selectedMeditation.collectAsState()
@@ -49,7 +50,7 @@ fun MeditationTimerScreen(
             Text(
                 text = "End meditation in",
                 fontSize = 18.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             Spacer(modifier = Modifier.height(16.dp))

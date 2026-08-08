@@ -33,6 +33,7 @@ import com.serenemind.ui.theme.*
 @Composable
 fun AddGoalScreen(
     viewModel: GoalViewModel,
+    isDarkMode: Boolean,
     onBack: () -> Unit = {},
     onSuccess: () -> Unit = {}
 ) {
@@ -78,10 +79,12 @@ fun AddGoalScreen(
                         Text("Save", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -115,15 +118,15 @@ fun AddGoalScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Form Fields
-            GoalInputField(label = "Goal Title", value = title, onValueChange = { title = it }, placeholder = "e.g. Read 20 pages daily")
+            GoalInputField(label = "Goal Title", value = title, onValueChange = { title = it }, placeholder = "e.g. Read 20 pages daily", isDarkMode = isDarkMode)
             Spacer(modifier = Modifier.height(20.dp))
-            GoalInputField(label = "Description (optional)", value = description, onValueChange = { description = it }, placeholder = "Why is this goal important to you?")
+            GoalInputField(label = "Description (optional)", value = description, onValueChange = { description = it }, placeholder = "Why is this goal important to you?", isDarkMode = isDarkMode)
             
             Spacer(modifier = Modifier.height(24.dp))
 
             // Frequency
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Box {
                     OutlinedCard(
@@ -131,16 +134,18 @@ fun AddGoalScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { showFrequencyMenu = true },
-                        colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFF9F9F9)),
-                        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+                        colors = CardDefaults.outlinedCardColors(
+                            containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
+                        ),
+                        border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE))
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(frequency, color = TextPrimary, fontSize = 15.sp)
-                            Icon(Icons.Default.Add, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                            Text(frequency, fontSize = 15.sp)
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                         }
                     }
                     DropdownMenu(
@@ -165,20 +170,20 @@ fun AddGoalScreen(
             // Target & Unit
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(100.dp))
-                            .background(Color(0xFFF9F9F9))
+                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
                             .padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = { if (target > 1) target-- },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White)
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                         ) {
-                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
+                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
                         }
                         Text(
                             target.toString(), 
@@ -189,15 +194,15 @@ fun AddGoalScreen(
                         )
                         IconButton(
                             onClick = { target++ },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White)
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
                 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Unit", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Unit", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = unit,
@@ -206,10 +211,10 @@ fun AddGoalScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color(0xFFEEEEEE),
+                            unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedContainerColor = Color(0xFFF9F9F9),
-                            focusedContainerColor = Color(0xFFF9F9F9)
+                            unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
+                            focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
                         ),
                         singleLine = true
                     )
@@ -221,14 +226,14 @@ fun AddGoalScreen(
             // Date & Reminder
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFF9F9F9))
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
+                            .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
                             .clickable {
                                 android.widget.Toast.makeText(context, "Date picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
                             }
@@ -236,19 +241,19 @@ fun AddGoalScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(startDate, fontSize = 14.sp, color = TextPrimary)
-                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp), tint = TextSecondary)
+                        Text(startDate, fontSize = 14.sp)
+                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Reminder", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Reminder", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFF9F9F9))
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
+                            .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
                             .clickable {
                                 android.widget.Toast.makeText(context, "Reminder picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
                             }
@@ -256,8 +261,8 @@ fun AddGoalScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(reminderTime, fontSize = 14.sp, color = TextPrimary)
-                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp), tint = TextSecondary)
+                        Text(reminderTime, fontSize = 14.sp)
+                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -268,9 +273,9 @@ fun AddGoalScreen(
 }
 
 @Composable
-fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String) {
+fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String, isDarkMode: Boolean = false) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = value,
@@ -279,10 +284,10 @@ fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFFEEEEEE),
+                unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedContainerColor = Color(0xFFF9F9F9),
-                focusedContainerColor = Color(0xFFF9F9F9)
+                unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
+                focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
             )
         )
     }

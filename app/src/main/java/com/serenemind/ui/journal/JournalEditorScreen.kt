@@ -42,6 +42,7 @@ import java.io.FileOutputStream
 fun JournalEditorScreen(
     id: Int?,
     viewModel: JournalEditorViewModel,
+    isDarkMode: Boolean,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
