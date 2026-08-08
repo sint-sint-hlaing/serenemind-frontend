@@ -17,6 +17,10 @@ abstract class SafeApiCall {
                 val body = response.body()
                 if (body != null) {
                     emit(NetworkResult.Success(body))
+                } else if (response.code() == 204 || response.code() == 200) {
+                    // Handle Unit/Void response or empty success
+                    @Suppress("UNCHECKED_CAST")
+                    emit(NetworkResult.Success(Unit as T))
                 } else {
                     emit(NetworkResult.Error("Empty response body", response.code()))
                 }

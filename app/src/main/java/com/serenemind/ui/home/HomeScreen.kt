@@ -12,8 +12,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -289,62 +293,9 @@ fun DashboardContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 QuickActionsGrid(
-                    actions = data.quickActions,
                     isDarkMode = isDarkMode,
                     onActionClick = onActionClick
                 )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // AI Chat Entry Card
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onActionClick("chat_landing") },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
-                            color = Color(0xFFEDE7F6)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = Color(0xFF7E57C2)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "SereneMind AI",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Your mindful AI companion",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -427,30 +378,43 @@ fun getMoodBgColor(mood: MoodType): Color {
 
 @Composable
 fun QuickActionsGrid(
-    actions: List<QuickActionResponse>,
     isDarkMode: Boolean,
     onActionClick: (String) -> Unit
 ) {
+    val items = listOf(
+        QuickActionLocalItem("Journal", Icons.AutoMirrored.Filled.Assignment, "journal", Color(0xFF9C27B0)),
+        QuickActionLocalItem("Meditate", Icons.Default.SelfImprovement, "meditation", Color(0xFF2196F3)),
+        QuickActionLocalItem("Goals", Icons.Default.TrackChanges, "goal", Color(0xFF4CAF50)),
+        QuickActionLocalItem("SereneAI", Icons.Default.AutoAwesome, "chat_landing", Color(0xFF7C4DFF))
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        actions.forEach { action ->
+        items.forEach { item ->
             QuickActionItem(
-                action = action,
+                item = item,
                 isDarkMode = isDarkMode,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    onActionClick(action.route ?: "")
+                    onActionClick(item.route)
                 }
             )
         }
     }
 }
 
+data class QuickActionLocalItem(
+    val title: String,
+    val icon: ImageVector,
+    val route: String,
+    val color: Color
+)
+
 @Composable
 fun QuickActionItem(
-    action: QuickActionResponse,
+    item: QuickActionLocalItem,
     isDarkMode: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -475,18 +439,20 @@ fun QuickActionItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(getBackgroundColorForAction(action.title ?: "", isDarkMode)),
+                    .background(if (isDarkMode) item.color.copy(alpha = 0.2f) else item.color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = action.icon ?: "",
-                    fontSize = 28.sp
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = item.color,
+                    modifier = Modifier.size(30.dp)
                 )
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = action.title ?: "",
+            text = item.title,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -494,16 +460,4 @@ fun QuickActionItem(
             maxLines = 1
         )
     }
-}
-
-@Composable
-fun getBackgroundColorForAction(title: String, isDarkMode: Boolean): Color {
-    val baseColor = when (title.lowercase()) {
-        "journal" -> ActionJournal
-        "meditate", "meditation" -> ActionMeditation
-        "goals", "goal" -> ActionGoals
-        "breathing" -> Color(0xFFFFF3E0)
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor
 }
