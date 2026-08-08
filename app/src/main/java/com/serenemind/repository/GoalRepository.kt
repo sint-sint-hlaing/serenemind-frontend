@@ -4,64 +4,37 @@ import com.serenemind.model.request.GoalRequest
 import com.serenemind.model.response.GoalStatistics
 import com.serenemind.model.response.UserGoal
 import com.serenemind.network.ApiService
-import kotlinx.coroutines.flow.flow
-import retrofit2.Response
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
+import kotlinx.coroutines.flow.Flow
 
-class GoalRepository(private val apiService: ApiService) {
+class GoalRepository(private val apiService: ApiService) : SafeApiCall() {
 
-    fun getAllGoals() = flow {
-        try {
-            emit(apiService.getAllGoals())
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getAllGoals(): Flow<NetworkResult<List<UserGoal>>> = safeApiCall {
+        apiService.getAllGoals()
     }
 
-    fun getActiveGoals() = flow {
-        try {
-            emit(apiService.getActiveGoals())
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getActiveGoals(): Flow<NetworkResult<List<UserGoal>>> = safeApiCall {
+        apiService.getActiveGoals()
     }
 
-    fun createGoal(request: GoalRequest) = flow {
-        try {
-            emit(apiService.createGoal(request))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun createGoal(request: GoalRequest): Flow<NetworkResult<UserGoal>> = safeApiCall {
+        apiService.createGoal(request)
     }
 
-    suspend fun updateProgress(id: Long): Response<UserGoal> {
-        return try {
-            apiService.updateGoalProgress(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun updateProgress(id: Long): Flow<NetworkResult<UserGoal>> = safeApiCall {
+        apiService.updateGoalProgress(id)
     }
 
-    suspend fun completeGoal(id: Long): Response<UserGoal> {
-        return try {
-            apiService.completeGoal(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun completeGoal(id: Long): Flow<NetworkResult<UserGoal>> = safeApiCall {
+        apiService.completeGoal(id)
     }
 
-    suspend fun deleteGoal(id: Long): Response<Unit> {
-        return try {
-            apiService.deleteGoal(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun deleteGoal(id: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.deleteGoal(id)
     }
 
-    fun getGoalStatistics() = flow {
-        try {
-            emit(apiService.getGoalStatistics())
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getGoalStatistics(): Flow<NetworkResult<GoalStatistics>> = safeApiCall {
+        apiService.getGoalStatistics()
     }
 }

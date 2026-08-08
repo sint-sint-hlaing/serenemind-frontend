@@ -1,32 +1,23 @@
 package com.serenemind.repository
 
 import com.serenemind.model.request.ChatSendRequest
+import com.serenemind.model.response.ChatMessageResponse
+import com.serenemind.model.response.ConversationResponse
 import com.serenemind.network.ChatApiService
-import kotlinx.coroutines.flow.flow
-import retrofit2.Response
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
+import kotlinx.coroutines.flow.Flow
 
-class ChatRepository(private val apiService: ChatApiService) {
-    fun sendMessage(message: String, conversationId: Long? = null) = flow {
-        try {
-            emit(apiService.sendMessage(ChatSendRequest(conversationId, message)))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+class ChatRepository(private val apiService: ChatApiService) : SafeApiCall() {
+    fun sendMessage(message: String, conversationId: Long? = null): Flow<NetworkResult<ConversationResponse>> = safeApiCall {
+        apiService.sendMessage(ChatSendRequest(conversationId, message))
     }
 
-    fun getConversations() = flow {
-        try {
-            emit(apiService.getConversations())
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getConversations(): Flow<NetworkResult<List<ConversationResponse>>> = safeApiCall {
+        apiService.getConversations()
     }
 
-    fun getConversationMessages(conversationId: Long) = flow {
-        try {
-            emit(apiService.getConversationMessages(conversationId))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getConversationMessages(conversationId: Long): Flow<NetworkResult<List<ChatMessageResponse>>> = safeApiCall {
+        apiService.getConversationMessages(conversationId)
     }
 }

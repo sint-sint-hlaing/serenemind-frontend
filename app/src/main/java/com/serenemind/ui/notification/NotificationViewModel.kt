@@ -2,16 +2,15 @@ package com.serenemind.ui.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.serenemind.model.response.NotificationResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.NotificationRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-sealed class NotificationNavigationEvent {
-    data class NavigateToPost(val postId: Long) : NotificationNavigationEvent()
-    data class NavigateToComment(val postId: Long) : NotificationNavigationEvent()
-    object ShowSystemDialog : NotificationNavigationEvent()
-}
 
 class NotificationViewModel(
     private val notificationRepository: NotificationRepository
@@ -33,68 +32,62 @@ class NotificationViewModel(
         currentFilter = filter?.takeIf { it != "all" }
         
         viewModelScope.launch {
-            _uiState.value = NotificationUiState.Loading
-            notificationRepository.getNotifications(currentFilter)
-                .catch { e ->
-                    _uiState.value = NotificationUiState.Error(e.message ?: "Unknown error")
+            notificationRepository.getNotifications(currentFilter).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = NotificationUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = NotificationUiState.Success(result.data)
+                    is NetworkResult.Error -> _uiState.value = NotificationUiState.Error(result.message)
                 }
-                .collect { response ->
-                    if (response.isSuccessful) {
-                        _uiState.value = response.body()?.let { NotificationUiState.Success(it) } 
-                            ?: NotificationUiState.Error("Empty response")
-                    } else {
-                        _uiState.value = NotificationUiState.Error("Failed to fetch notifications")
-                    }
-                }
-        }
-    }
-
-    fun onNotificationClicked(id: Long) {
-        viewModelScope.launch {
-            try {
-                val response = notificationRepository.clickNotification(id)
-                if (response.isSuccessful) {
-                    response.body()?.let { handleNavigation(it) }
-                    refreshNotifications()
-                }
-            } catch (e: Exception) {
-                // Silent error
             }
         }
     }
 
-    private suspend fun handleNavigation(noti: NotificationResponse) {
-        val targetId = noti.targetId ?: return
-        val event = when (noti.targetType) {
-            "POST" -> NotificationNavigationEvent.NavigateToPost(targetId)
-            "COMMENT" -> NotificationNavigationEvent.NavigateToComment(targetId)
-            "SYSTEM" -> NotificationNavigationEvent.ShowSystemDialog
-            else -> null
+    fun markAsRead(id: Long) {
+        viewModelScope.launch {
+            notificationRepository.markAsRead(id).collect { result ->
+                if (result is NetworkResult.Success) {
+                    fetchNotifications(currentFilter)
+                }
+            }
         }
-        event?.let { _navigationEvent.emit(it) }
+    }
+
+    fun onNotificationClick(id: Long) {
+        viewModelScope.launch {
+            notificationRepository.clickNotification(id).collect { result ->
+                if (result is NetworkResult.Success) {
+                    val notification = result.data
+                    notification.type?.let { type ->
+                        when (type.lowercase()) {
+                            "post", "like", "comment" -> {
+                                notification.targetId?.let { postId ->
+                                    _navigationEvent.emit(NotificationNavigationEvent.NavigateToPost(postId))
+                                }
+                            }
+                            "system" -> {
+                                _navigationEvent.emit(NotificationNavigationEvent.ShowSystemDialog(notification.message ?: ""))
+                            }
+                        }
+                    }
+                    fetchNotifications(currentFilter)
+                }
+            }
+        }
     }
 
     fun markAllAsRead() {
         viewModelScope.launch {
-            try {
-                if (notificationRepository.markAllAsRead().isSuccessful) {
-                    refreshNotifications()
+            notificationRepository.markAllAsRead().collect { result ->
+                if (result is NetworkResult.Success) {
+                    fetchNotifications(currentFilter)
                 }
-            } catch (e: Exception) {
-                // Silently ignore
             }
         }
     }
+}
 
-    private fun refreshNotifications() {
-        viewModelScope.launch {
-            notificationRepository.getNotifications(currentFilter)
-                .catch { /* ignore silent refresh error */ }
-                .collect { response ->
-                    if (response.isSuccessful) {
-                        response.body()?.let { _uiState.value = NotificationUiState.Success(it) }
-                    }
-                }
-        }
-    }
+sealed interface NotificationNavigationEvent {
+    data class NavigateToPost(val postId: Long) : NotificationNavigationEvent
+    data class NavigateToComment(val postId: Long, val commentId: Long) : NotificationNavigationEvent
+    data class ShowSystemDialog(val message: String) : NotificationNavigationEvent
 }

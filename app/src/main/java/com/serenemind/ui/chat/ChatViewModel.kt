@@ -3,6 +3,7 @@ package com.serenemind.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.ChatMessageResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.ChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,14 +26,15 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private fun fetchMessages(conversationId: Long) {
         viewModelScope.launch {
-            _uiState.value = ChatUiState.Loading
-            repository.getConversationMessages(conversationId).collect { response ->
-                if (response.isSuccessful && response.body() != null) {
-                    messages.clear()
-                    messages.addAll(response.body()!!.map { it.toMessage() })
-                    _uiState.value = ChatUiState.Active(currentConversationId, messages.toList())
-                } else {
-                    _uiState.value = ChatUiState.Error("Failed to load previous messages")
+            repository.getConversationMessages(conversationId).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = ChatUiState.Loading
+                    is NetworkResult.Success -> {
+                        messages.clear()
+                        messages.addAll(result.data.map { it.toMessage() })
+                        _uiState.value = ChatUiState.Active(currentConversationId, messages.toList())
+                    }
+                    is NetworkResult.Error -> _uiState.value = ChatUiState.Error(result.message)
                 }
             }
         }
@@ -52,9 +54,9 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
         _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = true)
 
         viewModelScope.launch {
-            repository.sendMessage(text, currentConversationId).collect { response ->
-                if (response.isSuccessful && response.body() != null) {
-                    val data = response.body()!!
+            repository.sendMessage(text, currentConversationId).collect { result ->
+                if (result is NetworkResult.Success) {
+                    val data = result.data
                     currentConversationId = data.id
                     
                     // Remove the optimistic message and sync from response
@@ -67,9 +69,8 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                     
                     messages.addAll(uniqueNewMessages)
                     _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = false)
-                } else {
+                } else if (result is NetworkResult.Error) {
                     _uiState.value = ChatUiState.Active(currentConversationId, messages.toList(), isTyping = false)
-                    // Optional: You could show a toast or a small error message here instead of switching full state
                 }
             }
         }

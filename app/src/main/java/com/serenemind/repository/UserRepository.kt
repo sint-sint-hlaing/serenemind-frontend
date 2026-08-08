@@ -5,58 +5,43 @@ import com.serenemind.model.response.UserProfileResponse
 import com.serenemind.model.response.UserActivityResponse
 import com.serenemind.model.response.PersonalInfoResponse
 import com.serenemind.network.ApiService
-import kotlinx.coroutines.flow.flow
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
+import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Response
 
 class UserRepository(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
-) {
-    fun getUserProfile() = flow {
-        try {
-            val response = apiService.getUserProfile()
-            emit(response)
-        } catch (e: Exception) {
-            emit(Response.error<UserProfileResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+) : SafeApiCall() {
+
+    fun getUserProfile(): Flow<NetworkResult<UserProfileResponse>> = safeApiCall {
+        apiService.getUserProfile()
     }
 
-    fun getUserActivity() = flow {
-        try {
-            emit(apiService.getUserActivity())
-        } catch (e: Exception) {
-            emit(Response.error<UserActivityResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getUserActivity(): Flow<NetworkResult<UserActivityResponse>> = safeApiCall {
+        apiService.getUserActivity()
     }
 
-    fun getPersonalInfo() = flow {
-        try {
-            emit(apiService.getPersonalInfo())
-        } catch (e: Exception) {
-            emit(Response.error<PersonalInfoResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getPersonalInfo(): Flow<NetworkResult<PersonalInfoResponse>> = safeApiCall {
+        apiService.getPersonalInfo()
     }
 
-    suspend fun updateUserProfile(
+    fun updateUserProfile(
         fullname: String,
         username: String,
         birthday: String,
         bio: String,
         avatarPart: MultipartBody.Part?
-    ): Response<UserProfileResponse> {
-        return try {
-            val fullnameBody = fullname.toRequestBody("text/plain".toMediaTypeOrNull())
-            val usernameBody = username.toRequestBody("text/plain".toMediaTypeOrNull())
-            val birthdayBody = birthday.toRequestBody("text/plain".toMediaTypeOrNull())
-            val bioBody = bio.toRequestBody("text/plain".toMediaTypeOrNull())
-            
-            apiService.updateUserProfile(fullnameBody, usernameBody, birthdayBody, bioBody, avatarPart)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    ): Flow<NetworkResult<UserProfileResponse>> = safeApiCall {
+        val fullnameBody = fullname.toRequestBody("text/plain".toMediaTypeOrNull())
+        val usernameBody = username.toRequestBody("text/plain".toMediaTypeOrNull())
+        val birthdayBody = birthday.toRequestBody("text/plain".toMediaTypeOrNull())
+        val bioBody = bio.toRequestBody("text/plain".toMediaTypeOrNull())
+        
+        apiService.updateUserProfile(fullnameBody, usernameBody, birthdayBody, bioBody, avatarPart)
     }
 
     suspend fun logout() {

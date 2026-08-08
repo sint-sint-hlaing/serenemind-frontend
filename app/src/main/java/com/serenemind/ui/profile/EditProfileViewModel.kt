@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.UserProfileResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,9 +29,9 @@ class EditProfileViewModel(
 
     fun fetchUserProfile() {
         viewModelScope.launch {
-            userRepository.getUserProfile().collect { response ->
-                if (response.isSuccessful && response.body() != null) {
-                    _userProfile.value = response.body()
+            userRepository.getUserProfile().collect { result ->
+                if (result is NetworkResult.Success) {
+                    _userProfile.value = result.data
                 }
             }
         }
@@ -45,17 +46,16 @@ class EditProfileViewModel(
         avatarUri: Uri?
     ) {
         viewModelScope.launch {
-            _uiState.value = EditProfileUiState.Loading
-            
             val avatarPart = avatarUri?.let { uri ->
                 prepareFilePart(context, "avatar", uri)
             }
             
-            val response = userRepository.updateUserProfile(fullname, username, birthday, bio, avatarPart)
-            if (response.isSuccessful) {
-                _uiState.value = EditProfileUiState.Success
-            } else {
-                _uiState.value = EditProfileUiState.Error("Failed to update profile")
+            userRepository.updateUserProfile(fullname, username, birthday, bio, avatarPart).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = EditProfileUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = EditProfileUiState.Success
+                    is NetworkResult.Error -> _uiState.value = EditProfileUiState.Error(result.message)
+                }
             }
         }
     }

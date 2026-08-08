@@ -3,6 +3,7 @@ package com.serenemind.ui.community
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.request.CreatePostRequest
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.CommunityRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,17 +25,13 @@ class CreatePostViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.value = CreatePostUiState.Loading
-            try {
-                val request = CreatePostRequest(content = content, anonymous = isAnonymous)
-                val response = communityRepository.createPost(request, imagePart)
-                if (response.isSuccessful) {
-                    _uiState.value = CreatePostUiState.Success
-                } else {
-                    _uiState.value = CreatePostUiState.Error("Error: ${response.message()}")
+            val request = CreatePostRequest(content = content, anonymous = isAnonymous)
+            communityRepository.createPost(request, imagePart).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = CreatePostUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = CreatePostUiState.Success
+                    is NetworkResult.Error -> _uiState.value = CreatePostUiState.Error(result.message)
                 }
-            } catch (e: Exception) {
-                _uiState.value = CreatePostUiState.Error("Exception: ${e.message}")
             }
         }
     }

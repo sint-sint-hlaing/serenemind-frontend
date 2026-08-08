@@ -3,6 +3,7 @@ package com.serenemind.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.PersonalInfoResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,12 +23,11 @@ class PersonalInfoViewModel(
 
     fun fetchPersonalInfo() {
         viewModelScope.launch {
-            _uiState.value = PersonalInfoUiState.Loading
-            userRepository.getPersonalInfo().collect { response ->
-                if (response.isSuccessful && response.body() != null) {
-                    _uiState.value = PersonalInfoUiState.Success(response.body()!!)
-                } else {
-                    _uiState.value = PersonalInfoUiState.Error("Failed to load personal information")
+            userRepository.getPersonalInfo().collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = PersonalInfoUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = PersonalInfoUiState.Success(result.data)
+                    is NetworkResult.Error -> _uiState.value = PersonalInfoUiState.Error(result.message)
                 }
             }
         }

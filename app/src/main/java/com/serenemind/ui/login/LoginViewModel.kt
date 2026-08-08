@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.serenemind.datastore.TokenManager
 import com.serenemind.model.request.LoginRequest
 import com.serenemind.model.request.RegisterRequest
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,15 +31,15 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.value = LoginUiState.Loading
-            
-            val result = repository.login(LoginRequest(email.trim(), password, fcmToken))
-            result.onSuccess { response ->
-                tokenManager.saveTokens(response.accessToken, response.refreshToken)
-                _uiState.value = LoginUiState.Success
-            }
-            result.onFailure {
-                _uiState.value = LoginUiState.Error(it.message ?: "Login failed")
+            repository.login(LoginRequest(email.trim(), password, fcmToken)).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = LoginUiState.Loading
+                    is NetworkResult.Success -> {
+                        tokenManager.saveTokens(result.data.accessToken, result.data.refreshToken)
+                        _uiState.value = LoginUiState.Success
+                    }
+                    is NetworkResult.Error -> _uiState.value = LoginUiState.Error(result.message)
+                }
             }
         }
     }
@@ -50,13 +51,12 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.value = LoginUiState.Loading
-            val result = repository.register(RegisterRequest(username, email, password))
-            result.onSuccess {
-                _uiState.value = LoginUiState.RegisterSuccess
-            }
-            result.onFailure {
-                _uiState.value = LoginUiState.Error(it.message ?: "Registration failed")
+            repository.register(RegisterRequest(username, email, password)).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = LoginUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = LoginUiState.RegisterSuccess
+                    is NetworkResult.Error -> _uiState.value = LoginUiState.Error(result.message)
+                }
             }
         }
     }

@@ -4,48 +4,29 @@ import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.network.ApiService
-import kotlinx.coroutines.flow.flow
-import retrofit2.Response
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
+import kotlinx.coroutines.flow.Flow
 
-class MoodRepository(private val apiService: ApiService) {
+class MoodRepository(private val apiService: ApiService) : SafeApiCall() {
 
-    suspend fun saveMood(request: MoodRequest): Response<Unit> {
-        return try {
-            apiService.saveMood(request)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun saveMood(request: MoodRequest): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.saveMood(request)
     }
 
-    fun getMoodHistory(year: Int, month: Int) = flow {
-        try {
-            emit(apiService.getMoodHistory(year, month))
-        } catch (e: Exception) {
-            emit(Response.error<List<DailyMoodResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getMoodHistory(year: Int, month: Int): Flow<NetworkResult<List<DailyMoodResponse>>> = safeApiCall {
+        apiService.getMoodHistory(year, month)
     }
 
-    fun getWeeklySummary() = flow {
-        try {
-            emit(apiService.getWeeklySummary())
-        } catch (e: Exception) {
-            emit(Response.error<WeeklyMoodResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getWeeklySummary(): Flow<NetworkResult<WeeklyMoodResponse>> = safeApiCall {
+        apiService.getWeeklySummary()
     }
 
-    fun getWeeklyMood() = flow {
-        try {
-            emit(apiService.getWeeklyMood())
-        } catch (e: Exception) {
-            emit(Response.error<List<WeeklyMoodResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getWeeklyMood(): Flow<NetworkResult<List<WeeklyMoodResponse>>> = safeApiCall {
+        apiService.getWeeklyMood()
     }
 
-    fun getMoodSummary() = flow {
-        try {
-            emit(apiService.getMoodSummary())
-        } catch (e: Exception) {
-            emit(Response.error<Map<String, Double>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getMoodSummary(): Flow<NetworkResult<Map<String, Double>>> = safeApiCall {
+        apiService.getMoodSummary()
     }
 }

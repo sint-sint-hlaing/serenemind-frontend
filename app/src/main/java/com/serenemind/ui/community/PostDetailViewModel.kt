@@ -3,12 +3,12 @@ package com.serenemind.ui.community
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.CommentResponse
-import com.serenemind.model.response.PostResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.CommunityRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class PostDetailViewModel(
@@ -25,32 +25,22 @@ class PostDetailViewModel(
 
     fun fetchPostAndComments(isInitialLoad: Boolean = false) {
         viewModelScope.launch {
-            if (isInitialLoad) {
-                _uiState.value = PostDetailUiState.Loading
-            }
-            
-            communityRepository.getPostById(postId)
-                .catch { e ->
-                    if (isInitialLoad) _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
-                }
-                .collect { postResponse ->
-                    if (postResponse.isSuccessful && postResponse.body() != null) {
-                        val post = postResponse.body()!!
-                        communityRepository.getComments(postId)
-                            .catch { e ->
-                                if (isInitialLoad) _uiState.value = PostDetailUiState.Error("Exception: ${e.message}")
+            communityRepository.getPostById(postId).collect { postResult ->
+                when (postResult) {
+                    is NetworkResult.Loading -> if (isInitialLoad) _uiState.value = PostDetailUiState.Loading
+                    is NetworkResult.Success -> {
+                        val post = postResult.data
+                        communityRepository.getComments(postId).collect { commentResult ->
+                            if (commentResult is NetworkResult.Success) {
+                                _uiState.value = PostDetailUiState.Success(post, commentResult.data)
+                            } else if (commentResult is NetworkResult.Error) {
+                                _uiState.value = PostDetailUiState.Success(post, emptyList())
                             }
-                            .collect { commentResponse ->
-                                if (commentResponse.isSuccessful && commentResponse.body() != null) {
-                                    _uiState.value = PostDetailUiState.Success(post, commentResponse.body()!!)
-                                } else {
-                                    _uiState.value = PostDetailUiState.Success(post, emptyList())
-                                }
-                            }
-                    } else if (isInitialLoad) {
-                        _uiState.value = PostDetailUiState.Error("Failed to fetch post")
+                        }
                     }
+                    is NetworkResult.Error -> if (isInitialLoad) _uiState.value = PostDetailUiState.Error(postResult.message)
                 }
+            }
         }
     }
 
@@ -65,9 +55,10 @@ class PostDetailViewModel(
             _uiState.value = currentState.copy(post = updatedPost)
 
             viewModelScope.launch {
-                val response = communityRepository.likePost(postId)
-                if (!response.isSuccessful) {
-                    _uiState.value = currentState
+                communityRepository.likePost(postId).collect { result ->
+                    if (result is NetworkResult.Error) {
+                        _uiState.value = currentState
+                    }
                 }
             }
         }
@@ -83,9 +74,10 @@ class PostDetailViewModel(
             _uiState.value = currentState.copy(post = updatedPost)
 
             viewModelScope.launch {
-                val response = communityRepository.toggleSavePost(postId)
-                if (!response.isSuccessful) {
-                    _uiState.value = currentState
+                communityRepository.toggleSavePost(postId).collect { result ->
+                    if (result is NetworkResult.Error) {
+                        _uiState.value = currentState
+                    }
                 }
             }
         }
@@ -93,9 +85,10 @@ class PostDetailViewModel(
 
     fun deletePost(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            val response = communityRepository.deletePost(postId)
-            if (response.isSuccessful) {
-                onSuccess()
+            communityRepository.deletePost(postId).collect { result ->
+                if (result is NetworkResult.Success) {
+                    onSuccess()
+                }
             }
         }
     }
@@ -117,16 +110,13 @@ class PostDetailViewModel(
             _uiState.value = currentState.copy(comments = updatedComments)
 
             viewModelScope.launch {
-                try {
-                    val response = communityRepository.addComment(postId, content, isAnonymous)
-                    if (response.isSuccessful) {
+                communityRepository.addComment(postId, content, isAnonymous).collect { result ->
+                    if (result is NetworkResult.Success) {
                         fetchPostAndComments(isInitialLoad = false) // Sync with server
-                    } else {
+                    } else if (result is NetworkResult.Error) {
                         // Rollback on failure
                         _uiState.value = currentState
                     }
-                } catch (e: Exception) {
-                    _uiState.value = currentState
                 }
             }
         }

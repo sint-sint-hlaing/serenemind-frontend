@@ -116,7 +116,7 @@ fun NotificationsScreen(
                         notifications = state.notifications,
                         isDarkMode = isDarkMode,
                         onNotificationClick = { notification ->
-                            viewModel.onNotificationClicked(notification.id)
+                            viewModel.onNotificationClick(notification.id)
                         },
                         modifier = Modifier.weight(1f)
                     )

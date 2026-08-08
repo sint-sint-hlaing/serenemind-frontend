@@ -3,21 +3,28 @@ package com.serenemind.repository
 import com.serenemind.datastore.TokenManager
 import com.serenemind.model.response.NotificationResponse
 import com.serenemind.network.ApiService
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 
 class NotificationRepository(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
-) {
-    fun getNotifications(filter: String? = null): Flow<Response<List<NotificationResponse>>> = flow {
-        emit(apiService.getNotifications(filter))
+) : SafeApiCall() {
+    fun getNotifications(filter: String? = null): Flow<NetworkResult<List<NotificationResponse>>> = safeApiCall {
+        apiService.getNotifications(filter)
     }
 
-    suspend fun markAsRead(id: Long): Response<Unit> = apiService.markAsRead(id)
+    fun markAsRead(id: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.markAsRead(id)
+    }
 
-    suspend fun clickNotification(id: Long): Response<NotificationResponse> = apiService.clickNotification(id)
+    fun clickNotification(id: Long): Flow<NetworkResult<NotificationResponse>> = safeApiCall {
+        apiService.clickNotification(id)
+    }
 
-    suspend fun markAllAsRead(): Response<Unit> = apiService.markAllAsRead()
+    fun markAllAsRead(): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.markAllAsRead()
+    }
 }

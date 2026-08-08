@@ -6,6 +6,7 @@ import com.serenemind.model.entity.enums.MoodType
 import com.serenemind.model.request.MoodRequest
 import com.serenemind.model.response.DailyMoodResponse
 import com.serenemind.model.response.WeeklyMoodResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.MoodRepository
 import com.serenemind.util.RefreshSignals
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,9 +44,9 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun fetchMoodSummary() {
         viewModelScope.launch {
-            repository.getMoodSummary().collect { response ->
-                if (response.isSuccessful) {
-                    _summaryState.value = response.body() ?: emptyMap()
+            repository.getMoodSummary().collect { result ->
+                if (result is NetworkResult.Success) {
+                    _summaryState.value = result.data
                 }
             }
         }
@@ -53,9 +54,9 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun fetchWeeklySummary() {
         viewModelScope.launch {
-            repository.getWeeklySummary().collect { response ->
-                if (response.isSuccessful) {
-                    _weeklySummary.value = response.body()
+            repository.getWeeklySummary().collect { result ->
+                if (result is NetworkResult.Success) {
+                    _weeklySummary.value = result.data
                 }
             }
         }
@@ -63,9 +64,9 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun fetchMoodHistory(year: Int, month: Int) {
         viewModelScope.launch {
-            repository.getMoodHistory(year, month).collect { response ->
-                if (response.isSuccessful) {
-                    val history = response.body() ?: emptyList()
+            repository.getMoodHistory(year, month).collect { result ->
+                if (result is NetworkResult.Success) {
+                    val history = result.data
                     _historyState.value = history
 
                     // Set today as selected by default if exists
@@ -83,23 +84,21 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
 
     fun saveMood(mood: MoodType, intensity: Int, note: String) {
         viewModelScope.launch {
-            _uiState.value = MoodUiState.Loading
-            try {
-                val request = MoodRequest(mood, intensity, note)
-                val response = repository.saveMood(request)
-
-                if (response.isSuccessful) {
-                    _uiState.value = MoodUiState.Success
-                    // Refresh data locally
-                    refresh()
-                    // Signal Home to refresh
-                    RefreshSignals.signalRefreshDashboard()
-                } else {
-                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                    _uiState.value = MoodUiState.Error("Server error ${response.code()}: $errorBody")
+            val request = MoodRequest(mood, intensity, note)
+            repository.saveMood(request).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> {
+                        _uiState.value = MoodUiState.Loading
+                    }
+                    is NetworkResult.Success -> {
+                        _uiState.value = MoodUiState.Success
+                        refresh()
+                        RefreshSignals.signalRefreshDashboard()
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.value = MoodUiState.Error(result.message)
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.value = MoodUiState.Error("Network error: ${e.localizedMessage}")
             }
         }
     }

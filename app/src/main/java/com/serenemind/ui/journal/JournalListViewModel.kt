@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.response.JournalResponse
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.JournalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,26 +45,29 @@ class JournalListViewModel(private val repository: JournalRepository) : ViewMode
         mode: LoadMode = LoadType.INITIAL
     ) {
         viewModelScope.launch {
-            when (mode) {
-                LoadType.INITIAL -> _isLoading.value = true
-                LoadType.REFRESH -> _isRefreshing.value = true
-                LoadType.BACKGROUND -> _isBackgroundLoading.value = true
-            }
-            
-            try {
-                val response = repository.listJournals(filter)
-                if (response.isSuccessful) {
-                    _journals.value = response.body() ?: emptyList()
-                    _error.value = null
-                } else {
-                    _error.value = "Failed to load journals: ${response.message()}"
+            repository.listJournals(filter).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> {
+                        when (mode) {
+                            LoadType.INITIAL -> _isLoading.value = true
+                            LoadType.REFRESH -> _isRefreshing.value = true
+                            LoadType.BACKGROUND -> _isBackgroundLoading.value = true
+                        }
+                    }
+                    is NetworkResult.Success -> {
+                        _journals.value = result.data
+                        _error.value = null
+                        _isLoading.value = false
+                        _isRefreshing.value = false
+                        _isBackgroundLoading.value = false
+                    }
+                    is NetworkResult.Error -> {
+                        _error.value = result.message
+                        _isLoading.value = false
+                        _isRefreshing.value = false
+                        _isBackgroundLoading.value = false
+                    }
                 }
-            } catch (e: Exception) {
-                _error.value = "Error: ${e.message}"
-            } finally {
-                _isLoading.value = false
-                _isRefreshing.value = false
-                _isBackgroundLoading.value = false
             }
         }
     }
@@ -81,55 +85,46 @@ class JournalListViewModel(private val repository: JournalRepository) : ViewMode
             return
         }
         viewModelScope.launch {
-            // Use background loading for search to keep it smooth
-            _isBackgroundLoading.value = true
-            try {
-                // Ensure query is trimmed and handle hashtag searches
-                val cleanedQuery = query.trim()
-                val response = repository.searchJournals(cleanedQuery)
-                if (response.isSuccessful) {
-                    _journals.value = response.body() ?: emptyList()
-                    _error.value = null
-                } else {
-                    _error.value = "Search failed: ${response.message()}"
+            repository.searchJournals(query.trim()).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _isBackgroundLoading.value = true
+                    is NetworkResult.Success -> {
+                        _journals.value = result.data
+                        _error.value = null
+                        _isBackgroundLoading.value = false
+                    }
+                    is NetworkResult.Error -> {
+                        _error.value = result.message
+                        _isBackgroundLoading.value = false
+                    }
                 }
-            } catch (e: Exception) {
-                _error.value = "Error: ${e.message}"
-            } finally {
-                _isBackgroundLoading.value = false
             }
         }
     }
 
     fun toggleFavorite(id: Int) {
         viewModelScope.launch {
-            try {
-                val response = repository.toggleFavorite(id)
-                if (response.isSuccessful) {
-                    // Refresh list or update item locally
+            repository.toggleFavorite(id).collect { result ->
+                if (result is NetworkResult.Success) {
                     loadJournals()
+                } else if (result is NetworkResult.Error) {
+                    _error.value = result.message
                 }
-            } catch (e: Exception) {
-                _error.value = "Error toggling favorite: ${e.message}"
             }
         }
     }
 
     fun deleteJournal(id: Int) {
         viewModelScope.launch {
-            _isBackgroundLoading.value = true
-            try {
-                val response = repository.deleteJournal(id)
-                if (response.isSuccessful) {
-                    // Force a BACKGROUND load to keep the animation visible while fetching fresh list
-                    loadJournals(mode = LoadType.BACKGROUND)
-                } else {
-                    _error.value = "Failed to delete journal"
-                    _isBackgroundLoading.value = false
+            repository.deleteJournal(id).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _isBackgroundLoading.value = true
+                    is NetworkResult.Success -> loadJournals(mode = LoadType.BACKGROUND)
+                    is NetworkResult.Error -> {
+                        _error.value = result.message
+                        _isBackgroundLoading.value = false
+                    }
                 }
-            } catch (e: Exception) {
-                _error.value = "Error deleting journal: ${e.message}"
-                _isBackgroundLoading.value = false
             }
         }
     }

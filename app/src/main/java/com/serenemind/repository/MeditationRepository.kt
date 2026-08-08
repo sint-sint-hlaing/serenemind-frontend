@@ -1,131 +1,71 @@
 package com.serenemind.repository
 
 import com.serenemind.model.request.MeditationSessionRequest
-import com.serenemind.model.response.MeditationDashboardResponse
-import com.serenemind.model.response.MeditationResponse
+import com.serenemind.model.response.*
 import com.serenemind.network.ApiService
-import kotlinx.coroutines.flow.flow
-import retrofit2.Response
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
+import kotlinx.coroutines.flow.Flow
 
-class MeditationRepository(private val apiService: ApiService) {
+class MeditationRepository(private val apiService: ApiService) : SafeApiCall() {
 
-    fun getDashboard() = flow {
-        try {
-            emit(apiService.getMeditationDashboard())
-        } catch (e: Exception) {
-            emit(Response.error<MeditationDashboardResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getDashboard(): Flow<NetworkResult<MeditationDashboardResponse>> = safeApiCall {
+        apiService.getMeditationDashboard()
     }
 
-    fun getMeditationById(id: Long) = flow {
-        try {
-            emit(apiService.getMeditationById(id))
-        } catch (e: Exception) {
-            emit(Response.error<MeditationResponse>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getMeditationById(id: Long): Flow<NetworkResult<MeditationResponse>> = safeApiCall {
+        apiService.getMeditationById(id)
     }
 
-    suspend fun completeSession(request: MeditationSessionRequest): Response<Unit> {
-        return try {
-            apiService.completeMeditationSession(request)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun completeSession(request: MeditationSessionRequest): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.completeMeditationSession(request)
     }
 
-    fun getHistory() = flow {
-        try {
-            emit(apiService.getMeditationHistory())
-        } catch (e: Exception) {
-            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getHistory(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getMeditationHistory()
     }
 
-    fun getRecommendations() = flow {
-        try {
-            emit(apiService.getMeditationRecommendations())
-        } catch (e: Exception) {
-            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getRecommendations(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getMeditationRecommendations()
     }
 
-    fun search(keyword: String) = flow {
-        try {
-            emit(apiService.searchMeditation(keyword))
-        } catch (e: Exception) {
-            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun search(keyword: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.searchMeditation(keyword)
     }
 
-    suspend fun addFavorite(meditationId: Long): Response<Unit> {
-        return try {
-            apiService.addFavoriteMeditation(com.serenemind.model.request.FavoriteRequest(meditationId))
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun addFavorite(meditationId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.addFavoriteMeditation(com.serenemind.model.request.FavoriteRequest(meditationId))
     }
 
-    suspend fun toggleFavorite(id: Long): Response<com.serenemind.model.response.FavoriteResponse> {
-        return try {
-            apiService.toggleMeditationFavorite(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun toggleFavorite(id: Long): Flow<NetworkResult<FavoriteResponse>> = safeApiCall {
+        apiService.toggleMeditationFavorite(id)
     }
 
-    suspend fun saveTimer(id: Long, minutes: Int): Response<com.serenemind.model.response.TimerResponse> {
-        return try {
-            apiService.saveMeditationTimer(id, com.serenemind.model.request.TimerRequest(minutes))
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun saveTimer(id: Long, minutes: Int): Flow<NetworkResult<TimerResponse>> = safeApiCall {
+        apiService.saveMeditationTimer(id, com.serenemind.model.request.TimerRequest(minutes))
     }
 
-    suspend fun getShareLink(id: Long): Response<com.serenemind.model.response.ShareResponse> {
-        return try {
-            apiService.shareMeditation(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun getShareLink(id: Long): Flow<NetworkResult<ShareResponse>> = safeApiCall {
+        apiService.shareMeditation(id)
     }
 
-    suspend fun getPrevious(id: Long): Response<MeditationResponse> {
-        return try {
-            apiService.getPreviousMeditation(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun getPrevious(id: Long): Flow<NetworkResult<MeditationResponse>> = safeApiCall {
+        apiService.getPreviousMeditation(id)
     }
 
-    suspend fun getNext(id: Long): Response<com.serenemind.model.response.MeditationList> {
-        return try {
-            apiService.getNextMeditation(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun getNext(id: Long): Flow<NetworkResult<MeditationList>> = safeApiCall {
+        apiService.getNextMeditation(id)
     }
 
-    suspend fun download(id: Long): Response<okhttp3.ResponseBody> {
-        return try {
-            apiService.downloadMeditationAudio(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun download(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
+        apiService.downloadMeditationAudio(id)
     }
 
-    suspend fun stream(id: Long): Response<okhttp3.ResponseBody> {
-        return try {
-            apiService.streamMeditationAudio(id)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun stream(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
+        apiService.streamMeditationAudio(id)
     }
 
-    fun getContinueListening() = flow {
-        try {
-            emit(apiService.getContinueListening())
-        } catch (e: Exception) {
-            emit(Response.error<List<MeditationResponse>>(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getContinueListening(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getContinueListening()
     }
 }

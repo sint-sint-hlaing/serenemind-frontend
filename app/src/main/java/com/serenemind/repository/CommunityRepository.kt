@@ -7,98 +7,62 @@ import com.serenemind.model.request.CreatePostRequest
 import com.serenemind.model.response.CommentResponse
 import com.serenemind.model.response.PostResponse
 import com.serenemind.network.ApiService
+import com.serenemind.network.NetworkResult
+import com.serenemind.network.SafeApiCall
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Response
 
 class CommunityRepository(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
-) {
-    fun getPosts(filter: String? = null): Flow<Response<List<PostResponse>>> = flow {
-        try {
-            emit(apiService.getPosts(filter))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+) : SafeApiCall() {
+    fun getPosts(filter: String? = null): Flow<NetworkResult<List<PostResponse>>> = safeApiCall {
+        apiService.getPosts(filter)
     }
 
-    fun getPostById(postId: Long): Flow<Response<PostResponse>> = flow {
-        try {
-            emit(apiService.getPostById(postId))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getPostById(postId: Long): Flow<NetworkResult<PostResponse>> = safeApiCall {
+        apiService.getPostById(postId)
     }
 
-    fun getComments(postId: Long): Flow<Response<List<CommentResponse>>> = flow {
-        try {
-            emit(apiService.getComments(postId))
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getComments(postId: Long): Flow<NetworkResult<List<CommentResponse>>> = safeApiCall {
+        apiService.getComments(postId)
     }
 
-    suspend fun likePost(postId: Long): Response<Unit> {
-        return try {
-            apiService.likePost(postId)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun likePost(postId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.likePost(postId)
     }
 
-    suspend fun toggleSavePost(postId: Long): Response<Unit> {
-        return try {
-            apiService.toggleSavePost(postId)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun toggleSavePost(postId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.toggleSavePost(postId)
     }
 
-    fun getSavedPosts(): Flow<Response<List<PostResponse>>> = flow {
-        try {
-            emit(apiService.getSavedPosts())
-        } catch (e: Exception) {
-            emit(Response.error(500, okhttp3.ResponseBody.create(null, "Network Error")))
-        }
+    fun getSavedPosts(): Flow<NetworkResult<List<PostResponse>>> = safeApiCall {
+        apiService.getSavedPosts()
     }
 
-    suspend fun addComment(
+    fun addComment(
         postId: Long,
         content: String,
         isAnonymous: Boolean = false
-    ): Response<CommentResponse> {
-        return try {
-            apiService.addComment(
-                postId,
-                CommentRequest(content, isAnonymous)
-            )
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    ): Flow<NetworkResult<CommentResponse>> = safeApiCall {
+        apiService.addComment(
+            postId,
+            CommentRequest(content, isAnonymous)
+        )
     }
 
-    suspend fun createPost(
+    fun createPost(
         request: CreatePostRequest,
         imagePart: MultipartBody.Part?
-    ): Response<PostResponse> {
-        return try {
-            val json = Gson().toJson(request)
-            val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())
-            apiService.createPost(postPart, imagePart)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    ): Flow<NetworkResult<PostResponse>> = safeApiCall {
+        val json = Gson().toJson(request)
+        val postPart = json.toRequestBody("application/json".toMediaTypeOrNull())
+        apiService.createPost(postPart, imagePart)
     }
 
-    suspend fun deletePost(postId: Long): Response<Unit> {
-        return try {
-            apiService.deletePost(postId)
-        } catch (e: Exception) {
-            Response.error(500, okhttp3.ResponseBody.create(null, "Network Error"))
-        }
+    fun deletePost(postId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.deletePost(postId)
     }
 }

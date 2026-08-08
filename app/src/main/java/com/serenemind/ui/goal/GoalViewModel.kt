@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.request.GoalRequest
 import com.serenemind.model.response.UserGoal
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.GoalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,12 +27,11 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
 
     fun fetchGoals() {
         viewModelScope.launch {
-            _uiState.value = GoalUiState.Loading
-            repository.getAllGoals().collect { response ->
-                if (response.isSuccessful) {
-                    _uiState.value = GoalUiState.Success(response.body() ?: emptyList())
-                } else {
-                    _uiState.value = GoalUiState.Error("Failed to fetch goals: ${response.code()}")
+            repository.getAllGoals().collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = GoalUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = GoalUiState.Success(result.data)
+                    is NetworkResult.Error -> _uiState.value = GoalUiState.Error(result.message)
                 }
             }
         }
@@ -43,17 +43,14 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
 
     fun incrementProgress(id: Long) {
         viewModelScope.launch {
-            try {
-                val response = repository.updateProgress(id)
-                if (response.isSuccessful) {
-                    val updatedGoal = response.body()
+            repository.updateProgress(id).collect { result ->
+                if (result is NetworkResult.Success) {
+                    val updatedGoal = result.data
                     fetchGoals()
                     if (_selectedGoal.value?.id == id) {
                         _selectedGoal.value = updatedGoal
                     }
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }
@@ -64,18 +61,14 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         targetDays: Int
     ) {
         viewModelScope.launch {
-            try {
-                val request = GoalRequest(title, description, targetDays)
-                repository.createGoal(request).collect { response ->
-                    if (response.isSuccessful) {
-                        _createGoalSuccess.value = true
-                        fetchGoals()
-                    } else {
-                        android.util.Log.e("GoalViewModel", "Failed to create goal: ${response.code()} ${response.errorBody()?.string()}")
-                    }
+            val request = GoalRequest(title, description, targetDays)
+            repository.createGoal(request).collect { result ->
+                if (result is NetworkResult.Success) {
+                    _createGoalSuccess.value = true
+                    fetchGoals()
+                } else if (result is NetworkResult.Error) {
+                    android.util.Log.e("GoalViewModel", "Failed to create goal: ${result.message}")
                 }
-            } catch (e: Exception) {
-                // Handle error
             }
         }
     }

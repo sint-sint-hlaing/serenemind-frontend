@@ -2,6 +2,7 @@ package com.serenemind.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.serenemind.network.NetworkResult
 import com.serenemind.repository.ChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,13 +19,11 @@ class ChatLandingViewModel(private val repository: ChatRepository) : ViewModel()
 
     fun fetchConversations() {
         viewModelScope.launch {
-            _uiState.value = ChatLandingUiState.Loading
-            repository.getConversations().collect { response ->
-                if (response.isSuccessful) {
-                    val conversations = response.body() ?: emptyList()
-                    _uiState.value = ChatLandingUiState.Success(conversations)
-                } else {
-                    _uiState.value = ChatLandingUiState.Error("Failed to load previous conversations")
+            repository.getConversations().collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = ChatLandingUiState.Loading
+                    is NetworkResult.Success -> _uiState.value = ChatLandingUiState.Success(result.data)
+                    is NetworkResult.Error -> _uiState.value = ChatLandingUiState.Error(result.message)
                 }
             }
         }

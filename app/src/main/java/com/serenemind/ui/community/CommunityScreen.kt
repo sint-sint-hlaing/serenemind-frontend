@@ -124,7 +124,7 @@ fun CommunityScreen(
                                 onClick = { onPostClick(post, false) },
                                 onCommentClick = { onPostClick(post, true) },
                                 onLikeClick = { viewModel.likePost(post.id) },
-                                onSaveClick = { viewModel.savePost(post.id) },
+                                onSaveClick = { viewModel.toggleSave(post.id) },
                                 onDeleteClick = { viewModel.deletePost(post.id) }
                             )
                         }
