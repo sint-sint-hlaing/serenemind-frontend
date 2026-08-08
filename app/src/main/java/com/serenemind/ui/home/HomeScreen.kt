@@ -126,7 +126,20 @@ fun DashboardContent(
                 },
                 actions = {
                     IconButton(onClick = onNotificationClick) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        BadgedBox(
+                            badge = {
+                                if ((data.unreadNotificationCount ?: 0) > 0) {
+                                    Badge(
+                                        containerColor = Color.Red,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text(data.unreadNotificationCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
