@@ -130,15 +130,17 @@ fun DashboardContent(
                             badge = {
                                 if ((data.unreadNotificationCount ?: 0) > 0) {
                                     Badge(
-                                        containerColor = Color.Red,
-                                        contentColor = Color.White
-                                    ) {
-                                        Text(data.unreadNotificationCount.toString())
-                                    }
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(6.dp)
+                                    )
                                 }
                             }
                         ) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
                 },

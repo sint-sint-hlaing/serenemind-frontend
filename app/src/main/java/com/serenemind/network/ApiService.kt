@@ -241,12 +241,12 @@ interface ApiService {
         @Query("filter") filter: String? = null
     ): Response<List<NotificationResponse>>
 
-    @POST("api/notifications/{id}/read")
+    @PATCH("api/notifications/{id}/read")
     suspend fun markAsRead(
         @Path("id") id: Long
     ): Response<Unit>
 
-    @POST("api/notifications/{id}/click")
+    @GET("api/notifications/{id}/click")
     suspend fun clickNotification(
         @Path("id") id: Long
     ): Response<NotificationResponse>

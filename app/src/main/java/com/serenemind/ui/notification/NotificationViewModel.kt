@@ -57,18 +57,20 @@ class NotificationViewModel(
             notificationRepository.clickNotification(id).collect { result ->
                 if (result is NetworkResult.Success) {
                     val notification = result.data
-                    notification.type?.let { type ->
-                        when (type.lowercase()) {
-                            "post", "like", "comment" -> {
-                                notification.targetId?.let { postId ->
-                                    _navigationEvent.emit(NotificationNavigationEvent.NavigateToPost(postId))
-                                }
-                            }
-                            "system" -> {
-                                _navigationEvent.emit(NotificationNavigationEvent.ShowSystemDialog(notification.message ?: ""))
+                    // Use targetType for navigation as provided in backend response
+                    val targetType = notification.targetType ?: notification.type
+                    
+                    when (targetType?.uppercase()) {
+                        "POST", "LIKE", "COMMENT" -> {
+                            notification.targetId?.let { postId ->
+                                _navigationEvent.emit(NotificationNavigationEvent.NavigateToPost(postId))
                             }
                         }
+                        "SYSTEM" -> {
+                            _navigationEvent.emit(NotificationNavigationEvent.ShowSystemDialog(notification.message ?: ""))
+                        }
                     }
+                    // Refresh current list (this will show the notification as read)
                     fetchNotifications(currentFilter)
                 }
             }

@@ -35,7 +35,7 @@ fun NotificationsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("All", "Unread", "Mentions", "System")
+    val tabs = listOf("All", "Unread")
 
     LaunchedEffect(Unit) {
         viewModel.fetchNotifications(tabs[selectedTabIndex].lowercase())
@@ -68,13 +68,12 @@ fun NotificationsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             // Tabs
-            ScrollableTabRow(
+            TabRow(
                 selectedTabIndex = selectedTabIndex,
-                edgePadding = 16.dp,
                 divider = {},
                 indicator = {},
                 containerColor = Color.Transparent,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -86,13 +85,15 @@ fun NotificationsScreen(
                         text = {
                             Surface(
                                 color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(20.dp)
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
                                     text = title,
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                    modifier = Modifier.padding(vertical = 8.dp),
                                     color = if (selectedTabIndex == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 14.sp
+                                    fontSize = 14.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                             }
                         }
