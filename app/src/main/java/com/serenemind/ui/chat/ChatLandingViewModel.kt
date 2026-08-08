@@ -32,4 +32,20 @@ class ChatLandingViewModel(private val repository: ChatRepository) : ViewModel()
     fun refresh() {
         fetchConversations()
     }
+
+    fun deleteConversation(id: Long) {
+        viewModelScope.launch {
+            repository.deleteConversation(id).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> { /* Optionally update a separate loading state */ }
+                    is NetworkResult.Success -> {
+                        fetchConversations()
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.value = ChatLandingUiState.Error(result.message)
+                    }
+                }
+            }
+        }
+    }
 }

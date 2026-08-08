@@ -18,4 +18,9 @@ interface ChatApiService {
     suspend fun getConversationMessages(
         @Path("id") conversationId: Long
     ): Response<List<com.serenemind.model.response.ChatMessageResponse>>
+
+    @DELETE("api/chat/conversations/{id}")
+    suspend fun deleteConversation(
+        @Path("id") conversationId: Long
+    ): Response<Unit>
 }

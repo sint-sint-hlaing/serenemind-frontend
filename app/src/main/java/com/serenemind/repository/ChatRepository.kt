@@ -20,4 +20,8 @@ class ChatRepository(private val apiService: ChatApiService) : SafeApiCall() {
     fun getConversationMessages(conversationId: Long): Flow<NetworkResult<List<ChatMessageResponse>>> = safeApiCall {
         apiService.getConversationMessages(conversationId)
     }
+
+    fun deleteConversation(conversationId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
+        apiService.deleteConversation(conversationId)
+    }
 }

@@ -2,6 +2,7 @@ package com.serenemind.ui.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.response.ConversationResponse
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,9 +38,35 @@ fun ChatLandingScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var conversationToDelete by remember { mutableStateOf<ConversationResponse?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
+    }
+
+    if (conversationToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { conversationToDelete = null },
+            title = { Text("Delete Conversation") },
+            text = { Text("Are you sure you want to delete this chat? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        conversationToDelete?.id?.let { viewModel.deleteConversation(it) }
+                        conversationToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { conversationToDelete = null }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
     }
 
     Scaffold(
@@ -166,7 +194,13 @@ fun ChatLandingScreen(
                 is ChatLandingUiState.Error -> Text(state.message, color = Color.Red)
                 is ChatLandingUiState.Success -> {
                     state.conversations.take(3).forEach { item ->
-                        HistoryItem(item, isDarkMode) { onViewConversation(item.id) }
+                        SwipeToDismissConversation(
+                            conversation = item,
+                            onDelete = { conversationToDelete = item },
+                            isDarkMode = isDarkMode
+                        ) {
+                            HistoryItem(item, isDarkMode) { onViewConversation(item.id) }
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
@@ -224,6 +258,59 @@ fun PromptCard(data: PromptData, isDarkMode: Boolean = false, onClick: () -> Uni
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeToDismissConversation(
+    conversation: ConversationResponse,
+    onDelete: () -> Unit,
+    isDarkMode: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+            }
+            false
+        }
+    )
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            delay(500)
+            dismissState.reset()
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        modifier = modifier,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            val color = when (dismissState.dismissDirection) {
+                SwipeToDismissBoxValue.EndToStart -> Color(0xFFF44336)
+                else -> Color.Transparent
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color, shape = RoundedCornerShape(16.dp))
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color.White
+                )
+            }
+        }
+    ) {
+        content()
     }
 }
 
