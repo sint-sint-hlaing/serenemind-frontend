@@ -1,26 +1,20 @@
 package com.serenemind.ui.login
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,46 +23,28 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.messaging.FirebaseMessaging
 import com.serenemind.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit,
+fun ResetPasswordScreen(
+    viewModel: ForgotPasswordViewModel,
+    onSuccess: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var fcmToken by remember { mutableStateOf("") }
-
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
-
-    LaunchedEffect(Unit) {
-        try {
-            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    fcmToken = task.result
-                    android.util.Log.d("FCM", "Token successfully fetched: $fcmToken")
-                } else {
-                    android.util.Log.e("FCM", "Fetching FCM registration token failed", task.exception)
-                    fcmToken = "DUMMY_TOKEN_FETCH_FAILED" // Fallback to allow login during dev
-                }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("FCM", "Firebase not initialized", e)
-            fcmToken = "DUMMY_TOKEN_NOT_INITIALIZED" // Fallback
-        }
-    }
+    val context = LocalContext.current
 
     LaunchedEffect(state) {
-        if (state is LoginUiState.Success) {
-            onLoginSuccess()
+        if (state is ForgotPasswordUiState.ResetPasswordSuccess) {
+            Toast.makeText(context, "Password reset successfully! Please login.", Toast.LENGTH_LONG).show()
+            onSuccess()
             viewModel.reset()
         }
     }
@@ -76,7 +52,7 @@ fun LoginScreen(
     Scaffold(
         topBar = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }
     ) { padding ->
@@ -92,7 +68,7 @@ fun LoginScreen(
 
             // Logo
             Icon(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder for the tree logo
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo",
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -101,51 +77,35 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Welcome Back 👋",
+                text = "Reset Password 🔐",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Log in to continue your\nSereneMind journey.",
+                text = "Secure your account by entering\nyour new password.",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Email
-            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
-            TextField(
-                value = email,
-                onValueChange = { email = it },
-                placeholder = { Text("Enter your email or phone") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Password Field
+            // New Password
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Password",
+                    text = "New Password",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text("Enter your password", fontSize = 14.sp) },
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    placeholder = { Text("Enter your new password", fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                     trailingIcon = {
                         val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -164,68 +124,78 @@ fun LoginScreen(
                 )
             }
 
-            // Forgot Password
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Confirm Password
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Forgot password?",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .clickable { onForgotPasswordClick() }
-                        .padding(vertical = 12.dp)
+                    text = "Confirm Password",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    placeholder = { Text("Confirm your new password", fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        val icon = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Error message
-            if (state is LoginUiState.Error) {
+            if (state is ForgotPasswordUiState.Error) {
                 Text(
-                    text = (state as LoginUiState.Error).message,
+                    text = (state as ForgotPasswordUiState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
 
-            // Login Button
+            // Reset Button
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    viewModel.login(email, password, fcmToken)
+                    if (newPassword == confirmPassword) {
+                        viewModel.resetPassword(newPassword)
+                    } else {
+                        Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = state !is LoginUiState.Loading && fcmToken.isNotEmpty()
+                enabled = state !is ForgotPasswordUiState.Loading
             ) {
-                if (state is LoginUiState.Loading) {
+                if (state is ForgotPasswordUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
                 } else {
-                    Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Reset Password", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer
-            Row(
-                modifier = Modifier.padding(bottom = 32.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Don't have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-                Text(
-                    text = "Sign up",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    modifier = Modifier.clickable { onRegisterClick() }
-                )
-            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
             SerenemindclientTheme(darkTheme = isDarkMode) {
                 AppNavigation(
                     loginViewModel = viewModel, 
+                    authRepository = repo,
                     tokenManager = tokenManager,
                     isDarkMode = isDarkMode,
                     onDarkModeToggle = { enabled ->

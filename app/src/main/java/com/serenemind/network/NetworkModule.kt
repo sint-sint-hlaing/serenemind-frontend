@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.1.28:8080/"
+    const val BASE_URL = "https://serenemind-server.onrender.com/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {

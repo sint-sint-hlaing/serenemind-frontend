@@ -10,22 +10,26 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.serenemind.datastore.TokenManager
-import com.serenemind.ui.login.LoginScreen
-import com.serenemind.ui.login.RegisterScreen
-import com.serenemind.ui.login.WelcomeScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.serenemind.repository.AuthRepository
+import com.serenemind.ui.login.*
 import com.serenemind.ui.main.MainScreen
-import com.serenemind.ui.login.LoginViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
     loginViewModel: LoginViewModel,
+    authRepository: AuthRepository,
     tokenManager: TokenManager,
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
     var startDestination by remember { mutableStateOf<String?>(null) }
+    
+    val forgotPasswordViewModel: ForgotPasswordViewModel = viewModel(
+        factory = ForgotPasswordViewModelFactory(authRepository)
+    )
 
     LaunchedEffect(Unit) {
         val token = tokenManager.getToken()
@@ -64,6 +68,37 @@ fun AppNavigation(
                     },
                     onRegisterClick = {
                         navController.navigate(Screen.Register.route)
+                    },
+                    onForgotPasswordClick = {
+                        navController.navigate(Screen.ForgotPassword.route)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.ForgotPassword.route) {
+                ForgotPasswordScreen(
+                    viewModel = forgotPasswordViewModel,
+                    onSuccess = {
+                        navController.navigate(Screen.ResetPassword.route)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.ResetPassword.route) {
+                ResetPasswordScreen(
+                    viewModel = forgotPasswordViewModel,
+                    onSuccess = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.ForgotPassword.route) {
+                                inclusive = true
+                            }
+                        }
                     },
                     onBackClick = {
                         navController.popBackStack()
