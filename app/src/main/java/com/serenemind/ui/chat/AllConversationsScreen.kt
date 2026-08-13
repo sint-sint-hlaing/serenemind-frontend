@@ -59,8 +59,6 @@ fun AllConversationsScreen(
         )
     }
 
-    var searchQuery by remember { mutableStateOf("") }
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -68,11 +66,6 @@ fun AllConversationsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Search logic */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

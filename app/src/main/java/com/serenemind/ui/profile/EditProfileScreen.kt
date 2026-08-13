@@ -52,7 +52,6 @@ fun EditProfileScreen(
     var email by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(Unit) {
@@ -65,7 +64,6 @@ fun EditProfileScreen(
             username = it.username ?: ""
             email = it.email ?: ""
             bio = it.bio ?: ""
-            location = it.location ?: ""
             
             // Normalize birthday format: try to handle yyyy.M.d or yyyy-M-d to yyyy-MM-dd
             val rawBirthday = it.birthday ?: ""
@@ -232,13 +230,6 @@ fun EditProfileScreen(
                     value = bio,
                     isDarkMode = isDarkMode,
                     onValueChange = { bio = it }
-                )
-                EditField(
-                    icon = Icons.Outlined.LocationOn,
-                    label = "Location",
-                    value = location,
-                    isDarkMode = isDarkMode,
-                    onValueChange = { location = it }
                 )
                 EditField(
                     icon = Icons.Outlined.CalendarToday,
