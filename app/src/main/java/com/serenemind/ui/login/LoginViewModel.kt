@@ -38,7 +38,12 @@ class LoginViewModel(
                         tokenManager.saveTokens(result.data.accessToken, result.data.refreshToken)
                         _uiState.value = LoginUiState.Success
                     }
-                    is NetworkResult.Error -> _uiState.value = LoginUiState.Error(result.message)
+                    is NetworkResult.Error -> {
+                        _uiState.value = LoginUiState.Error(
+                            message = result.message,
+                            fieldErrors = result.fieldErrors
+                        )
+                    }
                 }
             }
         }
@@ -55,7 +60,12 @@ class LoginViewModel(
                 when (result) {
                     is NetworkResult.Loading -> _uiState.value = LoginUiState.Loading
                     is NetworkResult.Success -> _uiState.value = LoginUiState.RegisterSuccess
-                    is NetworkResult.Error -> _uiState.value = LoginUiState.Error(result.message)
+                    is NetworkResult.Error -> {
+                        _uiState.value = LoginUiState.Error(
+                            message = result.message,
+                            fieldErrors = result.fieldErrors
+                        )
+                    }
                 }
             }
         }

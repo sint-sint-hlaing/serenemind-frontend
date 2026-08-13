@@ -1,9 +1,12 @@
 package com.serenemind.ui.login
 
-sealed class LoginUiState {
-    object Idle : LoginUiState()
-    object Loading : LoginUiState()
-    object Success : LoginUiState()
-    object RegisterSuccess : LoginUiState()
-    data class Error(val message: String) : LoginUiState()
+sealed interface LoginUiState {
+    data object Idle : LoginUiState
+    data object Loading : LoginUiState
+    data object Success : LoginUiState
+    data object RegisterSuccess : LoginUiState
+    data class Error(
+        val message: String,
+        val fieldErrors: Map<String, String>? = null
+    ) : LoginUiState
 }
