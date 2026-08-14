@@ -1,5 +1,8 @@
+// MoodHistoryScreen.kt
 package com.serenemind.ui.mood
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,10 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,9 +29,11 @@ import androidx.compose.ui.unit.sp
 import com.serenemind.model.entity.enums.MoodType
 import com.serenemind.ui.theme.*
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MoodHistoryScreen(
     viewModel: MoodViewModel,
@@ -41,12 +43,18 @@ fun MoodHistoryScreen(
     val summary by viewModel.summaryState.collectAsState()
     val history by viewModel.historyState.collectAsState()
     val selectedMood by viewModel.selectedDateMood.collectAsState()
-    
+
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
     val context = LocalContext.current
-    
+
     val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.ENGLISH) }
     val dayFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+
+    // Get colors based on dark mode
+    val backgroundColor = if (isDarkMode) Color(0xFF1A1A1A) else MaterialTheme.colorScheme.background
+    val surfaceColor = if (isDarkMode) Color(0xFF2A2A2A) else MaterialTheme.colorScheme.surface
+    val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+    val textSecondary = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant
 
     LaunchedEffect(calendar) {
         viewModel.fetchMoodHistory(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1)
@@ -55,28 +63,45 @@ fun MoodHistoryScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mood History", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = {
+                    Text(
+                        "Mood History",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = textColor
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = textColor
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { 
+                    IconButton(onClick = {
                         viewModel.refresh()
                         android.widget.Toast.makeText(context, "Refreshing mood history...", android.widget.Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = textColor
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = if (isDarkMode) Color(0xFF1A1A1A) else MaterialTheme.colorScheme.surface
+                )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = backgroundColor
     ) { padding ->
         BoxWithConstraints(modifier = Modifier.padding(padding)) {
             val isWide = maxWidth > 600.dp
-            
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -84,12 +109,14 @@ fun MoodHistoryScreen(
                     .padding(horizontal = if (isWide) 32.dp else 20.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Calendar Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    colors = CardDefaults.cardColors(
+                        containerColor = surfaceColor
+                    ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -99,48 +126,62 @@ fun MoodHistoryScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = { 
+                            IconButton(onClick = {
                                 val newCal = calendar.clone() as Calendar
                                 newCal.add(Calendar.MONTH, -1)
                                 calendar = newCal
                             }) {
-                                Icon(Icons.Default.ChevronLeft, contentDescription = "Prev")
+                                Icon(
+                                    Icons.Default.ChevronLeft,
+                                    contentDescription = "Prev",
+                                    tint = textColor
+                                )
                             }
                             Text(
-                                text = monthYearFormat.format(calendar.time), 
-                                fontWeight = FontWeight.Bold, 
+                                text = monthYearFormat.format(calendar.time),
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = textColor
                             )
-                            IconButton(onClick = { 
+                            IconButton(onClick = {
                                 val newCal = calendar.clone() as Calendar
                                 newCal.add(Calendar.MONTH, 1)
                                 calendar = newCal
                             }) {
-                                Icon(Icons.Default.ChevronRight, contentDescription = "Next")
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = "Next",
+                                    tint = textColor
+                                )
                             }
                         }
 
                         // Calendar Grid Header
                         val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp)
+                        ) {
                             daysOfWeek.forEach { day ->
                                 Text(
-                                    text = day, 
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
-                                    fontSize = 12.sp, 
-                                    modifier = Modifier.weight(1f), 
+                                    text = day,
+                                    color = textSecondary,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.weight(1f),
                                     textAlign = TextAlign.Center,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
                         }
-                        
+
                         // Calculate days for the grid
                         val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-                        val firstDayOfMonth = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }
+                        val firstDayOfMonth = (calendar.clone() as Calendar).apply {
+                            set(Calendar.DAY_OF_MONTH, 1)
+                        }
                         val firstDayOfWeek = firstDayOfMonth.get(Calendar.DAY_OF_WEEK)
-                        
+
                         // Convert Calendar.DAY_OF_WEEK (Sun=1, Mon=2...) to offset (Mon=0...Sun=6)
                         val offset = when(firstDayOfWeek) {
                             Calendar.MONDAY -> 0
@@ -152,10 +193,10 @@ fun MoodHistoryScreen(
                             Calendar.SUNDAY -> 6
                             else -> 0
                         }
-                        
+
                         val totalCells = daysInMonth + offset
                         val rows = (totalCells + 6) / 7
-                        
+
                         Column(modifier = Modifier.fillMaxWidth()) {
                             repeat(rows) { rowIndex ->
                                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -164,17 +205,24 @@ fun MoodHistoryScreen(
                                         Box(modifier = Modifier.weight(1f)) {
                                             if (cellIndex >= offset && cellIndex < totalCells) {
                                                 val day = cellIndex - offset + 1
-                                                val cellDate = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
-                                                val dateString = dayFormat.format(cellDate.time)
-                                                val moodData = history.find { it.date == dateString }
-                                                
-                                                val isSelected = selectedMood?.date == dateString
-                                                
+                                                val cellDate = (calendar.clone() as Calendar).apply {
+                                                    set(Calendar.DAY_OF_MONTH, day)
+                                                }
+                                                val cellLocalDate = LocalDate.of(
+                                                    cellDate.get(Calendar.YEAR),
+                                                    cellDate.get(Calendar.MONTH) + 1,
+                                                    cellDate.get(Calendar.DAY_OF_MONTH)
+                                                )
+                                                val moodData = history.find { it.date == cellLocalDate }
+
+                                                val isSelected = selectedMood?.date == cellLocalDate
+
                                                 CalendarDayItem(
                                                     day = day,
                                                     mood = moodData?.mood,
                                                     isSelected = isSelected,
-                                                    onClick = { viewModel.selectDateMood(dateString) }
+                                                    isDarkMode = isDarkMode,
+                                                    onClick = { viewModel.selectDateMood(cellLocalDate) }
                                                 )
                                             } else {
                                                 Box(modifier = Modifier.aspectRatio(1f))
@@ -194,13 +242,15 @@ fun MoodHistoryScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = CardDefaults.cardColors(
+                            containerColor = surfaceColor
+                        ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = formatDateNicely(mood.date),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                                text = formatDateNicely(mood.date.toString()),
+                                color = textSecondary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -221,16 +271,16 @@ fun MoodHistoryScreen(
                                         text = mood.mood.name.lowercase().replaceFirstChar { it.uppercase() },
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = textColor
                                     )
                                     Text(
-                                        text = "${mood.intensity}%", 
+                                        text = "${mood.intensity}%",
                                         color = Success,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 16.sp
                                     )
                                     mood.note?.let {
-                                        Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                                        Text(it, color = textSecondary, fontSize = 14.sp)
                                     }
                                 }
                             }
@@ -243,16 +293,25 @@ fun MoodHistoryScreen(
                             .height(100.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No mood recorded for this day", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                        Text(
+                            "No mood recorded for this day",
+                            color = textSecondary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Mood Summary
-                Text("Mood Summary (This Week)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(
+                    "Mood Summary (This Week)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = textColor
+                )
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 val moodColors = mapOf(
                     "HAPPY" to MoodHappy,
                     "CALM" to MoodCalm,
@@ -263,18 +322,32 @@ fun MoodHistoryScreen(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.size(130.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.size(130.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         MoodSummaryPieChart(summary = summary)
                     }
-                    
-                    Column(modifier = Modifier.padding(start = 32.dp).weight(1f)) {
+
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 32.dp)
+                            .weight(1f)
+                    ) {
                         summary.forEach { (mood, percentage) ->
                             val moodKey = mood.uppercase()
                             val displayLabel = mood.lowercase().replaceFirstChar { it.uppercase() }
-                            SummaryItem(displayLabel, percentage.toInt(), moodColors[moodKey] ?: MaterialTheme.colorScheme.outline)
+                            SummaryItem(
+                                label = displayLabel,
+                                percentage = percentage.toInt(),
+                                color = moodColors[moodKey] ?: MaterialTheme.colorScheme.outline,
+                                isDarkMode = isDarkMode
+                            )
                         }
                     }
                 }
@@ -285,11 +358,15 @@ fun MoodHistoryScreen(
 
 @Composable
 fun CalendarDayItem(
-    day: Int, 
-    mood: MoodType?, 
+    day: Int,
+    mood: MoodType?,
     isSelected: Boolean,
+    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
+    val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+    val textSecondary = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant
+
     Box(
         modifier = Modifier
             .aspectRatio(1f)
@@ -322,7 +399,7 @@ fun CalendarDayItem(
                 Text(
                     text = day.toString(),
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = textColor,
                     fontWeight = FontWeight.Medium
                 )
                 if (mood != null) {
@@ -358,7 +435,14 @@ fun getMoodColor(mood: MoodType): Color {
 }
 
 @Composable
-fun SummaryItem(label: String, percentage: Int, color: Color) {
+fun SummaryItem(
+    label: String,
+    percentage: Int,
+    color: Color,
+    isDarkMode: Boolean
+) {
+    val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -372,8 +456,18 @@ fun SummaryItem(label: String, percentage: Int, color: Color) {
                 .background(color)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = label, modifier = Modifier.weight(1f), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-        Text(text = "$percentage%", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            fontSize = 14.sp,
+            color = textColor
+        )
+        Text(
+            text = "$percentage%",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = textColor
+        )
     }
 }
 

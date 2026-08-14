@@ -1,10 +1,15 @@
+// MoodType.kt
 package com.serenemind.model.entity.enums
 
-enum class MoodType(val emoji: String, val percentage: Int, val message: String) {
-    HAPPY("😊", 90, "Great! Keep shining ✨"),
-    CALM("😌", 85, "Stay peaceful and relaxed"),
-    NEUTRAL("😐", 60, "Today is a fresh start"),
-    SAD("☹️", 40, "Take care of yourself"),
-    ANXIOUS("😰", 35, "Take a deep breath"),
-    ANGRY("😡", 20, "Relax and stay calm")
+enum class MoodType(
+    val emoji: String,
+    val message: String,
+    val color: String
+) {
+    HAPPY("😊", "Feeling great!", "#4CAF50"),
+    CALM("😌", "Peaceful and relaxed", "#2196F3"),
+    NEUTRAL("😐", "Feeling okay", "#9E9E9E"),
+    SAD("☹️", "Feeling down", "#FF5722"),
+    ANXIOUS("😰", "Feeling anxious", "#FF9800"),
+    ANGRY("😡", "Feeling frustrated", "#F44336")
 }

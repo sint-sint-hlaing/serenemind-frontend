@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.ui.theme.*
+import com.serenemind.model.entity.enums.Frequency
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,6 @@ fun AddGoalScreen(
     var unit by remember { mutableStateOf("") }
     var frequency by remember { mutableStateOf("Daily") }
     var startDate by remember { mutableStateOf("May 12, 2024") }
-    var reminderTime by remember { mutableStateOf("9:00 PM") }
 
     var showFrequencyMenu by remember { mutableStateOf(false) }
     val frequencies = listOf("Daily", "Weekly", "Monthly")
@@ -69,19 +69,26 @@ fun AddGoalScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = {
-                        if (title.isBlank()) {
-                            android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            viewModel.createGoal(title, description, target)
+                    TextButton(
+                        onClick = {
+                            if (title.isBlank()) {
+                                android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                val frequencyEnum = when (frequency) {
+                                    "Daily" -> Frequency.DAILY
+                                    "Weekly" -> Frequency.WEEKLY
+                                    "Monthly" -> Frequency.MONTHLY
+                                    else -> Frequency.DAILY
+                                }
+                                viewModel.createGoal(title, description, target, frequencyEnum)
+                            }
                         }
-                    }) {
+                    ) {
                         Text("Save", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                    containerColor = MaterialTheme.colorScheme.background               )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -223,46 +230,47 @@ fun AddGoalScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Date & Reminder
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
-                            .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
-                            .clickable {
-                                android.widget.Toast.makeText(context, "Date picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(startDate, fontSize = 14.sp)
-                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
-                    }
+            // Date
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
+                        .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                        .clickable {
+                            android.widget.Toast.makeText(context, "Date picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(startDate, fontSize = 14.sp)
+                    Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Reminder", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
-                            .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
-                            .clickable {
-                                android.widget.Toast.makeText(context, "Reminder picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(reminderTime, fontSize = 14.sp)
-                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Choose Color
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Choose Color", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                val colors = listOf(
+                    Color(0xFF6C63FF), Color(0xFF4CAF50), Color(0xFF03A9F4), 
+                    Color(0xFFFF9800), Color(0xFFE53935), Color(0xFFE91E63)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    colors.forEach { color ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .clickable { /* Select color */ }
+                        )
                     }
                 }
             }

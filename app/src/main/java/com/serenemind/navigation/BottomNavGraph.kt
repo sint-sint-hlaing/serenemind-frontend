@@ -42,6 +42,7 @@ import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
 
 import com.serenemind.datastore.ThemeManager
+import com.serenemind.network.MeditationApiService
 
 import com.serenemind.repository.*
 import com.serenemind.ui.community.*
@@ -70,6 +71,7 @@ fun BottomNavGraph(
 
     val apiService = remember { NetworkModule.provideApiService(context, tokenManager) }
     val goalApiService = remember { NetworkModule.provideGoalApiService(context, tokenManager) }
+    val moodApiService = remember { NetworkModule.provideMoodApiService(context, tokenManager) }
     val meditationApiService = remember { NetworkModule.provideMeditationApiService(context, tokenManager) }
     val journalApiService = remember { NetworkModule.provideJournalApiService(context, tokenManager) }
     val chatApiService = remember { NetworkModule.provideChatApiService(context, tokenManager) }
@@ -77,11 +79,11 @@ fun BottomNavGraph(
     // Repositories
     val communityRepository = remember { CommunityRepository(apiService, tokenManager) }
     val notificationRepository = remember { NotificationRepository(apiService, tokenManager) }
-    val dashboardRepository = remember { DashboardRepository(apiService, tokenManager) }
+    val dashboardRepository = remember { DashboardRepository(moodApiService, tokenManager) }
     val userRepository = remember { UserRepository(apiService, tokenManager) }
-    val moodRepository = remember { MoodRepository(apiService) }
-    val goalRepository = remember { GoalRepository(apiService) }
-    val meditationRepository = remember { MeditationRepository(apiService) }
+    val moodRepository = remember { MoodRepository(moodApiService) }
+    val goalRepository = remember { GoalRepository(goalApiService) }
+    val meditationRepository = remember { MeditationRepository(meditationApiService) }
     val journalRepository = remember { JournalRepository(journalApiService) }
     val chatRepository = remember { ChatRepository(chatApiService) }
     

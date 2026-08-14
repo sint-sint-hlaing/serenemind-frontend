@@ -8,11 +8,14 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.1.28:8080/"
+    // Use 10.0.2.2 for Android Emulator, or your computer's LAN IP for physical devices
+    const val BASE_URL = "http://10.215.79.239:8080/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -49,6 +52,10 @@ object NetworkModule {
     fun provideGoalApiService(context: Context, tokenManager: TokenManager): GoalApiService {
         return provideRetrofit(context, tokenManager).create(GoalApiService::class.java)
     }
+    fun provideMoodApiService(context: Context, tokenManager: TokenManager): MoodApiService {
+        return provideRetrofit(context, tokenManager).create(MoodApiService::class.java)
+    }
+
 
     fun provideJournalApiService(context: Context, tokenManager: TokenManager): JournalApiService {
         return provideRetrofit(context, tokenManager).create(JournalApiService::class.java)

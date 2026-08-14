@@ -1,3 +1,4 @@
+// GoalScreen.kt (Improved)
 package com.serenemind.ui.goal
 
 import androidx.compose.foundation.background
@@ -27,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.entity.enums.GoalStatus
-import com.serenemind.model.response.UserGoal
+import com.serenemind.model.response.GoalResponse
 import com.serenemind.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,36 +36,50 @@ import com.serenemind.ui.theme.*
 fun GoalScreen(
     viewModel: GoalViewModel,
     isDarkMode: Boolean,
-    onGoalClick: (UserGoal) -> Unit = {},
+    onGoalClick: (GoalResponse) -> Unit = {},
     onAddGoalClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedTab by remember { mutableIntStateOf(1) } // 0: All, 1: Active, 2: Completed
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: All, 1: Active, 2: Completed
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("My Goals", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = {
+                    Text(
+                        "My Goals",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { 
+                    IconButton(onClick = {
+                        // TODO: Open navigation drawer or menu
                         android.widget.Toast.makeText(context, "Opening menu...", android.widget.Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        android.widget.Toast.makeText(context, "Add new goal", android.widget.Toast.LENGTH_SHORT).show()
-                        onAddGoalClick()
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    IconButton(onClick = onAddGoalClick) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = if (isDarkMode) Color.White else MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = if (isDarkMode) Color(0xFF1A1A1A) else MaterialTheme.colorScheme.surface      )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = if (isDarkMode) Color(0xFF1A1A1A) else MaterialTheme.colorScheme.background
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             // Tabs
@@ -83,14 +98,43 @@ fun GoalScreen(
 
             when (val state = uiState) {
                 is GoalUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Loading goals...",
+                                color = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 is GoalUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                            Text(
+                                text = "❌",
+                                fontSize = 48.sp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.fetchGoals() }) {
                                 Text("Retry")
@@ -100,16 +144,28 @@ fun GoalScreen(
                 }
                 is GoalUiState.Success -> {
                     val filteredGoals = when (selectedTab) {
-                        0 -> state.goals
-                        1 -> state.goals.filter { it.status == GoalStatus.ACTIVE }
-                        2 -> state.goals.filter { it.status == GoalStatus.COMPLETED }
+                        0 -> state.goals // All goals
+                        1 -> state.goals.filter {
+                            it.status == "ACTIVE" || it.status == "PAUSED"
+                        }
+                        2 -> state.goals.filter { it.status == "COMPLETED" }
                         else -> state.goals
                     }
-                    
+
                     if (filteredGoals.isEmpty()) {
-                        EmptyGoalsState(onAddGoalClick)
+                        EmptyGoalsState(
+                            onAddClick = onAddGoalClick,
+                            isDarkMode = isDarkMode,
+                            selectedTab = selectedTab
+                        )
                     } else {
-                        GoalList(filteredGoals, isDarkMode, onGoalClick)
+                        GoalList(
+                            goals = filteredGoals,
+                            isDarkMode = isDarkMode,
+                            onGoalClick = { goal ->
+                                onGoalClick(goal)
+                            }
+                        )
                     }
                 }
             }
@@ -118,46 +174,87 @@ fun GoalScreen(
 }
 
 @Composable
-fun EmptyGoalsState(onAddClick: () -> Unit) {
+fun EmptyGoalsState(
+    onAddClick: () -> Unit,
+    isDarkMode: Boolean = false,
+    selectedTab: Int = 0
+) {
+    val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onBackground
+    val textSecondary = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant
+
+    // Different messages based on tab
+    val (emoji, title, description) = when (selectedTab) {
+        1 -> Triple("🏃", "No Active Goals", "You don't have any active goals right now. Start a new one!")
+        2 -> Triple("🎉", "No Completed Goals", "Complete a goal to see it here. Keep going!")
+        else -> Triple("📭", "No Goals Found", "Start building healthy habits by creating your first goal.")
+    }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
             Text(
-                "No goals found",
+                emoji,
+                fontSize = 64.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = textColor
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Start building healthy habits by creating your first goal.",
+                description,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = textSecondary,
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onAddClick) {
-                Text("Create Goal")
+            Button(
+                onClick = onAddClick,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Create Goal", fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
-
 @Composable
-fun GoalTab(title: String, isSelected: Boolean, isDarkMode: Boolean, onClick: () -> Unit) {
+fun GoalTab(
+    title: String,
+    isSelected: Boolean,
+    isDarkMode: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colorScheme.primary
+        isDarkMode -> Color(0xFF2A2A2A)
+        else -> Color(0xFFF5F5F5)
+    }
+
+    val textColor = when {
+        isSelected -> Color.White
+        isDarkMode -> Color.LightGray
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF5F5F5),
+        color = backgroundColor,
         modifier = Modifier.height(34.dp)
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 18.dp)) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 18.dp)
+        ) {
             Text(
                 text = title,
-                color = if (isSelected) Color.White else if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = textColor,
                 fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
@@ -166,58 +263,116 @@ fun GoalTab(title: String, isSelected: Boolean, isDarkMode: Boolean, onClick: ()
 }
 
 @Composable
-fun GoalList(goals: List<UserGoal>, isDarkMode: Boolean, onGoalClick: (UserGoal) -> Unit) {
+fun GoalList(
+    goals: List<GoalResponse>,
+    isDarkMode: Boolean,
+    onGoalClick: (GoalResponse) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(goals) { goal ->
-            GoalItem(goal, isDarkMode, onGoalClick)
+        items(
+            items = goals,
+            key = { it.id?:0 } // Add key for better performance
+        ) { goal ->
+            GoalItem(
+                goal = goal,
+                isDarkMode = isDarkMode,
+                onClick = onGoalClick
+            )
         }
     }
 }
 
 @Composable
-fun GoalItem(goal: UserGoal, isDarkMode: Boolean, onClick: (UserGoal) -> Unit) {
+fun GoalItem(
+    goal: GoalResponse,
+    isDarkMode: Boolean,
+    onClick: (GoalResponse) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick(goal) },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkMode) Color(0xFF2A2A2A) else MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(getGoalIconBgColor(goal.title, isDarkMode)),
+                    .background(getGoalIconBgColor(goal.title?:"", isDarkMode)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    getGoalIcon(goal.title),
+                    getGoalIcon(goal.title?:""),
                     contentDescription = null,
-                    tint = getGoalIconColor(goal.title),
+                    tint = getGoalIconColor(goal.title?:""),
                     modifier = Modifier.size(24.dp)
                 )
             }
+
             Spacer(modifier = Modifier.width(18.dp))
+
+            // Content
             Column(modifier = Modifier.weight(1f)) {
-                Text(goal.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text("${goal.progress} / ${goal.targetDays} days", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        goal.title?:"Untitled",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1
+                    )
+
+                    // Status badge
+                    when (goal.status) {
+                        "COMPLETED" -> {
+                            Text("✅", fontSize = 14.sp)
+                        }
+                        "PAUSED" -> {
+                            Text("⏸️", fontSize = 14.sp)
+                        }
+                        "EXPIRED" -> {
+                            Text("⏰", fontSize = 14.sp)
+                        }
+                        else -> {}
+                    }
+                }
+
+                Text(
+                    "${goal.progress} / ${goal.targetDays?:0} days",
+                    color = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
                 Spacer(modifier = Modifier.height(10.dp))
+
+                // Progress bar
+                val progress = (goal.progress?:0).toFloat() / (goal.targetDays?:1).toFloat().coerceAtLeast(1f)
                 LinearProgressIndicator(
-                    progress = { goal.progress.toFloat() / goal.targetDays.toFloat().coerceAtLeast(1f) },
+                    progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(CircleShape),
-                    color = getGoalIconColor(goal.title),
+                    color = getGoalIconColor(goal.title ?:""),
                     trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
                 )
             }
@@ -225,12 +380,17 @@ fun GoalItem(goal: UserGoal, isDarkMode: Boolean, onClick: (UserGoal) -> Unit) {
     }
 }
 
+// ===== Icon Helper Functions =====
+
 fun getGoalIcon(title: String): ImageVector {
     return when {
         title.contains("meditate", ignoreCase = true) -> Icons.Outlined.SelfImprovement
         title.contains("journal", ignoreCase = true) -> Icons.AutoMirrored.Outlined.Assignment
         title.contains("water", ignoreCase = true) -> Icons.Outlined.LocalDrink
         title.contains("sleep", ignoreCase = true) -> Icons.Outlined.Nightlight
+        title.contains("exercise", ignoreCase = true) -> Icons.Outlined.CheckCircle
+        title.contains("read", ignoreCase = true) -> Icons.Outlined.CheckCircle
+        title.contains("study", ignoreCase = true) -> Icons.Outlined.CheckCircle
         else -> Icons.Outlined.CheckCircle
     }
 }
@@ -241,7 +401,10 @@ fun getGoalIconBgColor(title: String, isDarkMode: Boolean): Color {
         title.contains("journal", ignoreCase = true) -> Color(0xFFE8F5E9)
         title.contains("water", ignoreCase = true) -> Color(0xFFE1F5FE)
         title.contains("sleep", ignoreCase = true) -> Color(0xFFFFF3E0)
-        else -> ActionGoals
+        title.contains("exercise", ignoreCase = true) -> Color(0xFFFFEBEE)
+        title.contains("read", ignoreCase = true) -> Color(0xFFFCE4EC)
+        title.contains("study", ignoreCase = true) -> Color(0xFFE8EAF6)
+        else -> Color(0xFFF5F5F5)
     }
     return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor
 }
@@ -252,6 +415,9 @@ fun getGoalIconColor(title: String): Color {
         title.contains("journal", ignoreCase = true) -> Color(0xFF4CAF50)
         title.contains("water", ignoreCase = true) -> Color(0xFF03A9F4)
         title.contains("sleep", ignoreCase = true) -> Color(0xFFFF9800)
+        title.contains("exercise", ignoreCase = true) -> Color(0xFFE53935)
+        title.contains("read", ignoreCase = true) -> Color(0xFFE91E63)
+        title.contains("study", ignoreCase = true) -> Color(0xFF3F51B5)
         else -> MoodHappy
     }
 }

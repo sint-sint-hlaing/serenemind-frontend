@@ -1,9 +1,17 @@
 package com.serenemind.model.request
 
-import com.serenemind.model.entity.enums.MoodType
+import com.google.gson.annotations.SerializedName
 
 data class MoodRequest(
-    val mood: MoodType,
-    val intensity:Int,
-    val note: String
+    @SerializedName("mood")
+    val mood: String,
+
+    @SerializedName("intensity")
+    val intensity: Int,
+
+    @SerializedName("score")
+    val score: Int? = null,
+
+    @SerializedName("note")
+    val note: String? = null
 )

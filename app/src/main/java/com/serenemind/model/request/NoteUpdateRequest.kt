@@ -1,6 +1,6 @@
 package com.serenemind.model.request
 import com.google.gson.annotations.SerializedName
-
-data class TimerRequest(
-    @SerializedName("minutes")
-    val minutes: Int? = null)
+data class NoteUpdateRequest(
+    @SerializedName("content")
+    val content: String
+)

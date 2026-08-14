@@ -1,5 +1,8 @@
+// MoodViewModel.kt
 package com.serenemind.ui.mood
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.entity.enums.MoodType
@@ -13,9 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 
 class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
+
     private val _uiState = MutableStateFlow<MoodUiState>(MoodUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
@@ -32,9 +37,12 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
     val weeklySummary = _weeklySummary.asStateFlow()
 
     init {
-        refresh()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            refresh()
+        }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun refresh() {
         fetchMoodSummary()
         fetchWeeklySummary()
@@ -62,6 +70,7 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun fetchMoodHistory(year: Int, month: Int) {
         viewModelScope.launch {
             repository.getMoodHistory(year, month).collect { result ->
@@ -70,31 +79,41 @@ class MoodViewModel(private val repository: MoodRepository) : ViewModel() {
                     _historyState.value = history
 
                     // Set today as selected by default if exists
-                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val today = sdf.format(Date())
-                    _selectedDateMood.value = history.find { it.date == today }
+                    val today = LocalDate.now()
+                    _selectedDateMood.value = history.find {
+                        it.date == today
+                    }
                 }
             }
         }
     }
 
-    fun selectDateMood(date: String) {
+    fun selectDateMood(date: LocalDate) {
         _selectedDateMood.value = _historyState.value.find { it.date == date }
     }
 
     fun saveMood(mood: MoodType, intensity: Int, note: String) {
         viewModelScope.launch {
-            val request = MoodRequest(mood, intensity, note)
+            val request = MoodRequest(
+                mood = mood.name,
+                intensity = intensity,
+                note = note
+            )
+            _uiState.value = MoodUiState.Loading
             repository.saveMood(request).collect { result ->
                 when (result) {
                     is NetworkResult.Loading -> {
                         _uiState.value = MoodUiState.Loading
                     }
+
                     is NetworkResult.Success -> {
                         _uiState.value = MoodUiState.Success
-                        refresh()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            refresh()
+                        }
                         RefreshSignals.signalRefreshDashboard()
                     }
+
                     is NetworkResult.Error -> {
                         _uiState.value = MoodUiState.Error(result.message)
                     }

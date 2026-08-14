@@ -1,8 +1,15 @@
 package com.serenemind.model.request
-
+import com.google.gson.annotations.SerializedName
 data class MeditationSessionRequest(
+    @SerializedName("meditationId")
     val meditationId: Long,
-    val durationMinutes: Int,
-    val completed: Boolean = true
 
+    @SerializedName("durationMinutes")
+    val durationMinutes: Int? = null,
+
+    @SerializedName("completed")
+    val completed: Boolean = true,
+
+    @SerializedName("progressPercentage")
+    val progressPercentage: Int? = null
 )

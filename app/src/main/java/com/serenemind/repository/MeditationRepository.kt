@@ -1,71 +1,106 @@
 package com.serenemind.repository
 
 import com.serenemind.model.request.MeditationSessionRequest
+import com.serenemind.model.request.TimerRequest
 import com.serenemind.model.response.*
-import com.serenemind.network.ApiService
+import com.serenemind.network.MeditationApiService
 import com.serenemind.network.NetworkResult
 import com.serenemind.network.SafeApiCall
 import kotlinx.coroutines.flow.Flow
 
-class MeditationRepository(private val apiService: ApiService) : SafeApiCall() {
-
+class MeditationRepository(private val apiService: MeditationApiService) : SafeApiCall() {
+    // ===== DASHBOARD =====
     fun getDashboard(): Flow<NetworkResult<MeditationDashboardResponse>> = safeApiCall {
-        apiService.getMeditationDashboard()
+        apiService.getDashboard()
     }
 
+    // ===== ALL MEDITATIONS =====
+    fun getAllMeditations(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getAllMeditations()
+    }
+
+    // ===== GET BY ID =====
     fun getMeditationById(id: Long): Flow<NetworkResult<MeditationResponse>> = safeApiCall {
         apiService.getMeditationById(id)
     }
 
+    // ===== GET BY CATEGORY =====
+    fun getByCategory(category: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getByCategory(category)
+    }
+
+    // ===== GET BY TIME =====
+    fun getByTime(time: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getByTime(time)
+    }
+
+    // ===== SEARCH =====
+    fun searchMeditations(
+        query: String? = null,
+        category: String? = null,
+        time: String? = null
+    ): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.searchMeditations(query, category, time)
+    }
+
+
+    // ===== COMPLETE SESSION =====
     fun completeSession(request: MeditationSessionRequest): Flow<NetworkResult<Unit>> = safeApiCall {
-        apiService.completeMeditationSession(request)
+        apiService.completeSession(request)
     }
 
-    fun getHistory(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.getMeditationHistory()
+    // ===== HISTORY =====
+    fun getHistory(): Flow<NetworkResult<List<MeditationHistoryResponse>>> = safeApiCall {
+        apiService.getHistory()
     }
 
-    fun getRecommendations(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.getMeditationRecommendations()
-    }
-
-    fun search(keyword: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.searchMeditation(keyword)
+    // ===== FAVORITE =====
+    fun toggleFavorite(id: Long): Flow<NetworkResult<FavoriteResponse>> = safeApiCall {
+        apiService.toggleFavorite(id)
     }
 
     fun addFavorite(meditationId: Long): Flow<NetworkResult<Unit>> = safeApiCall {
-        apiService.addFavoriteMeditation(com.serenemind.model.request.FavoriteRequest(meditationId))
+        apiService.addFavorite(com.serenemind.model.request.FavoriteRequest(meditationId))
     }
 
-    fun toggleFavorite(id: Long): Flow<NetworkResult<FavoriteResponse>> = safeApiCall {
-        apiService.toggleMeditationFavorite(id)
-    }
-
+    // ===== TIMER =====
     fun saveTimer(id: Long, minutes: Int): Flow<NetworkResult<TimerResponse>> = safeApiCall {
-        apiService.saveMeditationTimer(id, com.serenemind.model.request.TimerRequest(minutes))
+        apiService.saveTimer(id, TimerRequest(minutes))
     }
 
+    // ===== SHARE =====
     fun getShareLink(id: Long): Flow<NetworkResult<ShareResponse>> = safeApiCall {
-        apiService.shareMeditation(id)
+        apiService.getShareLink(id)
     }
 
-    fun getPrevious(id: Long): Flow<NetworkResult<MeditationResponse>> = safeApiCall {
-        apiService.getPreviousMeditation(id)
+    // ===== RECOMMENDATIONS =====
+    fun getRecommendations(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.getRecommendations()
     }
 
-    fun getNext(id: Long): Flow<NetworkResult<MeditationList>> = safeApiCall {
-        apiService.getNextMeditation(id)
-    }
-
-    fun download(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
-        apiService.downloadMeditationAudio(id)
-    }
-
-    fun stream(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
-        apiService.streamMeditationAudio(id)
-    }
-
+    // ===== CONTINUE LISTENING =====
     fun getContinueListening(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
         apiService.getContinueListening()
     }
+
+    // ===== PREVIOUS =====
+    fun getPrevious(id: Long): Flow<NetworkResult<MeditationResponse>> = safeApiCall {
+        apiService.getPrevious(id)
+    }
+
+    // ===== NEXT =====
+    fun getNext(id: Long): Flow<NetworkResult<MeditationList>> = safeApiCall {
+        apiService.getNext(id)
+    }
+
+    // ===== STREAM =====
+    fun streamAudio(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
+        apiService.streamAudio(id)
+    }
+
+    // ===== DOWNLOAD =====
+    fun downloadAudio(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
+        apiService.downloadAudio(id)
+    }
+
 }

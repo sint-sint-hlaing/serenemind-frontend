@@ -1,22 +1,28 @@
 package com.serenemind.model.response
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
+import com.serenemind.model.entity.enums.MoodType
+import com.serenemind.network.LocalDateAdapter
+import java.time.LocalDate
 
 data class DashboardResponse(
     val username: String? = null,
     val greeting: String? = null,
-    val date: String? = null,
-    @SerializedName("currentMood") val mood: String? = null,
-    @SerializedName("moodPercentage") val percentage: Int? = null,
-    @SerializedName("weeklyDataList") val weeklyOverview: List<WeeklyMoodResponse> = emptyList(),
-    @SerializedName("quickActions") val quickActions: List<QuickActionResponse> = emptyList(),
-    @SerializedName("unreadNotificationCount") val unreadNotificationCount: Int? = 0
+    @JsonAdapter(LocalDateAdapter::class)
+    val date: LocalDate? = null,
+    val todayMood: TodayMoodResponse? = null,
+    val weeklyOverview: List<WeeklyMoodResponse>? = null,
+    val quickActions: List<QuickActionResponse>? = null,
+    val currentStreak: Int? = null,
+    val isNewBest: Boolean? = null,
+    val unreadNotificationCount: Long = 0
 )
 
 data class TodayMoodResponse(
-    val mood: String,
-    val percentage: Int,
-    val message: String
+    val mood: MoodType? = null,
+    val percentage: Int? = null,
+    val message: String? = null
 )
 
 data class QuickActionResponse(

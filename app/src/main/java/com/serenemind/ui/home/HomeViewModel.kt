@@ -1,8 +1,10 @@
+// HomeViewModel.kt
 package com.serenemind.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.datastore.ThemeManager
+import com.serenemind.model.response.WeeklyMoodResponse
 import com.serenemind.network.NetworkResult
 import com.serenemind.repository.DashboardRepository
 import com.serenemind.repository.MoodRepository
@@ -11,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
@@ -23,7 +24,7 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _weeklyMood = MutableStateFlow<List<com.serenemind.model.response.WeeklyMoodResponse>>(emptyList())
+    private val _weeklyMood = MutableStateFlow<List<WeeklyMoodResponse>>(emptyList())
     val weeklyMood = _weeklyMood.asStateFlow()
 
     init {
@@ -68,16 +69,5 @@ class HomeViewModel(
             }
         }
     }
-
-    suspend fun shouldShowCelebration(currentStreak: Int, isNewBest: Boolean): Boolean {
-        if (!isNewBest) return false
-        val lastCelebrated = themeManager.lastCelebratedStreak.first()
-        return currentStreak > lastCelebrated
-    }
-
-    fun markCelebrationShown(streak: Int) {
-        viewModelScope.launch {
-            themeManager.saveLastCelebratedStreak(streak)
-        }
-    }
 }
+

@@ -1,12 +1,10 @@
+// MoodTrackerScreen.kt
 package com.serenemind.ui.mood
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +34,13 @@ fun MoodTrackerScreen(
     val uiState by viewModel.uiState.collectAsState()
     var intensity by remember { mutableFloatStateOf(40f) }
     var note by remember { mutableStateOf("") }
-    var selectedMood by remember { mutableStateOf<MoodType?>(MoodType.NEUTRAL) }
+    var selectedMood by remember { mutableStateOf<MoodType?>(null) }
+
+    // Get colors based on dark mode
+    val backgroundColor = if (isDarkMode) Color(0xFF1A1A1A) else MaterialTheme.colorScheme.background
+    val surfaceColor = if (isDarkMode) Color(0xFF2A2A2A) else MaterialTheme.colorScheme.surface
+    val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onBackground
+    val textSecondary = if (isDarkMode) Color.LightGray else MaterialTheme.colorScheme.onSurfaceVariant
 
     LaunchedEffect(uiState) {
         if (uiState is MoodUiState.Success) {
@@ -48,21 +52,38 @@ fun MoodTrackerScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mood Tracker", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = {
+                    Text(
+                        "Mood Tracker",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = textColor
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = textColor
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onViewHistory) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = "History")
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = "History",
+                            tint = textColor
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = if (isDarkMode) Color(0xFF1A1A1A) else Color.Transparent
+                )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = backgroundColor
     ) { padding ->
         Column(
             modifier = Modifier
@@ -79,19 +100,20 @@ fun MoodTrackerScreen(
                     "How are you feeling today?",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = textColor
                 )
                 Text(
                     "Let's check in with your emotions",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textSecondary,
                     fontSize = 14.sp
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Mood Grid - 3 columns
                 val moods = MoodType.entries.toList()
                 val chunkedMoods = moods.chunked(3)
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     chunkedMoods.forEach { rowMoods ->
                         Row(
@@ -103,7 +125,10 @@ fun MoodTrackerScreen(
                                     MoodItemView(
                                         mood = mood,
                                         isSelected = selectedMood == mood,
-                                        onClick = { selectedMood = mood }
+                                        isDarkMode = isDarkMode,
+                                        onClick = {
+                                            selectedMood = if (selectedMood == mood) null else mood
+                                        }
                                     )
                                 }
                             }
@@ -119,13 +144,24 @@ fun MoodTrackerScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Intensity Slider
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Intensity", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
-                    Text("${intensity.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Intensity",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = textColor
+                    )
+                    Text(
+                        "${intensity.toInt()}%",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 Slider(
@@ -141,17 +177,25 @@ fun MoodTrackerScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Note Input
                 Text(
                     "Add a note (optional)",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = textColor
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    placeholder = { Text("What's on your mind?", fontSize = 14.sp) },
+                    placeholder = {
+                        Text(
+                            "What's on your mind?",
+                            fontSize = 14.sp,
+                            color = textSecondary
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(140.dp),
@@ -159,11 +203,12 @@ fun MoodTrackerScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFE0E0E0),
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                        unfocusedContainerColor = surfaceColor,
+                        focusedContainerColor = surfaceColor
                     )
                 )
 
+                // Error message
                 if (uiState is MoodUiState.Error) {
                     Text(
                         text = (uiState as MoodUiState.Error).message,
@@ -175,6 +220,7 @@ fun MoodTrackerScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
+                // Save Button
                 Button(
                     onClick = {
                         selectedMood?.let {
@@ -185,13 +231,26 @@ fun MoodTrackerScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    enabled = uiState !is MoodUiState.Loading
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedMood != null)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    ),
+                    enabled = selectedMood != null && uiState !is MoodUiState.Loading
                 ) {
                     if (uiState is MoodUiState.Loading) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
                     } else {
-                        Text("Save", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Save",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
 
@@ -202,29 +261,59 @@ fun MoodTrackerScreen(
 }
 
 @Composable
-fun MoodItemView(mood: MoodType, isSelected: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+fun MoodItemView(
+    mood: MoodType,
+    isSelected: Boolean,
+    isDarkMode: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+    } else if (isDarkMode) {
+        Color(0xFF2A2A2A)
+    } else {
+        Color.Transparent
+    }
+
+    val borderColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else if (isDarkMode) {
+        Color(0xFF333333)
+    } else {
+        Color.Transparent
+    }
+
+    val textColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else if (isDarkMode) {
+        Color.White
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
-            .then(
-                if (isSelected) Modifier.border(1.5.dp, borderColor, RoundedCornerShape(16.dp))
-                else Modifier
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
             )
             .clickable { onClick() }
             .padding(12.dp)
     ) {
-        Text(text = mood.toEmoji(), fontSize = 36.sp)
+        Text(
+            text = mood.toEmoji(),
+            fontSize = 36.sp
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = mood.name.lowercase().replaceFirstChar { it.uppercase() },
             fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            color = textColor
         )
     }
 }
