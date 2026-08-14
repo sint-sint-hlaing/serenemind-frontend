@@ -14,6 +14,8 @@ sealed class Screen(
     object Welcome : Screen("welcome")
     object Login : Screen("login")
     object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
+    object ResetPassword : Screen("reset_password")
 
     // Main container
     object Main : Screen("main")

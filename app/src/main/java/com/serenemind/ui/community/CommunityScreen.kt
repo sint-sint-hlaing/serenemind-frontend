@@ -50,10 +50,10 @@ fun CommunityScreen(
     val currentUsername = (profileState as? ProfileUiState.Success)?.user?.username
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Popular", "Recent")
+    val tabs = listOf("Recent", "Popular")
 
     LaunchedEffect(selectedTab) {
-        val filter = if (selectedTab == 0) "popular" else null
+        val filter = if (selectedTab == 1) "popular" else null
         viewModel.fetchPosts(isInitialLoad = true, filter = filter)
     }
 

@@ -20,6 +20,12 @@ interface ApiService {
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshRequest): Response<LoginResponse>
 
+    @POST("api/auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ForgotPasswordResponse>
+
+    @POST("api/auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<Unit>
+
     // --- USER PROFILE (HEAD priority) ---
     @GET("api/users/me")
     suspend fun getUserProfile(): Response<UserProfileResponse>

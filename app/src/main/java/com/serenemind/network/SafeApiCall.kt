@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.flowOn
 import retrofit2.Response
 
 abstract class SafeApiCall {
+    
+    // Inject or provide Gson instance
+    private val gson = Gson()
 
     fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Flow<NetworkResult<T>> = flow {
         emit(NetworkResult.Loading)
@@ -18,24 +21,16 @@ abstract class SafeApiCall {
                 if (body != null) {
                     emit(NetworkResult.Success(body))
                 } else if (response.code() == 204 || response.code() == 200) {
-                    // Handle Unit/Void response or empty success
                     @Suppress("UNCHECKED_CAST")
                     emit(NetworkResult.Success(Unit as T))
                 } else {
                     emit(NetworkResult.Error("Empty response body", response.code()))
                 }
             } else {
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = try {
-                    Gson().fromJson(errorBody, ErrorResponse::class.java)
-                } catch (e: Exception) {
-                    null
-                }
-                val errorMessage = errorResponse?.message ?: "An unknown error occurred"
-                emit(NetworkResult.Error(errorMessage, response.code()))
+                emit(ErrorParser.parseError(response, gson))
             }
         } catch (e: Exception) {
-            emit(NetworkResult.Error(e.localizedMessage ?: "Network request failed"))
+            emit(ErrorParser.handleException(e))
         }
     }.flowOn(Dispatchers.IO)
 }

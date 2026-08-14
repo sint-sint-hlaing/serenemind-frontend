@@ -38,6 +38,7 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -47,6 +48,7 @@ fun LoginScreen(
 
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         try {
@@ -69,10 +71,17 @@ fun LoginScreen(
         if (state is LoginUiState.Success) {
             onLoginSuccess()
             viewModel.reset()
+        } else if (state is LoginUiState.Error) {
+            val error = state as LoginUiState.Error
+            // Show snackbar for global errors (not field specific) or general feedback
+            if (error.fieldErrors.isNullOrEmpty()) {
+                snackbarHostState.showSnackbar(error.message)
+            }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             IconButton(onClick = onBackClick) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -115,12 +124,19 @@ fun LoginScreen(
 
             // Email
             Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
+            val emailError = (state as? LoginUiState.Error)?.fieldErrors?.get("email")
             TextField(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = { Text("Enter your email or phone") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+                isError = emailError != null,
+                supportingText = {
+                    if (emailError != null) {
+                        Text(text = emailError, color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -140,11 +156,18 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                val passwordError = (state as? LoginUiState.Error)?.fieldErrors?.get("password")
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     placeholder = { Text("Enter your password", fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth(),
+                    isError = passwordError != null,
+                    supportingText = {
+                        if (passwordError != null) {
+                            Text(text = passwordError, color = MaterialTheme.colorScheme.error)
+                        }
+                    },
                     trailingIcon = {
                         val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -171,7 +194,7 @@ fun LoginScreen(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
-                        .clickable { /* TODO */ }
+                        .clickable { onForgotPasswordClick() }
                         .padding(vertical = 12.dp)
                 )
             }
