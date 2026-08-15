@@ -68,11 +68,11 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         _selectedGoal.value = goal
     }
 
-    // ===== INCREMENT PROGRESS =====
-    fun incrementProgress(id: Long) {
+    // ===== UPDATE PROGRESS =====
+    fun updateProgress(id: Long, completed: Boolean, note: String?, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value = GoalUiState.Loading
-            repository.updateProgress(id).collect { result ->
+            repository.updateProgress(id, completed, note).collect { result ->
                 when (result) {
                     is NetworkResult.Loading -> {
                         _uiState.value = GoalUiState.Loading
@@ -83,6 +83,7 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                         if (_selectedGoal.value?.id == id) {
                             _selectedGoal.value = updatedGoal.toUserGoal()
                         }
+                        onSuccess()
                     }
                     is NetworkResult.Error -> {
                         _uiState.value = GoalUiState.Error(result.message ?: "Failed to update progress")

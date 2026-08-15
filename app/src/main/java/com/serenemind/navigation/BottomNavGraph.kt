@@ -242,6 +242,17 @@ fun BottomNavGraph(
             GoalDetailScreen(
                 viewModel = goalViewModel,
                 isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() },
+                onUpdateProgress = {
+                    navController.navigate(Screen.UpdateGoalProgress.route)
+                }
+            )
+        }
+
+        composable(Screen.UpdateGoalProgress.route) {
+            UpdateProgressScreen(
+                viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
             )
         }

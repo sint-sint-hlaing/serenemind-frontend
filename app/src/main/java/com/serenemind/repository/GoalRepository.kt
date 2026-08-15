@@ -55,8 +55,8 @@ class GoalRepository (private val apiService: GoalApiService) : SafeApiCall() {
     }
 
     // ===== UPDATE PROGRESS =====
-    fun updateProgress(id: Long): Flow<NetworkResult<GoalResponse>> = safeApiCall {
-        apiService.updateProgress(id)
+    fun updateProgress(id: Long, completed: Boolean, note: String?): Flow<NetworkResult<GoalResponse>> = safeApiCall {
+        apiService.updateProgress(id, com.serenemind.model.request.GoalProgressRequest(completed, note))
     }
 
     // ===== COMPLETE GOAL =====

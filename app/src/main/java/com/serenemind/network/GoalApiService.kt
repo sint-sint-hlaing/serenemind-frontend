@@ -10,7 +10,8 @@ import com.serenemind.model.request.GoalNoteRequest
 import com.serenemind.model.request.NoteUpdateRequest
 import com.serenemind.model.response.GoalNoteResponse
 import com.serenemind.model.response.HomeResponse
-interface GoalApiService {
+interface
+GoalApiService {
     // ===== CREATE & UPDATE =====
     @POST("api/goals")
     suspend fun createGoal(
@@ -54,7 +55,8 @@ interface GoalApiService {
     // ===== UPDATE PROGRESS =====
     @PATCH("api/goals/{id}/progress")
     suspend fun updateProgress(
-        @Path("id") id: Long
+        @Path("id") id: Long,
+        @Body request: com.serenemind.model.request.GoalProgressRequest
     ): Response<GoalResponse>
 
     // ===== COMPLETE GOAL =====
