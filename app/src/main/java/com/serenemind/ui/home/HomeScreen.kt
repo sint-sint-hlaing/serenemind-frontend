@@ -360,9 +360,14 @@ fun WeeklyChart(weeklyOverview: List<WeeklyDayDto>, isDarkMode: Boolean) {
             val hasData = data?.hasData ?: false
 
             val barColor = when (label) {
-                "Mon", "Wed" -> Color(0xFF81C784) // Green
-                "Tue" -> Color(0xFFFFD54F) // Yellow/Orange
-                else -> Color(0xFF9575CD) // Purple
+                "Mon" -> Color(0xFF81C784) // Green
+                "Tue" -> Color(0xFFFFD54F) // Orange
+                "Wed" -> Color(0xFF64B5F6) // Blue
+                "Thu" -> Color(0xFFBA68C8) // Purple
+                "Fri" -> Color(0xFFF06292) // Pink
+                "Sat" -> Color(0xFFFF8A65) // Coral
+                "Sun" -> Color(0xFF4DB6AC) // Teal
+                else -> Color(0xFF9575CD)
             }
 
             Column(
@@ -373,7 +378,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyDayDto>, isDarkMode: Boolean) {
                     modifier = Modifier
                         .height(100.dp)
                         .width(24.dp),
-                    contentAlignment = Alignment.TopCenter
+                    contentAlignment = Alignment.BottomCenter
                 ) {
                     // Vertical thin line
                     Box(
@@ -383,17 +388,16 @@ fun WeeklyChart(weeklyOverview: List<WeeklyDayDto>, isDarkMode: Boolean) {
                             .background(if (isDarkMode) Color.DarkGray else Color(0xFFEEEEEE))
                     )
 
-                    // Hanging capsule
+                    // Bar starting from bottom
                     if (hasData) {
-                        val barHeight = (20 + (score * 0.6f)).dp
-                        val topPadding = (10 + (100 - score) * 0.3f).dp
+                        // Making the bar height proportional to the score (0-100)
+                        val barHeight = (score.coerceIn(5, 100)).dp
                         
                         Box(
                             modifier = Modifier
-                                .padding(top = topPadding)
-                                .width(20.dp)
+                                .width(18.dp)
                                 .height(barHeight)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomStart = 2.dp, bottomEnd = 2.dp))
                                 .background(barColor)
                         )
                     }
@@ -414,7 +418,7 @@ fun WeeklyChart(weeklyOverview: List<WeeklyDayDto>, isDarkMode: Boolean) {
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(if (label == "Sat") Color(0xFF9575CD).copy(alpha = 0.2f) else Color.Transparent),
+                        .background(if (hasData) barColor.copy(alpha = 0.15f) else Color.Transparent),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
