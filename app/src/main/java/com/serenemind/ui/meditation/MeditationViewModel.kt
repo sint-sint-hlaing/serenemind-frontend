@@ -36,6 +36,9 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     private val _continueListening = MutableStateFlow<List<MeditationResponse>>(emptyList())
     val continueListening = _continueListening.asStateFlow()
 
+    private val _history = MutableStateFlow<List<MeditationHistoryResponse>>(emptyList())
+    val history = _history.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
@@ -43,6 +46,7 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
         fetchMeditationDashboard()
         fetchRecommendations()
         fetchContinueListening()
+        fetchHistory()
     }
 
     // ===== DASHBOARD =====
@@ -352,6 +356,22 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     }
 
     // ===== GET HISTORY =====
+    fun fetchHistory() {
+        viewModelScope.launch {
+            repository.getHistory().collect { result ->
+                when (result) {
+                    is NetworkResult.Success -> {
+                        _history.value = result.data
+                    }
+                    is NetworkResult.Error -> {
+                        _errorMessage.value = result.message
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
     fun getHistory(onResult: (List<MeditationHistoryResponse>) -> Unit) {
         viewModelScope.launch {
             repository.getHistory().collect { result ->
@@ -406,8 +426,7 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     // ===== SELECT MEDITATION =====
     fun selectMeditation(meditation: MeditationResponse) {
         _selectedMeditation.value = meditation
-        getNextMeditation(meditation.id)
-        getPreviousMeditation(meditation.id)
+        meditation.id?.let { getMeditationById(it) }
     }
 
     // ===== CLEAR SEARCH =====

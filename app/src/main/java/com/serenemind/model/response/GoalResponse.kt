@@ -81,6 +81,8 @@ fun GoalResponse.toUserGoal(): UserGoal {
                 GoalStatus.ACTIVE
             }
         } ?: GoalStatus.ACTIVE,
+        color = this.color,
+        icon = this.icon,
         history = this.history?.map {
             ProgressHistoryItem(
                 date = it.date ?: "",

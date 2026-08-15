@@ -277,13 +277,11 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         }
     }
 
-    private fun fetchGoalById(id: Long) {
+    fun fetchGoalById(id: Long) {
         viewModelScope.launch {
             repository.getGoalById(id).collect { result ->
                 if (result is NetworkResult.Success) {
-                    if (_selectedGoal.value?.id == id) {
-                        _selectedGoal.value = result.data.toUserGoal()
-                    }
+                    _selectedGoal.value = result.data.toUserGoal()
                 }
             }
         }

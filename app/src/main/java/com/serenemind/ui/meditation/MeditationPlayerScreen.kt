@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -271,13 +272,46 @@ fun MeditationPlayerScreen(
                         m.title ?: "Untitled",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = textColor
+                        color = textColor,
+                        textAlign = TextAlign.Center
                     )
                     Text(
-                        "${m.duration ?: "4"} min • ${m.category ?: "Meditation"}",
+                        "${m.duration ?: "4"} min • ${m.category ?: "Meditation"} • ${m.time ?: "Anytime"}",
                         fontSize = 14.sp,
                         color = textSecondaryColor
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Meditation Stats
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(
+                            label = "Difficulty",
+                            value = when(m.difficulty ?: 2) {
+                                1 -> "Easy"
+                                2 -> "Medium"
+                                3 -> "Hard"
+                                else -> "Normal"
+                            },
+                            icon = Icons.Default.SignalCellularAlt,
+                            isDarkMode = isDarkMode
+                        )
+                        StatItem(
+                            label = "Listens",
+                            value = (m.listenCount ?: 0).toString(),
+                            icon = Icons.Default.Headset,
+                            isDarkMode = isDarkMode
+                        )
+                        StatItem(
+                            label = "Favorites",
+                            value = (m.favoriteCount ?: 0).toString(),
+                            icon = Icons.Default.FavoriteBorder,
+                            isDarkMode = isDarkMode
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -507,6 +541,35 @@ fun MeditationPlayerScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun StatItem(
+    label: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isDarkMode: Boolean
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isDarkMode) Color.White else TextPrimary
+        )
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = if (isDarkMode) Color.LightGray else TextSecondary
+        )
     }
 }
 

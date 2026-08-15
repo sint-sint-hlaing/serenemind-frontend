@@ -189,6 +189,7 @@ fun GoalDetailScreen(
                 val g = goal!!
 
                 LaunchedEffect(g.id) {
+                    viewModel.fetchGoalById(g.id)
                     viewModel.fetchNotes(g.id)
                 }
 
@@ -201,11 +202,13 @@ fun GoalDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Progress Circle
-                    val progressColor = when {
-                        g.status == GoalStatus.COMPLETED -> Success
-                        g.status == GoalStatus.PAUSED -> Warning
-                        g.status == GoalStatus.EXPIRED -> Color.Red
-                        else -> PrimaryLight
+                    val themeColor = remember(g.color) {
+                        parseColor(g.color) ?: when {
+                            g.status == GoalStatus.COMPLETED -> Success
+                            g.status == GoalStatus.PAUSED -> Warning
+                            g.status == GoalStatus.EXPIRED -> Color.Red
+                            else -> PrimaryLight
+                        }
                     }
 
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
@@ -215,12 +218,16 @@ fun GoalDetailScreen(
                                 (g.progress.toFloat() / target).coerceIn(0f, 1f)
                             },
                             modifier = Modifier.fillMaxSize(),
-                            color = progressColor,
+                            color = themeColor,
                             strokeWidth = 10.dp,
                             trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
                             strokeCap = StrokeCap.Round,
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (g.icon != null) {
+                                Text(g.icon, fontSize = 32.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
                             Text(
                                 g.progress.toString(),
                                 fontSize = 32.sp,
@@ -261,7 +268,7 @@ fun GoalDetailScreen(
                             }
                         }
                         GoalStatus.ACTIVE -> {
-                            Badge(containerColor = PrimaryLight, modifier = Modifier.padding(4.dp)) {
+                            Badge(containerColor = themeColor, modifier = Modifier.padding(4.dp)) {
                                 Text("🟢 Active", color = Color.White, fontSize = 12.sp)
                             }
                         }
@@ -293,7 +300,7 @@ fun GoalDetailScreen(
                             label = "Progress",
                             value = "${g.progress} / ${g.targetDays} days",
                             progress = g.progress.toFloat() / g.targetDays.toFloat().coerceAtLeast(1f),
-                            color = progressColor,
+                            color = themeColor,
                             isDarkMode = isDarkMode,
                             modifier = Modifier.weight(1f)
                         )
@@ -670,5 +677,19 @@ fun HistoryItem(
             color = if (isToday) PrimaryLight else textSecondary,
             fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
         )
+    }
+}
+
+fun parseColor(colorStr: String?): Color? {
+    return when (colorStr?.lowercase()) {
+        "red" -> Color(0xFFE53935)
+        "blue" -> Color(0xFF1E88E5)
+        "green" -> Color(0xFF43A047)
+        "yellow" -> Color(0xFFFFEB3B)
+        "purple" -> Color(0xFF8E24AA)
+        "orange" -> Color(0xFFFB8C00)
+        "pink" -> Color(0xFFD81B60)
+        "teal" -> Color(0xFF00897B)
+        else -> null
     }
 }
