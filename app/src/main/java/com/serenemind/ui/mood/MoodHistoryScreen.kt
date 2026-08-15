@@ -274,7 +274,7 @@ fun MoodHistoryScreen(
                                         color = textColor
                                     )
                                     Text(
-                                        text = "${mood.intensity}%",
+                                        text = "${mood.intensity}/10",
                                         color = Success,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 16.sp

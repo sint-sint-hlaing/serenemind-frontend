@@ -32,7 +32,7 @@ fun MoodTrackerScreen(
     onViewHistory: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var intensity by remember { mutableFloatStateOf(40f) }
+    var intensity by remember { mutableFloatStateOf(5f) }
     var note by remember { mutableStateOf("") }
     var selectedMood by remember { mutableStateOf<MoodType?>(null) }
 
@@ -157,7 +157,7 @@ fun MoodTrackerScreen(
                         color = textColor
                     )
                     Text(
-                        "${intensity.toInt()}%",
+                        "${intensity.toInt()}/10",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.primary
@@ -167,7 +167,8 @@ fun MoodTrackerScreen(
                 Slider(
                     value = intensity,
                     onValueChange = { intensity = it },
-                    valueRange = 0f..100f,
+                    valueRange = 1f..10f,
+                    steps = 8,
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,

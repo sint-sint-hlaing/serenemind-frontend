@@ -177,7 +177,7 @@ fun DashboardContent(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${data.greeting ?: "Hello, User"}! 👋",
+                text = "${data.greeting ?: "Hello, User"}",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onBackground
