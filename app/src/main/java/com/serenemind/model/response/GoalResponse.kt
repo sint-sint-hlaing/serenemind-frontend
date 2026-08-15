@@ -47,6 +47,7 @@ data class GoalResponse(
 
     @SerializedName("progress")
     val progress: Int? = null,
+    val color:String?=null,
 
     @SerializedName("totalDays")
     val totalDays: Int? = null,

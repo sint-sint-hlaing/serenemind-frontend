@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.ui.theme.*
 import com.serenemind.model.entity.enums.Frequency
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +51,8 @@ fun AddGoalScreen(
     var unit by remember { mutableStateOf("") }
     var frequency by remember { mutableStateOf("Daily") }
     var startDate by remember { mutableStateOf("May 12, 2024") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
 
     var showFrequencyMenu by remember { mutableStateOf(false) }
     val frequencies = listOf("Daily", "Weekly", "Monthly")
@@ -240,15 +245,38 @@ fun AddGoalScreen(
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
                         .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
-                        .clickable {
-                            android.widget.Toast.makeText(context, "Date picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        .clickable { showDatePicker = true }
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(startDate, fontSize = 14.sp)
                     Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+            }
+
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val date = Date(millis)
+                                val formatter = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
+                                startDate = formatter.format(date)
+                            }
+                            showDatePicker = false
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
                 }
             }
 
