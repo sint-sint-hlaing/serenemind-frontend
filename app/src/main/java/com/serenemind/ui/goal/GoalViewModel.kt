@@ -92,19 +92,21 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         }
     }
 
-    // ===== CREATE GOAL =====
+    // ===== CREATE & UPDATE =====
     fun createGoal(
         title: String,
         description: String,
         targetDays: Int,
-        frequency: Frequency = Frequency.DAILY
+        frequency: Frequency = Frequency.DAILY,
+        color: String? = null,
+        icon: String = "📚",
+        startDate: String? = null
     ) {
         viewModelScope.launch {
             _uiState.value = GoalUiState.Loading
             _createGoalSuccess.value = false
 
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val startDate = dateFormat.format(Date())
+            val finalStartDate = startDate ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
             val request = GoalRequest(
                 title = title,
@@ -112,8 +114,9 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                 description = description,
                 targetDays = targetDays,
                 unit = "days",
-                startDate = startDate,
-                icon = "📚",
+                startDate = finalStartDate,
+                icon = icon,
+                color = color,
                 silentMode = false
             )
 
@@ -129,6 +132,38 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                     is NetworkResult.Error -> {
                         _uiState.value = GoalUiState.Error(result.message ?: "Failed to create goal")
                     }
+                }
+            }
+        }
+    }
+
+    fun updateGoal(
+        id: Long,
+        title: String,
+        description: String,
+        targetDays: Int,
+        frequency: Frequency,
+        color: String? = null,
+        icon: String? = null
+    ) {
+        viewModelScope.launch {
+            _uiState.value = GoalUiState.Loading
+            val request = GoalRequest(
+                title = title,
+                frequency = frequency,
+                description = description,
+                targetDays = targetDays,
+                color = color,
+                icon = icon ?: "📚"
+            )
+            repository.updateGoal(id, request).collect { result ->
+                if (result is NetworkResult.Success) {
+                    fetchGoals()
+                    if (_selectedGoal.value?.id == id) {
+                        _selectedGoal.value = result.data.toUserGoal()
+                    }
+                } else if (result is NetworkResult.Error) {
+                    _uiState.value = GoalUiState.Error(result.message ?: "Failed to update goal")
                 }
             }
         }

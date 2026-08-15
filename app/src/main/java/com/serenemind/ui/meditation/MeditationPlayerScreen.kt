@@ -378,12 +378,12 @@ fun MeditationPlayerScreen(
                             fontSize = 18.sp,
                             color = textColor
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = m.description ?: "No description available.",
+                            text = m.description ?: "A gentle meditation to help you relax your mind and release stress.",
                             color = textSecondaryColor,
                             fontSize = 15.sp,
-                            lineHeight = 24.sp
+                            lineHeight = 22.sp
                         )
                     }
 

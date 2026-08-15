@@ -308,16 +308,17 @@ fun MeditationContent(
             Text(
                 "Popular Categories",
                 fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
+                fontSize = 18.sp,
                 color = textColor
             )
-            Text(
-                text = "View all",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { onViewAllClick() }
-            )
+            TextButton(onClick = { onViewAllClick() }) {
+                Text(
+                    text = "View all",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -176,16 +176,15 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     fun toggleFavorite(meditationId: Long?) {
         if (meditationId == null) return
         viewModelScope.launch {
-            repository.addFavorite(meditationId).collect { result ->
+            repository.toggleFavorite(meditationId).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
                         val current = _selectedMeditation.value
                         if (current?.id == meditationId) {
-                            val newFavoriteStatus = !(current.favorite)
-                            _selectedMeditation.value = current.copy(favorite = newFavoriteStatus)
-                            // Update in lists
-                            updateFavoriteInLists(meditationId, newFavoriteStatus)
+                            _selectedMeditation.value = current.copy(favorite = result.data.favorite)
                         }
+                        // Update in lists
+                        updateFavoriteInLists(meditationId, result.data.favorite)
                     }
                     is NetworkResult.Error -> {
                         _errorMessage.value = result.message

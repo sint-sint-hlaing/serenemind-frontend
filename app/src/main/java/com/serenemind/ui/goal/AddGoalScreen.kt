@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -50,7 +51,14 @@ fun AddGoalScreen(
     var target by remember { mutableIntStateOf(10) }
     var unit by remember { mutableStateOf("") }
     var frequency by remember { mutableStateOf("Daily") }
-    var startDate by remember { mutableStateOf("May 12, 2024") }
+    
+    val isoFormatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val displayFormatter = remember { SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH) }
+    
+    var startDateIso by remember { mutableStateOf(isoFormatter.format(Date())) }
+    var selectedIcon by remember { mutableStateOf("📚") }
+    var selectedColorName by remember { mutableStateOf("purple") }
+
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
@@ -85,7 +93,15 @@ fun AddGoalScreen(
                                     "Monthly" -> Frequency.MONTHLY
                                     else -> Frequency.DAILY
                                 }
-                                viewModel.createGoal(title, description, target, frequencyEnum)
+                                viewModel.createGoal(
+                                    title = title,
+                                    description = description,
+                                    targetDays = target,
+                                    frequency = frequencyEnum,
+                                    color = selectedColorName,
+                                    icon = selectedIcon,
+                                    startDate = startDateIso
+                                )
                             }
                         }
                     ) {
@@ -107,22 +123,38 @@ fun AddGoalScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Icon Picker
+            val icons = listOf("📚", "🧘", "📖", "💧", "😴", "🏃", "🍎", "🌱")
+            var showIconMenu by remember { mutableStateOf(false) }
+
             Box(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .clickable { 
-                        android.widget.Toast.makeText(context, "Icon picker coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                    },
+                    .clickable { showIconMenu = true },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Outlined.SelfImprovement,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(36.dp)
-                )
+                Text(selectedIcon, fontSize = 40.sp)
+                
+                DropdownMenu(
+                    expanded = showIconMenu,
+                    onDismissRequest = { showIconMenu = false }
+                ) {
+                    icons.chunked(4).forEach { rowIcons ->
+                        Row {
+                            rowIcons.forEach { icon ->
+                                DropdownMenuItem(
+                                    text = { Text(icon, fontSize = 24.sp) },
+                                    onClick = {
+                                        selectedIcon = icon
+                                        showIconMenu = false
+                                    },
+                                    modifier = Modifier.width(60.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text("Change Icon", fontSize = 13.sp, color = TextSecondary)
@@ -250,7 +282,13 @@ fun AddGoalScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(startDate, fontSize = 14.sp)
+                    val displayDate = try {
+                        val date = isoFormatter.parse(startDateIso)
+                        displayFormatter.format(date!!)
+                    } catch (e: Exception) {
+                        startDateIso
+                    }
+                    Text(displayDate, fontSize = 14.sp)
                     Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
             }
@@ -261,9 +299,7 @@ fun AddGoalScreen(
                     confirmButton = {
                         TextButton(onClick = {
                             datePickerState.selectedDateMillis?.let { millis ->
-                                val date = Date(millis)
-                                val formatter = SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH)
-                                startDate = formatter.format(date)
+                                startDateIso = isoFormatter.format(Date(millis))
                             }
                             showDatePicker = false
                         }) {
@@ -287,18 +323,41 @@ fun AddGoalScreen(
                 Text("Choose Color", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 val colors = listOf(
-                    Color(0xFF6C63FF), Color(0xFF4CAF50), Color(0xFF03A9F4), 
-                    Color(0xFFFF9800), Color(0xFFE53935), Color(0xFFE91E63)
+                    "red" to Color(0xFFE53935),
+                    "blue" to Color(0xFF1E88E5),
+                    "green" to Color(0xFF43A047),
+                    "yellow" to Color(0xFFFFEB3B),
+                    "purple" to Color(0xFF8E24AA),
+                    "orange" to Color(0xFFFB8C00)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    colors.forEach { color ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    colors.forEach { (name, color) ->
+                        val isSelected = selectedColorName == name
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(color)
-                                .clickable { /* Select color */ }
-                        )
+                                .border(
+                                    width = if (isSelected) 3.dp else 0.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clickable { selectedColorName = name },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = if (name == "yellow") Color.Black else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
