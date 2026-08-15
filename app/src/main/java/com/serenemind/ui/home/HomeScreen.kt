@@ -137,7 +137,7 @@ fun DashboardContent(
                     IconButton(onClick = onNotificationClick) {
                         BadgedBox(
                             badge = {
-                                if (data.unreadNotificationCount > 0) {
+                                if (data.unreadNotification) {
                                     Badge(
                                         containerColor = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(6.dp)

@@ -8,7 +8,8 @@ data class DashboardResponse(
     val formattedDate: String? = null,
     val todayMood: TodayMoodDto? = null,
     val weeklyOverview: List<WeeklyDayDto>? = null,
-    val unreadNotificationCount: Int = 0
+    val unreadNotificationCount: Int = 0,
+    val unreadNotification: Boolean = false
 )
 
 data class TodayMoodDto(
