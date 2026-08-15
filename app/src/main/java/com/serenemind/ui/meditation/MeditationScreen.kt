@@ -204,14 +204,16 @@ fun MeditationScreen(
                         MeditationContent(
                             data = state.data,
                             continueListening = continueListening,
-                            recommendations = recommendations,
+                            recommendations = if (searchResults.isNotEmpty()) searchResults else recommendations,
                             isDarkMode = isDarkMode,
                             onMeditationClick = onMeditationClick,
-                            onCategoryClick = { category ->
-                                viewModel.searchMeditations(null, category.uppercase(), null)
+                            onCategoryClick = { categoryName ->
+                                val categoryCode = state.data.categories?.find { it.displayName == categoryName }?.name ?: categoryName
+                                viewModel.searchMeditations(null, categoryCode.uppercase(), null)
                             },
-                            onTimeClick = { time ->
-                                viewModel.searchMeditations(null, null, time.uppercase())
+                            onTimeClick = { timeName ->
+                                val timeCode = state.data.times?.find { it.displayName == timeName }?.name ?: timeName
+                                viewModel.searchMeditations(null, null, timeCode.uppercase())
                             },
                             onViewAllClick = {
                                 viewModel.fetchMeditationDashboard()
@@ -375,9 +377,11 @@ fun MeditationContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (recommendations.isNotEmpty()) {
+        val displayList = if (recommendations.isNotEmpty()) recommendations else data.popular ?: emptyList()
+        
+        if (displayList.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                recommendations.forEach { meditation ->
+                displayList.forEach { meditation ->
                     RecommendedItem(
                         meditation = meditation,
                         isDarkMode = isDarkMode,
@@ -386,17 +390,11 @@ fun MeditationContent(
                 }
             }
         } else {
-            data.recent?.let { fallback ->
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    fallback.forEach { meditation ->
-                        RecommendedItem(
-                            meditation = meditation,
-                            isDarkMode = isDarkMode,
-                            onClick = { onMeditationClick(meditation) }
-                        )
-                    }
-                }
-            }
+            Text(
+                "No recommendations available",
+                color = textSecondary,
+                fontSize = 14.sp
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
