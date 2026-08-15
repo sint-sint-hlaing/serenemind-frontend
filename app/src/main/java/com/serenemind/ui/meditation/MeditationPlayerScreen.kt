@@ -182,296 +182,173 @@ fun MeditationPlayerScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Meditation Image/Video Card
+                    // Meditation Image Card with Text Overlay
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(240.dp),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = surfaceColor
-                        )
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            // Audio/Video Player integration
-                            if (isPlaying && m.getCleanAudioUrl()?.isNotEmpty() == true) {
-                                VideoPlayer(
-                                    videoUrl = m.getCleanAudioUrl()!!,
-                                    isPlaying = isPlaying,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                AsyncImage(
-                                    model = m.getCleanImageUrl(),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop,
-                                    error = painterResource(R.drawable.ic_launcher_background)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                                                startY = 300f
-                                            )
+                            // Background Image
+                            AsyncImage(
+                                model = m.getCleanImageUrl(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                error = painterResource(R.drawable.ic_launcher_background)
+                            )
+                            
+                            // Dark Gradient Overlay
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                                            startY = 300f
                                         )
+                                    )
+                            )
+
+                            // Title & Duration Text (Bottom Left)
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(24.dp)
+                            ) {
+                                Text(
+                                    text = m.title ?: "Untitled",
+                                    color = Color.White,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
-                            }
-
-                            if (!isPlaying) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(24.dp),
-                                    verticalArrangement = Arrangement.Bottom
-                                ) {
-                                    Text(
-                                        m.title ?: "Untitled",
-                                        color = Color.White,
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "${m.duration ?: "4"} min • Guided Meditation",
-                                        color = Color.White.copy(alpha = 0.8f),
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-
-                            // Play/Pause overlay button
-                            if (!isPlaying) {
-                                Surface(
-                                    onClick = { isPlaying = true },
-                                    shape = CircleShape,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .size(56.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            Icons.Filled.PlayArrow,
-                                            contentDescription = "Play",
-                                            modifier = Modifier.size(32.dp),
-                                            // ⚠️ FIXED: PrimaryLight ကို Primary နဲ့ အစားထိုးခဲ့ပါတယ်
-                                            tint = PrimaryLight
-                                        )
-                                    }
-                                }
+                                Text(
+                                    text = "${m.duration ?: "10"} min - Guided Meditation",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Title and description
-                    Text(
-                        m.title ?: "Untitled",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        "${m.duration ?: "4"} min • ${m.category ?: "Meditation"} • ${m.time ?: "Anytime"}",
-                        fontSize = 14.sp,
-                        color = textSecondaryColor
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Meditation Stats
+                    // Progress Slider & Time
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StatItem(
-                            label = "Difficulty",
-                            value = when(m.difficulty ?: 2) {
-                                1 -> "Easy"
-                                2 -> "Medium"
-                                3 -> "Hard"
-                                else -> "Normal"
-                            },
-                            icon = Icons.Default.SignalCellularAlt,
-                            isDarkMode = isDarkMode
+                        Text(
+                            text = currentTime,
+                            fontSize = 12.sp,
+                            color = textSecondaryColor,
+                            fontWeight = FontWeight.Medium
                         )
-                        StatItem(
-                            label = "Listens",
-                            value = (m.listenCount ?: 0).toString(),
-                            icon = Icons.Default.Headset,
-                            isDarkMode = isDarkMode
+                        Slider(
+                            value = progress,
+                            onValueChange = { progress = it },
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
+                            ),
+                            modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
                         )
-                        StatItem(
-                            label = "Favorites",
-                            value = (m.favoriteCount ?: 0).toString(),
-                            icon = Icons.Default.FavoriteBorder,
-                            isDarkMode = isDarkMode
+                        Text(
+                            text = totalTime,
+                            fontSize = 12.sp,
+                            color = textSecondaryColor,
+                            fontWeight = FontWeight.Medium
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Progress Slider
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(currentTime, fontSize = 12.sp, color = textSecondaryColor)
-                        Text(totalTime, fontSize = 12.sp, color = textSecondaryColor)
-                    }
-                    Slider(
-                        value = progress,
-                        onValueChange = { progress = it },
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Controls
+                    // Playback Controls
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Previous
+                        // Rewind 15s
                         IconButton(
-                            onClick = {
-                                viewModel.navigateToPrevious()
-                            },
+                            onClick = { progress = (progress - 0.05f).coerceAtLeast(0f) },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
-                                Icons.Default.SkipPrevious,
-                                contentDescription = "Previous",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Rewind
-                        IconButton(
-                            onClick = {
-                                progress = (progress - 0.05f).coerceAtLeast(0f)
-                                Toast.makeText(context, "Rewinding 15s", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                Icons.Outlined.Replay,
+                                imageVector = Icons.Outlined.Replay10, // Close enough to 15
                                 contentDescription = "Rewind",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
+                                modifier = Modifier.size(32.dp),
+                                tint = textSecondaryColor
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(24.dp))
 
                         // Play/Pause Main
-                        // ✅ Alternative - Using Surface without elevation
                         Surface(
                             onClick = { isPlaying = !isPlaying },
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary,
-                            shadowElevation = 8.dp,  // ✅ Use shadowElevation instead of elevation
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier.size(80.dp),
+                            shadowElevation = 4.dp
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(36.dp),
+                                    modifier = Modifier.size(40.dp),
                                     tint = Color.White
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(24.dp))
 
-                        // Fast Forward
+                        // Forward 15s
                         IconButton(
-                            onClick = {
-                                progress = (progress + 0.05f).coerceAtMost(1f)
-                                Toast.makeText(context, "Fast Forward 15s", Toast.LENGTH_SHORT).show()
-                            },
+                            onClick = { progress = (progress + 0.05f).coerceAtMost(1f) },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
-                                Icons.Outlined.Forward,
-                                contentDescription = "Fast Forward",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Next
-                        IconButton(
-                            onClick = {
-                                viewModel.navigateToNext()
-                            },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.SkipNext,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
+                                imageVector = Icons.Outlined.Forward10, // Close enough to 15
+                                contentDescription = "Forward",
+                                modifier = Modifier.size(32.dp),
+                                tint = textSecondaryColor
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
 
-                    // Bottom Actions
+                    // Action Icons (Download, Favorite, Timer, Share)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = Icons.Outlined.FileDownload,
                             label = "Download",
-                            onClick = {
-                                viewModel.downloadAudio(m.id) { msg ->
-                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                            onClick = { viewModel.downloadAudio(m.id) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() } }
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
                             label = "Favorite",
-                            color = if (isFavorite) Color.Red else textColor,
+                            color = if (isFavorite) Color.Red else textSecondaryColor,
                             onClick = {
                                 viewModel.toggleFavorite(m.id)
-                                // ⚠️ FIXED: isFavorite ကို update လုပ်ပါတယ်
                                 isFavorite = !isFavorite
-                                val msg = if (isFavorite) "Added to favorites" else "Removed from favorites"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             }
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = Icons.Outlined.Timer,
                             label = "Timer",
                             onClick = onNavigateToTimer
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = Icons.Outlined.Share,
                             label = "Share",
                             onClick = {
@@ -488,26 +365,32 @@ fun MeditationPlayerScreen(
 
                     Spacer(modifier = Modifier.height(40.dp))
 
+                    // Divider
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = surfaceColor)
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
                     // About Section
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            "About this session",
+                            text = "About this session",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = textColor
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            m.description ?: "No description available for this meditation.",
+                            text = m.description ?: "No description available.",
                             color = textSecondaryColor,
                             fontSize = 15.sp,
-                            lineHeight = 22.sp
+                            lineHeight = 24.sp
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-            } ?: run {
+            }
+?: run {
                 // No meditation selected
                 Box(
                     modifier = Modifier
@@ -545,36 +428,7 @@ fun MeditationPlayerScreen(
 }
 
 @Composable
-fun StatItem(
-    label: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isDarkMode: Boolean
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (isDarkMode) Color.White else TextPrimary
-        )
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = if (isDarkMode) Color.LightGray else TextSecondary
-        )
-    }
-}
-
-@Composable
-fun PlayerAction(
+fun PlayerActionItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     color: Color = MaterialTheme.colorScheme.onSurface,
@@ -583,21 +437,25 @@ fun PlayerAction(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .width(80.dp)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(8.dp)
     ) {
         Icon(
-            icon,
+            imageVector = icon,
             contentDescription = label,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(28.dp),
             tint = color
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            label,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
         )
     }
 }
+
+
