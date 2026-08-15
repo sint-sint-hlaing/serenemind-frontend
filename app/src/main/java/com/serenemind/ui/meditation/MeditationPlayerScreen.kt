@@ -381,6 +381,77 @@ fun MeditationPlayerScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
                     // Progress Slider & Time
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -427,6 +498,77 @@ fun MeditationPlayerScreen(
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
+
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
 
                     // Playback Controls
                     Row(
@@ -542,6 +684,77 @@ fun MeditationPlayerScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
                     // About Section
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
@@ -560,6 +773,77 @@ fun MeditationPlayerScreen(
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
+
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
                 }
             }
 ?: run {
