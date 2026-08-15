@@ -122,28 +122,38 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Email
-            Text("Email or Phone", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
-            val emailError = (state as? LoginUiState.Error)?.fieldErrors?.get("email")
-            TextField(
-                value = email,
-                onValueChange = { email = it },
-                placeholder = { Text("Enter your email or phone") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                isError = emailError != null,
-                supportingText = {
-                    if (emailError != null) {
-                        Text(text = emailError, color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+            // Email Field
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Email or Phone",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-            )
+                val emailError = (state as? LoginUiState.Error)?.fieldErrors?.get("email")
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("Enter your email or phone", fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    isError = emailError != null,
+                    supportingText = {
+                        if (emailError != null) {
+                            Text(text = emailError, color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -162,6 +172,7 @@ fun LoginScreen(
                     onValueChange = { password = it },
                     placeholder = { Text("Enter your password", fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     isError = passwordError != null,
                     supportingText = {
                         if (passwordError != null) {
