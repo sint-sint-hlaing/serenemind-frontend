@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
@@ -28,6 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.AsyncImage
 import com.serenemind.R
 import com.serenemind.ui.theme.*
@@ -47,26 +51,117 @@ fun MeditationPlayerScreen(
     // ⚠️ FIXED: ViewModel မှာ isLoading မရှိလို့ state ကို ဖယ်ရှားခဲ့ပါတယ်
     // loading state အတွက် uiState ကိုသုံးပါမယ်
     val uiState by viewModel.uiState.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
+    val timerSeconds by viewModel.timerSeconds.collectAsState()
+    val isTimerRunning by viewModel.isTimerRunning.collectAsState()
+    val isTimerCompleted by viewModel.isTimerCompleted.collectAsState()
+    val downloadState by viewModel.downloadState.collectAsState()
 
-    var isPlaying by remember { mutableStateOf(false) }
-    var progress by remember { mutableFloatStateOf(0.35f) }
-    var currentTime by remember { mutableStateOf("02:35") }
-    var totalTime by remember { mutableStateOf("04:00") }
+    var progress by remember { mutableFloatStateOf(0.0f) }
+    var currentTime by remember { mutableStateOf("00:00") }
+    var totalTime by remember { mutableStateOf("00:00") }
     var isFavorite by remember { mutableStateOf(false) }
+    var isDragging by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Update favorite when meditation changes
+    // ===== EXOPLAYER INITIALIZATION =====
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            addListener(object : Player.Listener {
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    android.util.Log.e("MeditationPlayer", "ExoPlayer Error: ${error.errorCodeName} - ${error.message}", error)
+                    Toast.makeText(context, "Playback error: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+
+                override fun onPlaybackStateChanged(state: Int) {
+                    when (state) {
+                        Player.STATE_BUFFERING -> android.util.Log.d("MeditationPlayer", "Buffering...")
+                        Player.STATE_READY -> {
+                            android.util.Log.d("MeditationPlayer", "Ready to play. Duration: ${duration}")
+                            if (duration > 0) {
+                                val totalMins = (duration / 1000) / 60
+                                val totalSecs = (duration / 1000) % 60
+                                totalTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", totalMins, totalSecs)
+                            }
+                        }
+                        Player.STATE_ENDED -> {
+                            android.util.Log.d("MeditationPlayer", "Playback Ended")
+                            viewModel.resetTimer()
+                        }
+                        Player.STATE_IDLE -> android.util.Log.d("MeditationPlayer", "Player Idle")
+                    }
+                }
+            })
+        }
+    }
+
+    // Release player when Composable is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            android.util.Log.d("MeditationPlayer", "Releasing ExoPlayer")
+            exoPlayer.release()
+        }
+    }
+
+    // Update media item when meditation changes
     LaunchedEffect(meditation) {
+        meditation?.getCleanAudioUrl()?.let { url ->
+            android.util.Log.d("MeditationPlayer", "Loading URL: $url")
+            if (url.isNotBlank()) {
+                val mediaItem = MediaItem.fromUri(url)
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+            }
+        }
         isFavorite = meditation?.favorite ?: false
-        totalTime = "${meditation?.duration ?: "4"}:00"
     }
 
     // Show error messages
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            // Clear error after showing
             viewModel.clearError()
+        }
+    }
+
+    // Sync playback state
+    LaunchedEffect(isPlaying) {
+        android.util.Log.d("MeditationPlayer", "Syncing isPlaying: $isPlaying")
+        exoPlayer.playWhenReady = isPlaying
+        if (isPlaying && exoPlayer.playbackState == Player.STATE_IDLE) {
+            exoPlayer.prepare()
+        }
+    }
+
+    // Update progress and current time
+    LaunchedEffect(isPlaying, isDragging) {
+        while (isPlaying && !isDragging) {
+            val currentPos = exoPlayer.currentPosition
+            val duration = exoPlayer.duration
+            if (duration > 0) {
+                progress = (currentPos.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                
+                val mins = (currentPos / 1000) / 60
+                val secs = (currentPos / 1000) % 60
+                currentTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+            }
+            delay(500)
+        }
+    }
+
+    // Handle download state messages
+    LaunchedEffect(downloadState) {
+        val currentDownloadState = downloadState
+        when (currentDownloadState) {
+            is DownloadUiState.Success -> {
+                Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
+                viewModel.resetDownloadState()
+            }
+            is DownloadUiState.Error -> {
+                Toast.makeText(context, currentDownloadState.message, Toast.LENGTH_LONG).show()
+                viewModel.resetDownloadState()
+            }
+            else -> {}
         }
     }
 
@@ -122,9 +217,7 @@ fun MeditationPlayerScreen(
                             onClick = {
                                 showMenu = false
                                 meditation?.let {
-                                    viewModel.downloadAudio(it.id) { msg ->
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                    }
+                                    viewModel.startDownload(context, it.id, it.title)
                                 }
                             }
                         )
@@ -230,6 +323,59 @@ fun MeditationPlayerScreen(
                                     fontSize = 14.sp
                                 )
                             }
+
+                            // Timer overlay if running
+                            if (isTimerRunning || isTimerCompleted) {
+                                val minutes = timerSeconds / 60
+                                val seconds = timerSeconds % 60
+                                val timeStr = if (isTimerCompleted) "Done!" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                                
+                                Surface(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(16.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = timeStr,
+                                            color = if (isTimerCompleted) Success else Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                        if (isTimerRunning) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.Pause,
+                                                contentDescription = "Pause Timer",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.pauseTimer() }
+                                            )
+                                        } else if (timerSeconds > 0 && !isTimerCompleted) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.PlayArrow,
+                                                contentDescription = "Resume Timer",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.resumeTimer() }
+                                            )
+                                        }
+                                        if (timerSeconds > 0 || isTimerCompleted) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.Refresh,
+                                                contentDescription = "Reset",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.resetTimer() }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -249,7 +395,22 @@ fun MeditationPlayerScreen(
                         )
                         Slider(
                             value = progress,
-                            onValueChange = { progress = it },
+                            onValueChange = { 
+                                isDragging = true
+                                progress = it
+                                if (exoPlayer.duration > 0) {
+                                    val seekPos = (it * exoPlayer.duration).toLong()
+                                    val mins = (seekPos / 1000) / 60
+                                    val secs = (seekPos / 1000) % 60
+                                    currentTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+                                }
+                            },
+                            onValueChangeFinished = {
+                                isDragging = false
+                                if (exoPlayer.duration > 0) {
+                                    exoPlayer.seekTo((progress * exoPlayer.duration).toLong())
+                                }
+                            },
                             colors = SliderDefaults.colors(
                                 thumbColor = MaterialTheme.colorScheme.primary,
                                 activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -275,7 +436,10 @@ fun MeditationPlayerScreen(
                     ) {
                         // Rewind 15s
                         IconButton(
-                            onClick = { progress = (progress - 0.05f).coerceAtLeast(0f) },
+                            onClick = { 
+                                val newPos = (exoPlayer.currentPosition - 15000).coerceAtLeast(0)
+                                exoPlayer.seekTo(newPos)
+                            },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
@@ -290,7 +454,7 @@ fun MeditationPlayerScreen(
 
                         // Play/Pause Main
                         Surface(
-                            onClick = { isPlaying = !isPlaying },
+                            onClick = { viewModel.togglePlayback() },
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(80.dp),
@@ -310,7 +474,10 @@ fun MeditationPlayerScreen(
 
                         // Forward 15s
                         IconButton(
-                            onClick = { progress = (progress + 0.05f).coerceAtMost(1f) },
+                            onClick = { 
+                                val newPos = (exoPlayer.currentPosition + 15000).coerceAtMost(exoPlayer.duration)
+                                exoPlayer.seekTo(newPos)
+                            },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
@@ -330,9 +497,14 @@ fun MeditationPlayerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         PlayerActionItem(
-                            icon = Icons.Outlined.FileDownload,
-                            label = "Download",
-                            onClick = { viewModel.downloadAudio(m.id) { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() } }
+                            icon = if (downloadState is DownloadUiState.Downloading) Icons.Default.Downloading else Icons.Outlined.FileDownload,
+                            label = if (downloadState is DownloadUiState.Downloading) "Downloading" else "Download",
+                            enabled = downloadState !is DownloadUiState.Downloading,
+                            onClick = { 
+                                meditation?.let { 
+                                    viewModel.startDownload(context, it.id, it.title) 
+                                } 
+                            }
                         )
                         PlayerActionItem(
                             icon = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
@@ -432,6 +604,7 @@ fun PlayerActionItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     color: Color = MaterialTheme.colorScheme.onSurface,
+    enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
     Column(
@@ -439,8 +612,9 @@ fun PlayerActionItem(
         modifier = Modifier
             .width(80.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(8.dp)
+            .alpha(if (enabled) 1f else 0.5f)
     ) {
         Icon(
             imageVector = icon,

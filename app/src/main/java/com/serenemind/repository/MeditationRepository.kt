@@ -93,6 +93,11 @@ class MeditationRepository(private val apiService: MeditationApiService) : SafeA
         apiService.getNext(id)
     }
 
+    // ===== DOWNLOAD URL =====
+    fun getDownloadUrl(id: Long): Flow<NetworkResult<DownloadUrlResponse>> = safeApiCall {
+        apiService.getDownloadUrl(id)
+    }
+
     // ===== STREAM =====
     fun streamAudio(id: Long): Flow<NetworkResult<okhttp3.ResponseBody>> = safeApiCall {
         apiService.streamAudio(id)

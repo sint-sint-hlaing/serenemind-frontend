@@ -89,6 +89,11 @@ interface MeditationApiService {
         @Path("id") id: Long
     ): Response<MeditationList>
 
+    @GET("api/meditations/{id}/download-url")
+    suspend fun getDownloadUrl(
+        @Path("id") id: Long
+    ): Response<com.serenemind.model.response.DownloadUrlResponse>
+
     @GET("api/meditations/{id}/stream")
     suspend fun streamAudio(
         @Path("id") id: Long
