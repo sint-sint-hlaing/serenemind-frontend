@@ -1,6 +1,10 @@
 // MeditationViewModel.kt
 package com.serenemind.ui.meditation
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.serenemind.model.request.MeditationSessionRequest
@@ -9,11 +13,18 @@ import com.serenemind.model.response.MeditationList
 import com.serenemind.model.response.MeditationResponse
 import com.serenemind.network.NetworkResult
 import com.serenemind.repository.MeditationRepository
+import com.serenemind.util.MeditationAlarmScheduler
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class MeditationViewModel(private val repository: MeditationRepository) : ViewModel() {
+class MeditationViewModel(
+    private val repository: MeditationRepository,
+    private val scheduler: MeditationAlarmScheduler
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MeditationUiState>(MeditationUiState.Idle)
     val uiState = _uiState.asStateFlow()
@@ -36,13 +47,40 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     private val _continueListening = MutableStateFlow<List<MeditationResponse>>(emptyList())
     val continueListening = _continueListening.asStateFlow()
 
+    private val _history = MutableStateFlow<List<MeditationHistoryResponse>>(emptyList())
+    val history = _history.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
+
+    private val _downloadState = MutableStateFlow<DownloadUiState>(DownloadUiState.Idle)
+    val downloadState = _downloadState.asStateFlow()
+
+    // ===== TIMER STATE =====
+    private val _timerUiState = MutableStateFlow(TimerUiState())
+    val timerUiState = _timerUiState.asStateFlow()
+
+    private val _timerSeconds = MutableStateFlow(0)
+    val timerSeconds = _timerSeconds.asStateFlow()
+
+    private val _isTimerRunning = MutableStateFlow(false)
+    val isTimerRunning = _isTimerRunning.asStateFlow()
+
+    private val _isTimerCompleted = MutableStateFlow(false)
+    val isTimerCompleted = _isTimerCompleted.asStateFlow()
+
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying = _isPlaying.asStateFlow()
+
+    private var timerJob: Job? = null
+    private var initialTimerSeconds: Int = 0
+    private var endTimeMillis: Long = 0L
 
     init {
         fetchMeditationDashboard()
         fetchRecommendations()
         fetchContinueListening()
+        fetchHistory()
     }
 
     // ===== DASHBOARD =====
@@ -172,16 +210,15 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     fun toggleFavorite(meditationId: Long?) {
         if (meditationId == null) return
         viewModelScope.launch {
-            repository.addFavorite(meditationId).collect { result ->
+            repository.toggleFavorite(meditationId).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
                         val current = _selectedMeditation.value
                         if (current?.id == meditationId) {
-                            val newFavoriteStatus = !(current.favorite)
-                            _selectedMeditation.value = current.copy(favorite = newFavoriteStatus)
-                            // Update in lists
-                            updateFavoriteInLists(meditationId, newFavoriteStatus)
+                            _selectedMeditation.value = current.copy(favorite = result.data.favorite)
                         }
+                        // Update in lists
+                        updateFavoriteInLists(meditationId, result.data.favorite)
                     }
                     is NetworkResult.Error -> {
                         _errorMessage.value = result.message
@@ -207,25 +244,139 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
         }
     }
 
-    // ===== SAVE TIMER =====
     fun saveTimer(meditationId: Long?, minutes: Int, onResult: (String) -> Unit) {
         if (meditationId == null) {
             onResult("Invalid meditation ID")
             return
         }
         viewModelScope.launch {
+            _timerUiState.update { it.copy(isSaving = true, error = null, selectedMinutes = minutes) }
             repository.saveTimer(meditationId, minutes).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
+                        val durationMillis = minutes * 60_000L
+                        endTimeMillis = System.currentTimeMillis() + durationMillis
+                        
+                        scheduler.schedule(meditationId, endTimeMillis)
+                        
+                        _timerUiState.update { it.copy(
+                            isSaving = false,
+                            isRunning = true,
+                            remainingMillis = durationMillis,
+                            successMessage = result.data.message
+                        ) }
+                        
+                        _timerSeconds.value = minutes * 60
+                        _isTimerCompleted.value = false
+                        _isPlaying.value = true
+                        
+                        startLocalCountdown()
                         onResult(result.data.message ?: "Timer set")
                     }
                     is NetworkResult.Error -> {
+                        _timerUiState.update { it.copy(isSaving = false, error = result.message) }
                         onResult(result.message ?: "Failed to set timer")
                         _errorMessage.value = result.message
                     }
                     else -> {}
                 }
             }
+        }
+    }
+
+    private fun startLocalCountdown() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (true) {
+                val now = System.currentTimeMillis()
+                val remaining = endTimeMillis - now
+                
+                if (remaining <= 0) {
+                    _timerUiState.update { it.copy(isRunning = false, remainingMillis = 0L) }
+                    _timerSeconds.value = 0
+                    onTimerFinished()
+                    break
+                }
+                
+                _timerUiState.update { it.copy(remainingMillis = remaining) }
+                _timerSeconds.value = (remaining / 1000).toInt()
+                _isTimerRunning.value = true
+                
+                delay(500)
+            }
+        }
+    }
+
+    // ===== TIMER CONTROLS =====
+    fun startTimer() {
+        if (_timerSeconds.value <= 0) return
+        
+        timerJob?.cancel()
+        _isTimerRunning.value = true
+        _isTimerCompleted.value = false
+        _isPlaying.value = true // Automatically start meditation
+        
+        endTimeMillis = System.currentTimeMillis() + (_timerSeconds.value * 1000L)
+        _selectedMeditation.value?.id?.let { scheduler.schedule(it, endTimeMillis) }
+
+        startLocalCountdown()
+    }
+
+    fun pauseTimer() {
+        timerJob?.cancel()
+        val remaining = endTimeMillis - System.currentTimeMillis()
+        _timerUiState.update { it.copy(isRunning = false, remainingMillis = maxOf(0L, remaining)) }
+        _selectedMeditation.value?.id?.let { scheduler.cancel(it) }
+        _isTimerRunning.value = false
+        _isPlaying.value = false
+    }
+
+    fun resumeTimer() {
+        val remaining = _timerUiState.value.remainingMillis
+        if (remaining > 0) {
+            endTimeMillis = System.currentTimeMillis() + remaining
+            _selectedMeditation.value?.id?.let { scheduler.schedule(it, endTimeMillis) }
+            _timerUiState.update { it.copy(isRunning = true) }
+            _isTimerRunning.value = true
+            _isPlaying.value = true
+            startLocalCountdown()
+        }
+    }
+
+    fun resetTimer() {
+        timerJob?.cancel()
+        _selectedMeditation.value?.id?.let { scheduler.cancel(it) }
+        _timerUiState.value = TimerUiState()
+        _isTimerRunning.value = false
+        _timerSeconds.value = 0
+        _isTimerCompleted.value = false
+        _isPlaying.value = false
+    }
+
+    private fun onTimerFinished() {
+        _isTimerRunning.value = false
+        _isTimerCompleted.value = true
+        _isPlaying.value = false // Stop meditation
+        
+        _timerUiState.update { it.copy(isRunning = false, remainingMillis = 0) }
+
+        // Call complete session API if a meditation is selected
+        val id = _selectedMeditation.value?.id
+        val minutes = _timerUiState.value.selectedMinutes
+        if (id != null) {
+            completeSession(id, minutes, {
+                fetchHistory()
+            })
+        }
+    }
+
+    fun togglePlayback() {
+        _isPlaying.value = !_isPlaying.value
+        // Optionally sync timer with playback
+        if (_isTimerRunning.value && !_isPlaying.value) {
+            pauseTimer()
+        } else if (!_isTimerRunning.value && _isPlaying.value && _timerSeconds.value > 0) {
+            startTimer()
         }
     }
 
@@ -305,25 +456,55 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     }
 
     // ===== DOWNLOAD AUDIO =====
-    fun downloadAudio(meditationId: Long?, onResult: (String) -> Unit) {
-        if (meditationId == null) {
-            onResult("Invalid meditation ID")
+    fun startDownload(context: Context, id: Long?, title: String?) {
+        if (id == null) {
+            _errorMessage.value = "Invalid meditation ID"
             return
         }
+
+        if (_downloadState.value == DownloadUiState.Downloading) return
+
         viewModelScope.launch {
-            repository.downloadAudio(meditationId).collect { result ->
+            _downloadState.value = DownloadUiState.Downloading
+            repository.getDownloadUrl(id).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
-                        onResult("Download complete!")
+                        val downloadUrl = result.data.downloadUrl
+                        if (downloadUrl.isNotEmpty()) {
+                            performSystemDownload(context, downloadUrl, id, title ?: "Meditation")
+                            _downloadState.value = DownloadUiState.Success
+                        } else {
+                            _downloadState.value = DownloadUiState.Error("Empty download URL")
+                        }
                     }
                     is NetworkResult.Error -> {
-                        onResult("Download failed: ${result.message}")
-                        _errorMessage.value = result.message
+                        _downloadState.value = DownloadUiState.Error(result.message ?: "Failed to get download URL")
                     }
                     else -> {}
                 }
             }
         }
+    }
+
+    private fun performSystemDownload(context: Context, url: String, id: Long, title: String) {
+        try {
+            val request = DownloadManager.Request(Uri.parse(url))
+                .setTitle(title)
+                .setDescription("Downloading meditation...")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "meditation_$id.mp3")
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            downloadManager.enqueue(request)
+        } catch (e: Exception) {
+            _downloadState.value = DownloadUiState.Error("Download system error: ${e.message}")
+        }
+    }
+
+    fun resetDownloadState() {
+        _downloadState.value = DownloadUiState.Idle
     }
 
     // ===== COMPLETE SESSION =====
@@ -352,6 +533,22 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     }
 
     // ===== GET HISTORY =====
+    fun fetchHistory() {
+        viewModelScope.launch {
+            repository.getHistory().collect { result ->
+                when (result) {
+                    is NetworkResult.Success -> {
+                        _history.value = result.data
+                    }
+                    is NetworkResult.Error -> {
+                        _errorMessage.value = result.message
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
     fun getHistory(onResult: (List<MeditationHistoryResponse>) -> Unit) {
         viewModelScope.launch {
             repository.getHistory().collect { result ->
@@ -406,8 +603,8 @@ class MeditationViewModel(private val repository: MeditationRepository) : ViewMo
     // ===== SELECT MEDITATION =====
     fun selectMeditation(meditation: MeditationResponse) {
         _selectedMeditation.value = meditation
-        getNextMeditation(meditation.id)
-        getPreviousMeditation(meditation.id)
+        resetTimer() // Reset timer for new selection
+        meditation.id?.let { getMeditationById(it) }
     }
 
     // ===== CLEAR SEARCH =====

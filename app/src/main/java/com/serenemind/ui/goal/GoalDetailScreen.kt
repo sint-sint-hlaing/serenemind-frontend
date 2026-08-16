@@ -1,4 +1,4 @@
-// GoalDetailScreen.kt (Complete fixed version)
+// GoalDetailScreen.kt
 package com.serenemind.ui.goal
 
 import androidx.compose.foundation.background
@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.serenemind.model.entity.enums.GoalStatus
 import com.serenemind.ui.theme.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,22 +38,26 @@ import kotlinx.coroutines.delay
 fun GoalDetailScreen(
     viewModel: GoalViewModel,
     isDarkMode: Boolean,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onUpdateProgress: () -> Unit = {}
 ) {
     val goal by viewModel.selectedGoal.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val notes by viewModel.notes.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    var noteText by remember { mutableStateOf("") }
-    var showNoteSaved by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
 
     val backgroundColor = if (isDarkMode) Color(0xFF1A1A1A) else Color.White
     val surfaceColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
     val borderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
     val textPrimary = if (isDarkMode) Color.White else TextPrimary
     val textSecondary = if (isDarkMode) Color.LightGray else TextSecondary
+
+    // Fetch latest data when screen opens
+    LaunchedEffect(goal?.id) {
+        goal?.id?.let { id ->
+            viewModel.fetchGoalById(id)
+            viewModel.fetchNotes(id)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -73,6 +80,7 @@ fun GoalDetailScreen(
                     }
                 },
                 actions = {
+                    var showMenu by remember { mutableStateOf(false) }
                     IconButton(onClick = { showMenu = true }) {
                         Icon(
                             Icons.Default.MoreVert,
@@ -87,41 +95,6 @@ fun GoalDetailScreen(
                         containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color.White
                     ) {
                         goal?.let { g ->
-                            when (g.status) {
-                                GoalStatus.ACTIVE -> {
-                                    DropdownMenuItem(
-                                        text = { Text("⏸️ Pause Goal", color = textPrimary) },
-                                        onClick = {
-                                            viewModel.pauseGoal(g.id)
-                                            showMenu = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("✅ Complete Goal", color = Success) },
-                                        onClick = {
-                                            viewModel.completeGoal(g.id)
-                                            showMenu = false
-                                        }
-                                    )
-                                }
-                                GoalStatus.PAUSED -> {
-                                    DropdownMenuItem(
-                                        text = { Text("▶️ Resume Goal", color = PrimaryLight) },
-                                        onClick = {
-                                            viewModel.resumeGoal(g.id)
-                                            showMenu = false
-                                        }
-                                    )
-                                }
-                                GoalStatus.COMPLETED -> {
-                                    DropdownMenuItem(
-                                        text = { Text("✅ Already Completed", color = Success) },
-                                        enabled = false,
-                                        onClick = {}
-                                    )
-                                }
-                                else -> {}
-                            }
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -145,434 +118,343 @@ fun GoalDetailScreen(
         },
         containerColor = backgroundColor
     ) { padding ->
-        when {
-            uiState is GoalUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Loading...", color = textSecondary)
-                    }
-                }
-            }
-            uiState is GoalUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("❌", fontSize = 48.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            (uiState as GoalUiState.Error).message,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.fetchGoals() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
-            }
-            goal != null -> {
-                val g = goal!!
-
-                LaunchedEffect(g.id) {
-                    viewModel.fetchNotes(g.id)
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Progress Circle
-                    val progressColor = when {
+        goal?.let { g ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Progress Circle
+                val themeColor = remember(g.color) {
+                    parseColor(g.color) ?: when {
                         g.status == GoalStatus.COMPLETED -> Success
                         g.status == GoalStatus.PAUSED -> Warning
                         g.status == GoalStatus.EXPIRED -> Color.Red
-                        else -> PrimaryLight
+                        else -> PrimaryPurple
                     }
+                }
 
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
-                        CircularProgressIndicator(
-                            progress = {
-                                val target = g.targetDays.toFloat().coerceAtLeast(1f)
-                                (g.progress.toFloat() / target).coerceIn(0f, 1f)
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                            color = progressColor,
-                            strokeWidth = 10.dp,
-                            trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
-                            strokeCap = StrokeCap.Round,
-                        )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                g.progress.toString(),
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textPrimary
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.width(30.dp).padding(vertical = 4.dp),
-                                thickness = 2.dp,
-                                color = borderColor
-                            )
-                            Text(
-                                g.targetDays.toString(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textSecondary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Status badge
-                    when (g.status) {
-                        GoalStatus.COMPLETED -> {
-                            Badge(containerColor = Success, modifier = Modifier.padding(4.dp)) {
-                                Text("✅ Completed", color = Color.White, fontSize = 12.sp)
-                            }
-                        }
-                        GoalStatus.PAUSED -> {
-                            Badge(containerColor = Warning, modifier = Modifier.padding(4.dp)) {
-                                Text("⏸️ Paused", color = Color.White, fontSize = 12.sp)
-                            }
-                        }
-                        GoalStatus.EXPIRED -> {
-                            Badge(containerColor = Color.Red, modifier = Modifier.padding(4.dp)) {
-                                Text("⏰ Expired", color = Color.White, fontSize = 12.sp)
-                            }
-                        }
-                        GoalStatus.ACTIVE -> {
-                            Badge(containerColor = PrimaryLight, modifier = Modifier.padding(4.dp)) {
-                                Text("🟢 Active", color = Color.White, fontSize = 12.sp)
-                            }
-                        }
-                        else -> {}
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        g.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary,
-                        textAlign = TextAlign.Center
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
+                    CircularProgressIndicator(
+                        progress = {
+                            val target = g.targetDays.toFloat().coerceAtLeast(1f)
+                            (g.progress.toFloat() / target).coerceIn(0f, 1f)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                        color = themeColor,
+                        strokeWidth = 10.dp,
+                        trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
+                        strokeCap = StrokeCap.Round,
                     )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (g.icon != null) {
+                            Text(g.icon, fontSize = 32.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        Text(
+                            g.progress.toString(),
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.width(30.dp).padding(vertical = 4.dp),
+                            thickness = 2.dp,
+                            color = borderColor
+                        )
+                        Text(
+                            g.targetDays.toString(),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Status badge
+                Surface(
+                    color = themeColor.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(100.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(themeColor)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = g.status.name.lowercase().replaceFirstChar { it.uppercase() },
+                            color = themeColor,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    g.title,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textPrimary,
+                    textAlign = TextAlign.Center
+                )
+                
+                if (!g.description.isNullOrBlank()) {
                     Text(
-                        g.description ?: "Build a calm and peaceful mind.",
+                        g.description,
                         fontSize = 14.sp,
                         color = textSecondary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 8.dp)
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                    // Progress Info Row
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        InfoCard(
-                            label = "Progress",
-                            value = "${g.progress} / ${g.targetDays} days",
-                            progress = g.progress.toFloat() / g.targetDays.toFloat().coerceAtLeast(1f),
-                            color = progressColor,
-                            isDarkMode = isDarkMode,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        InfoCard(
-                            label = "Streak",
-                            value = "${g.streak} days",
-                            progress = (g.streak.toFloat() / 30f).coerceAtMost(1f),
-                            color = Warning,
-                            isDarkMode = isDarkMode,
-                            modifier = Modifier.weight(1f)
+                // Progress Info Row
+                Text(
+                    "Progress",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                InfoCard(
+                    label = "",
+                    value = "${g.progress} / ${g.targetDays} days",
+                    progress = g.progress.toFloat() / g.targetDays.toFloat().coerceAtLeast(1f),
+                    color = themeColor,
+                    isDarkMode = isDarkMode,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // History
+                Text(
+                    "History",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val historyList = g.history ?: emptyList()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val today = LocalDate.now()
+                    val days = (0..6).map { today.minusDays(it.toLong()) }.reversed()
+                    
+                    days.forEach { date ->
+                        val dayName = date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+                        val dateLabel = date.dayOfMonth.toString()
+                        
+                        val historyEntry = historyList.find { 
+                            try { LocalDate.parse(it.date) == date } catch(e: Exception) { false }
+                        }
+                        
+                        HistoryItem(
+                            day = dayName,
+                            dateLabel = dateLabel,
+                            isCompleted = historyEntry?.completed ?: false,
+                            isToday = date == today,
+                            isDarkMode = isDarkMode
                         )
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                    // Streak Fire Icons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        repeat(7) { i ->
-                            Text(
-                                "🔥",
-                                fontSize = 18.sp,
-                                modifier = Modifier.alpha(if (i < g.streak) 1f else 0.2f)
+                // Notes Section
+                Text(
+                    "Notes",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (notes.isNotEmpty()) {
+                    notes.forEach { note ->
+                        var isEditing by remember { mutableStateOf(false) }
+                        var editContent by remember { mutableStateOf(note.content ?: "") }
+
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = surfaceColor
                             )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // History
-                    Text(
-                        "History",
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = textPrimary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val historyList = g.history ?: emptyList()
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        val days = listOf("May 6", "May 7", "May 8", "May 9", "May 10", "May 11", "May 12")
-                        days.forEachIndexed { index, day ->
-                            val historyEntry = historyList.find { it.date.contains(day) }
-                            val isCompleted = historyEntry?.completed ?: (index < 3 || index == 5)
-                            val isToday = index == 6
-                            HistoryItem(day, isCompleted, isToday, isDarkMode)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Notes Section
-                    Text(
-                        "Notes",
-                        modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = textPrimary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Display notes from ViewModel
-                    if (notes.isNotEmpty()) {
-                        notes.forEach { note ->
-                            var isEditing by remember { mutableStateOf(false) }
-                            var editContent by remember { mutableStateOf(note.content ?: "") }
-
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = surfaceColor
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    if (isEditing) {
-                                        OutlinedTextField(
-                                            value = editContent,
-                                            onValueChange = { editContent = it },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
-                                        )
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            TextButton(onClick = { isEditing = false }) {
-                                                Text("Cancel")
-                                            }
-                                            TextButton(onClick = {
-                                                note.id?.let {
-                                                    viewModel.updateNote(g.id, it, editContent)
-                                                }
-                                                isEditing = false
-                                            }) {
-                                                Text("Save")
-                                            }
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                if (isEditing) {
+                                    OutlinedTextField(
+                                        value = editContent,
+                                        onValueChange = { editContent = it },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(onClick = { isEditing = false }) {
+                                            Text("Cancel")
                                         }
-                                    } else {
+                                        TextButton(onClick = {
+                                            note.id?.let {
+                                                viewModel.updateNote(g.id, it, editContent)
+                                            }
+                                            isEditing = false
+                                        }) {
+                                            Text("Save")
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        text = note.content ?: "",
+                                        fontSize = 14.sp,
+                                        color = textPrimary
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Text(
-                                            text = note.content ?: "",
-                                            fontSize = 14.sp,
-                                            color = textPrimary
+                                            text = formatDateNicely(note.createdAt ?: ""),
+                                            fontSize = 11.sp,
+                                            color = textSecondary,
+                                            modifier = Modifier.weight(1f)
                                         )
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            IconButton(onClick = { isEditing = true }, modifier = Modifier.size(24.dp)) {
-                                                Icon(Icons.Default.MoreHoriz, contentDescription = "Edit", tint = textSecondary, modifier = Modifier.size(16.dp))
+                                        IconButton(onClick = { isEditing = true }, modifier = Modifier.size(24.dp)) {
+                                            Icon(Icons.Default.MoreHoriz, contentDescription = "Edit", tint = textSecondary, modifier = Modifier.size(16.dp))
+                                        }
+                                        IconButton(onClick = {
+                                            note.id?.let {
+                                                viewModel.deleteNote(g.id, it)
                                             }
-                                            IconButton(onClick = {
-                                                note.id?.let {
-                                                    viewModel.deleteNote(g.id, it)
-                                                }
-                                            }, modifier = Modifier.size(24.dp)) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                                            }
+                                        }, modifier = Modifier.size(24.dp)) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                                         }
                                     }
                                 }
                             }
                         }
-                    } else {
-                        Text(
-                            "No notes yet. Add one below!",
-                            color = textSecondary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
                     }
+                } else {
+                    Text(
+                        "No notes yet. Add one below!",
+                        color = textSecondary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Add note input
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                // Add note input
+                var noteInput by remember { mutableStateOf("") }
+                var isSavingNote by remember { mutableStateOf(false) }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = noteInput,
+                        onValueChange = { noteInput = it },
+                        placeholder = {
+                            Text(
+                                "Add a note...",
+                                fontSize = 14.sp,
+                                color = textSecondary
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(60.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = borderColor,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedContainerColor = surfaceColor,
+                            focusedContainerColor = surfaceColor
+                        )
+                    )
+
+                    Button(
+                        onClick = {
+                            if (noteInput.isNotBlank()) {
+                                isSavingNote = true
+                                viewModel.addNote(g.id, noteInput)
+                                noteInput = ""
+                                isSavingNote = false
+                            }
+                        },
+                        enabled = noteInput.isNotBlank() && !isSavingNote,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.height(60.dp)
                     ) {
-                        OutlinedTextField(
-                            value = noteText,
-                            onValueChange = { noteText = it },
-                            placeholder = {
-                                Text(
-                                    "Add a note...",
-                                    fontSize = 14.sp,
-                                    color = textSecondary
-                                )
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(60.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = borderColor,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedContainerColor = surfaceColor,
-                                focusedContainerColor = surfaceColor
-                            )
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Save Note",
+                            tint = Color.White
                         )
-
-                        Button(
-                            onClick = {
-                                if (noteText.isNotBlank()) {
-                                    viewModel.addNote(g.id, noteText)
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        "Note saved",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                    noteText = ""
-                                    showNoteSaved = true
-                                }
-                            },
-                            enabled = noteText.isNotBlank(),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.height(60.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = "Save Note",
-                                tint = Color.White
-                            )
-                        }
                     }
+                }
 
-                    if (showNoteSaved) {
+                Spacer(modifier = Modifier.height(40.dp))
+
+                // Main Action Button
+                if (g.status == GoalStatus.ACTIVE || g.status == GoalStatus.PAUSED) {
+                    Button(
+                        onClick = onUpdateProgress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
                         Text(
-                            "✅ Note saved!",
-                            color = Success,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 4.dp)
+                            if (g.status == GoalStatus.PAUSED) "Resume & Update" else "Update Progress",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
                         )
-                        LaunchedEffect(Unit) {
-                            delay(2000)
-                            showNoteSaved = false
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Action Buttons based on status
-                    when (g.status) {
-                        GoalStatus.ACTIVE -> {
-                            Button(
-                                onClick = { viewModel.incrementProgress(g.id) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                enabled = uiState !is GoalUiState.Loading
-                            ) {
-                                if (uiState is GoalUiState.Loading) {
-                                    CircularProgressIndicator(
-                                        color = Color.White,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Updating...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                } else {
-                                    Text("✅ Check In", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                }
-                            }
-                        }
-                        GoalStatus.PAUSED -> {
-                            Button(
-                                onClick = { viewModel.resumeGoal(g.id) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Warning)
-                            ) {
-                                Text("▶️ Resume Goal", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
-                        GoalStatus.COMPLETED -> {
-                            Button(
-                                onClick = {},
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                enabled = false,
-                                colors = ButtonDefaults.buttonColors(containerColor = Success)
-                            ) {
-                                Text("✅ Goal Completed", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
-                        GoalStatus.EXPIRED -> {
-                            Button(
-                                onClick = {},
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                enabled = false,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                            ) {
-                                Text("⏰ Goal Expired", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
-                        else -> {}
                     }
                 }
             }
-            else -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        } ?: run {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (uiState is GoalUiState.Loading) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Loading goal details...", color = textSecondary)
+                    } else {
                         Text("📭", fontSize = 48.sp)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No goal selected", color = textSecondary, fontSize = 16.sp)
+                        Text("Goal not found", color = textSecondary, fontSize = 16.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = onBack) {
                             Text("Go Back")
@@ -598,8 +480,10 @@ fun InfoCard(
     val trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
 
     Column(modifier = modifier) {
-        Text(label, fontSize = 13.sp, color = textSecondary, fontWeight = FontWeight.Medium)
-        Spacer(modifier = Modifier.height(4.dp))
+        if (label.isNotEmpty()) {
+            Text(label, fontSize = 13.sp, color = textSecondary, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         Text(value, fontSize = 15.sp, color = textPrimary, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         LinearProgressIndicator(
@@ -617,6 +501,7 @@ fun InfoCard(
 @Composable
 fun HistoryItem(
     day: String,
+    dateLabel: String,
     isCompleted: Boolean,
     isToday: Boolean,
     isDarkMode: Boolean = false
@@ -626,9 +511,16 @@ fun HistoryItem(
     val surfaceColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF5F5F5)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = day,
+            fontSize = 12.sp,
+            color = textSecondary,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(
                     when {
@@ -644,31 +536,45 @@ fun HistoryItem(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            when {
-                isCompleted -> {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Success,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                isToday -> {
-                    Icon(
-                        Icons.Default.MoreHoriz,
-                        contentDescription = null,
-                        tint = textSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+            if (isCompleted) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Success,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            day,
-            fontSize = 10.sp,
-            color = if (isToday) PrimaryLight else textSecondary,
+            dateLabel,
+            fontSize = 11.sp,
+            color = if (isToday) PrimaryPurple else textSecondary,
             fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
         )
+    }
+}
+
+fun parseColor(colorStr: String?): Color? {
+    return when (colorStr?.lowercase()) {
+        "red" -> Color(0xFFE53935)
+        "blue" -> Color(0xFF1E88E5)
+        "green" -> Color(0xFF43A047)
+        "yellow" -> Color(0xFFFFEB3B)
+        "purple" -> Color(0xFF8E24AA)
+        "orange" -> Color(0xFFFB8C00)
+        "pink" -> Color(0xFFD81B60)
+        "teal" -> Color(0xFF00897B)
+        else -> null
+    }
+}
+
+fun formatDateNicely(dateStr: String): String {
+    return try {
+        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        val date = java.time.LocalDateTime.parse(dateStr, formatter)
+        date.format(DateTimeFormatter.ofPattern("MMM dd, HH:mm", Locale.ENGLISH))
+    } catch (e: Exception) {
+        dateStr.substringBefore("T")
     }
 }

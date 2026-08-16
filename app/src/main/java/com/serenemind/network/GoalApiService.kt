@@ -10,10 +10,17 @@ import com.serenemind.model.request.GoalNoteRequest
 import com.serenemind.model.request.NoteUpdateRequest
 import com.serenemind.model.response.GoalNoteResponse
 import com.serenemind.model.response.HomeResponse
-interface GoalApiService {
-    // ===== CREATE =====
+interface
+GoalApiService {
+    // ===== CREATE & UPDATE =====
     @POST("api/goals")
     suspend fun createGoal(
+        @Body request: GoalRequest
+    ): Response<GoalResponse>
+
+    @PATCH("api/goals/{id}")
+    suspend fun updateGoal(
+        @Path("id") id: Long,
         @Body request: GoalRequest
     ): Response<GoalResponse>
 
@@ -48,17 +55,18 @@ interface GoalApiService {
     // ===== UPDATE PROGRESS =====
     @PATCH("api/goals/{id}/progress")
     suspend fun updateProgress(
-        @Path("id") id: Long
+        @Path("id") id: Long,
+        @Body request: com.serenemind.model.request.GoalProgressRequest
     ): Response<GoalResponse>
 
     // ===== COMPLETE GOAL =====
-    @PATCH("api/goals/{id}/complete")
+    @PUT("api/goals/{id}/complete")
     suspend fun completeGoal(
         @Path("id") id: Long
     ): Response<GoalResponse>
 
     // ===== PAUSE GOAL =====
-    @PATCH("api/goals/{id}/pause")
+    @PUT("api/goals/{id}/pause")
     suspend fun pauseGoal(
         @Path("id") id: Long
     ): Response<GoalResponse>

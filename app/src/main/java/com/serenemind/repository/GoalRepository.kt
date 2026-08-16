@@ -15,9 +15,13 @@ import kotlinx.coroutines.flow.Flow
 
 
 class GoalRepository (private val apiService: GoalApiService) : SafeApiCall() {
-    // ===== CREATE =====
+    // ===== CREATE & UPDATE =====
     fun createGoal(request: GoalRequest): Flow<NetworkResult<GoalResponse>> = safeApiCall {
         apiService.createGoal(request)
+    }
+
+    fun updateGoal(id: Long, request: GoalRequest): Flow<NetworkResult<GoalResponse>> = safeApiCall {
+        apiService.updateGoal(id, request)
     }
 
     // ===== GET ALL GOALS =====
@@ -51,8 +55,8 @@ class GoalRepository (private val apiService: GoalApiService) : SafeApiCall() {
     }
 
     // ===== UPDATE PROGRESS =====
-    fun updateProgress(id: Long): Flow<NetworkResult<GoalResponse>> = safeApiCall {
-        apiService.updateProgress(id)
+    fun updateProgress(id: Long, completed: Boolean, note: String?): Flow<NetworkResult<GoalResponse>> = safeApiCall {
+        apiService.updateProgress(id, com.serenemind.model.request.GoalProgressRequest(completed, note))
     }
 
     // ===== COMPLETE GOAL =====

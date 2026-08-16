@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
@@ -25,8 +26,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.AsyncImage
 import com.serenemind.R
 import com.serenemind.ui.theme.*
@@ -46,26 +51,117 @@ fun MeditationPlayerScreen(
     // ⚠️ FIXED: ViewModel မှာ isLoading မရှိလို့ state ကို ဖယ်ရှားခဲ့ပါတယ်
     // loading state အတွက် uiState ကိုသုံးပါမယ်
     val uiState by viewModel.uiState.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
+    val timerSeconds by viewModel.timerSeconds.collectAsState()
+    val isTimerRunning by viewModel.isTimerRunning.collectAsState()
+    val isTimerCompleted by viewModel.isTimerCompleted.collectAsState()
+    val downloadState by viewModel.downloadState.collectAsState()
 
-    var isPlaying by remember { mutableStateOf(false) }
-    var progress by remember { mutableFloatStateOf(0.35f) }
-    var currentTime by remember { mutableStateOf("02:35") }
-    var totalTime by remember { mutableStateOf("04:00") }
+    var progress by remember { mutableFloatStateOf(0.0f) }
+    var currentTime by remember { mutableStateOf("00:00") }
+    var totalTime by remember { mutableStateOf("00:00") }
     var isFavorite by remember { mutableStateOf(false) }
+    var isDragging by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Update favorite when meditation changes
+    // ===== EXOPLAYER INITIALIZATION =====
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            addListener(object : Player.Listener {
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    android.util.Log.e("MeditationPlayer", "ExoPlayer Error: ${error.errorCodeName} - ${error.message}", error)
+                    Toast.makeText(context, "Playback error: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+
+                override fun onPlaybackStateChanged(state: Int) {
+                    when (state) {
+                        Player.STATE_BUFFERING -> android.util.Log.d("MeditationPlayer", "Buffering...")
+                        Player.STATE_READY -> {
+                            android.util.Log.d("MeditationPlayer", "Ready to play. Duration: ${duration}")
+                            if (duration > 0) {
+                                val totalMins = (duration / 1000) / 60
+                                val totalSecs = (duration / 1000) % 60
+                                totalTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", totalMins, totalSecs)
+                            }
+                        }
+                        Player.STATE_ENDED -> {
+                            android.util.Log.d("MeditationPlayer", "Playback Ended")
+                            viewModel.resetTimer()
+                        }
+                        Player.STATE_IDLE -> android.util.Log.d("MeditationPlayer", "Player Idle")
+                    }
+                }
+            })
+        }
+    }
+
+    // Release player when Composable is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            android.util.Log.d("MeditationPlayer", "Releasing ExoPlayer")
+            exoPlayer.release()
+        }
+    }
+
+    // Update media item when meditation changes
     LaunchedEffect(meditation) {
+        meditation?.getCleanAudioUrl()?.let { url ->
+            android.util.Log.d("MeditationPlayer", "Loading URL: $url")
+            if (url.isNotBlank()) {
+                val mediaItem = MediaItem.fromUri(url)
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+            }
+        }
         isFavorite = meditation?.favorite ?: false
-        totalTime = "${meditation?.duration ?: "4"}:00"
     }
 
     // Show error messages
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            // Clear error after showing
             viewModel.clearError()
+        }
+    }
+
+    // Sync playback state
+    LaunchedEffect(isPlaying) {
+        android.util.Log.d("MeditationPlayer", "Syncing isPlaying: $isPlaying")
+        exoPlayer.playWhenReady = isPlaying
+        if (isPlaying && exoPlayer.playbackState == Player.STATE_IDLE) {
+            exoPlayer.prepare()
+        }
+    }
+
+    // Update progress and current time
+    LaunchedEffect(isPlaying, isDragging) {
+        while (isPlaying && !isDragging) {
+            val currentPos = exoPlayer.currentPosition
+            val duration = exoPlayer.duration
+            if (duration > 0) {
+                progress = (currentPos.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                
+                val mins = (currentPos / 1000) / 60
+                val secs = (currentPos / 1000) % 60
+                currentTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+            }
+            delay(500)
+        }
+    }
+
+    // Handle download state messages
+    LaunchedEffect(downloadState) {
+        val currentDownloadState = downloadState
+        when (currentDownloadState) {
+            is DownloadUiState.Success -> {
+                Toast.makeText(context, "Download started", Toast.LENGTH_SHORT).show()
+                viewModel.resetDownloadState()
+            }
+            is DownloadUiState.Error -> {
+                Toast.makeText(context, currentDownloadState.message, Toast.LENGTH_LONG).show()
+                viewModel.resetDownloadState()
+            }
+            else -> {}
         }
     }
 
@@ -121,9 +217,7 @@ fun MeditationPlayerScreen(
                             onClick = {
                                 showMenu = false
                                 meditation?.let {
-                                    viewModel.downloadAudio(it.id) { msg ->
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                    }
+                                    viewModel.startDownload(context, it.id, it.title)
                                 }
                             }
                         )
@@ -181,83 +275,104 @@ fun MeditationPlayerScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Meditation Image/Video Card
+                    // Meditation Image Card with Text Overlay
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(240.dp),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = surfaceColor
-                        )
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            // Audio/Video Player integration
-                            if (isPlaying && m.getCleanAudioUrl()?.isNotEmpty() == true) {
-                                VideoPlayer(
-                                    videoUrl = m.getCleanAudioUrl()!!,
-                                    isPlaying = isPlaying,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                AsyncImage(
-                                    model = m.getCleanImageUrl(),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop,
-                                    error = painterResource(R.drawable.ic_launcher_background)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                                                startY = 300f
-                                            )
+                            // Background Image
+                            AsyncImage(
+                                model = m.getCleanImageUrl(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                error = painterResource(R.drawable.ic_launcher_background)
+                            )
+                            
+                            // Dark Gradient Overlay
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                                            startY = 300f
                                         )
+                                    )
+                            )
+
+                            // Title & Duration Text (Bottom Left)
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(24.dp)
+                            ) {
+                                Text(
+                                    text = m.title ?: "Untitled",
+                                    color = Color.White,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${m.duration ?: "10"} min - Guided Meditation",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 14.sp
                                 )
                             }
 
-                            if (!isPlaying) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(24.dp),
-                                    verticalArrangement = Arrangement.Bottom
-                                ) {
-                                    Text(
-                                        m.title ?: "Untitled",
-                                        color = Color.White,
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "${m.duration ?: "4"} min • Guided Meditation",
-                                        color = Color.White.copy(alpha = 0.8f),
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-
-                            // Play/Pause overlay button
-                            if (!isPlaying) {
+                            // Timer overlay if running
+                            if (isTimerRunning || isTimerCompleted) {
+                                val minutes = timerSeconds / 60
+                                val seconds = timerSeconds % 60
+                                val timeStr = if (isTimerCompleted) "Done!" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                                
                                 Surface(
-                                    onClick = { isPlaying = true },
-                                    shape = CircleShape,
-                                    color = Color.White.copy(alpha = 0.9f),
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .size(56.dp)
+                                        .align(Alignment.TopEnd)
+                                        .padding(16.dp)
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            Icons.Filled.PlayArrow,
-                                            contentDescription = "Play",
-                                            modifier = Modifier.size(32.dp),
-                                            // ⚠️ FIXED: PrimaryLight ကို Primary နဲ့ အစားထိုးခဲ့ပါတယ်
-                                            tint = PrimaryLight
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = timeStr,
+                                            color = if (isTimerCompleted) Success else Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
                                         )
+                                        if (isTimerRunning) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.Pause,
+                                                contentDescription = "Pause Timer",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.pauseTimer() }
+                                            )
+                                        } else if (timerSeconds > 0 && !isTimerCompleted) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.PlayArrow,
+                                                contentDescription = "Resume Timer",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.resumeTimer() }
+                                            )
+                                        }
+                                        if (timerSeconds > 0 || isTimerCompleted) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.Refresh,
+                                                contentDescription = "Reset",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp).clickable { viewModel.resetTimer() }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -266,178 +381,288 @@ fun MeditationPlayerScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Title and description
-                    Text(
-                        m.title ?: "Untitled",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor
-                    )
-                    Text(
-                        "${m.duration ?: "4"} min • ${m.category ?: "Meditation"}",
-                        fontSize = 14.sp,
-                        color = textSecondaryColor
-                    )
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Progress Slider
+                    // Progress Slider & Time
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(currentTime, fontSize = 12.sp, color = textSecondaryColor)
-                        Text(totalTime, fontSize = 12.sp, color = textSecondaryColor)
+                        Text(
+                            text = currentTime,
+                            fontSize = 12.sp,
+                            color = textSecondaryColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Slider(
+                            value = progress,
+                            onValueChange = { 
+                                isDragging = true
+                                progress = it
+                                if (exoPlayer.duration > 0) {
+                                    val seekPos = (it * exoPlayer.duration).toLong()
+                                    val mins = (seekPos / 1000) / 60
+                                    val secs = (seekPos / 1000) % 60
+                                    currentTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+                                }
+                            },
+                            onValueChangeFinished = {
+                                isDragging = false
+                                if (exoPlayer.duration > 0) {
+                                    exoPlayer.seekTo((progress * exoPlayer.duration).toLong())
+                                }
+                            },
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
+                            ),
+                            modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                        )
+                        Text(
+                            text = totalTime,
+                            fontSize = 12.sp,
+                            color = textSecondaryColor,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                    Slider(
-                        value = progress,
-                        onValueChange = { progress = it },
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Controls
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
+                    // Playback Controls
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Previous
+                        // Rewind 15s
                         IconButton(
-                            onClick = {
-                                viewModel.navigateToPrevious()
+                            onClick = { 
+                                val newPos = (exoPlayer.currentPosition - 15000).coerceAtLeast(0)
+                                exoPlayer.seekTo(newPos)
                             },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
-                                Icons.Default.SkipPrevious,
-                                contentDescription = "Previous",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Rewind
-                        IconButton(
-                            onClick = {
-                                progress = (progress - 0.05f).coerceAtLeast(0f)
-                                Toast.makeText(context, "Rewinding 15s", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                Icons.Outlined.Replay,
+                                imageVector = Icons.Outlined.Replay10, // Close enough to 15
                                 contentDescription = "Rewind",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
+                                modifier = Modifier.size(32.dp),
+                                tint = textSecondaryColor
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(24.dp))
 
                         // Play/Pause Main
-                        // ✅ Alternative - Using Surface without elevation
                         Surface(
-                            onClick = { isPlaying = !isPlaying },
+                            onClick = { viewModel.togglePlayback() },
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary,
-                            shadowElevation = 8.dp,  // ✅ Use shadowElevation instead of elevation
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier.size(80.dp),
+                            shadowElevation = 4.dp
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(36.dp),
+                                    modifier = Modifier.size(40.dp),
                                     tint = Color.White
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(24.dp))
 
-                        // Fast Forward
+                        // Forward 15s
                         IconButton(
-                            onClick = {
-                                progress = (progress + 0.05f).coerceAtMost(1f)
-                                Toast.makeText(context, "Fast Forward 15s", Toast.LENGTH_SHORT).show()
+                            onClick = { 
+                                val newPos = (exoPlayer.currentPosition + 15000).coerceAtMost(exoPlayer.duration)
+                                exoPlayer.seekTo(newPos)
                             },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
-                                Icons.Outlined.Forward,
-                                contentDescription = "Fast Forward",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Next
-                        IconButton(
-                            onClick = {
-                                viewModel.navigateToNext()
-                            },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.SkipNext,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(28.dp),
-                                tint = textColor
+                                imageVector = Icons.Outlined.Forward10, // Close enough to 15
+                                contentDescription = "Forward",
+                                modifier = Modifier.size(32.dp),
+                                tint = textSecondaryColor
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
 
-                    // Bottom Actions
+                    // Action Icons (Download, Favorite, Timer, Share)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        PlayerAction(
-                            icon = Icons.Outlined.FileDownload,
-                            label = "Download",
-                            onClick = {
-                                viewModel.downloadAudio(m.id) { msg ->
-                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                }
+                        PlayerActionItem(
+                            icon = if (downloadState is DownloadUiState.Downloading) Icons.Default.Downloading else Icons.Outlined.FileDownload,
+                            label = if (downloadState is DownloadUiState.Downloading) "Downloading" else "Download",
+                            enabled = downloadState !is DownloadUiState.Downloading,
+                            onClick = { 
+                                meditation?.let { 
+                                    viewModel.startDownload(context, it.id, it.title) 
+                                } 
                             }
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
                             label = "Favorite",
-                            color = if (isFavorite) Color.Red else textColor,
+                            color = if (isFavorite) Color.Red else textSecondaryColor,
                             onClick = {
                                 viewModel.toggleFavorite(m.id)
-                                // ⚠️ FIXED: isFavorite ကို update လုပ်ပါတယ်
                                 isFavorite = !isFavorite
-                                val msg = if (isFavorite) "Added to favorites" else "Removed from favorites"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             }
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = Icons.Outlined.Timer,
                             label = "Timer",
                             onClick = onNavigateToTimer
                         )
-
-                        PlayerAction(
+                        PlayerActionItem(
                             icon = Icons.Outlined.Share,
                             label = "Share",
                             onClick = {
@@ -454,26 +679,174 @@ fun MeditationPlayerScreen(
 
                     Spacer(modifier = Modifier.height(40.dp))
 
+                    // Divider
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = surfaceColor)
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
                     // About Section
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            "About this session",
+                            text = "About this session",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = textColor
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            m.description ?: "No description available for this meditation.",
+                            text = m.description ?: "A gentle meditation to help you relax your mind and release stress.",
                             color = textSecondaryColor,
                             fontSize = 15.sp,
                             lineHeight = 22.sp
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Prominent Timer Display (Active Timer Screen style)
+                    if (isTimerRunning || isTimerCompleted) {
+                        val minutes = timerSeconds / 60
+                        val seconds = timerSeconds % 60
+                        val timeStr = if (isTimerCompleted) "SESSION COMPLETED" else String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(surfaceColor)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Meditation Timer",
+                                fontSize = 14.sp,
+                                color = textSecondaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = timeStr,
+                                fontSize = 48.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Pause / Resume
+                                if (!isTimerCompleted) {
+                                    OutlinedButton(
+                                        onClick = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.resumeTimer() },
+                                        modifier = Modifier.weight(1f).height(48.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(if (isTimerRunning) "PAUSE" else "RESUME")
+                                    }
+                                }
+                                
+                                // Cancel / Reset
+                                Button(
+                                    onClick = { viewModel.resetTimer() },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f),
+                                        contentColor = if (isTimerCompleted) Color.White else textColor
+                                    )
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerCompleted) "FINISH" else "CANCEL")
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
                 }
-            } ?: run {
+            }
+?: run {
                 // No meditation selected
                 Box(
                     modifier = Modifier
@@ -511,30 +884,36 @@ fun MeditationPlayerScreen(
 }
 
 @Composable
-fun PlayerAction(
+fun PlayerActionItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     color: Color = MaterialTheme.colorScheme.onSurface,
+    enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .width(80.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(8.dp)
+            .alpha(if (enabled) 1f else 0.5f)
     ) {
         Icon(
-            icon,
+            imageVector = icon,
             contentDescription = label,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(28.dp),
             tint = color
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            label,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
         )
     }
 }
+
+

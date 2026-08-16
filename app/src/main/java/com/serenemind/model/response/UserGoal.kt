@@ -10,6 +10,8 @@ data class UserGoal(
     val progress: Int,
     val streak: Int,
     val status: GoalStatus,
+    val color: String? = null,
+    val icon: String? = null,
     val history: List<ProgressHistoryItem>? = null,
     val notes: List<String>? = null
 )

@@ -45,22 +45,30 @@ data class MeditationResponse(
 ) {
     /**
      * Extracts actual URL if it's in Markdown format like [text](url)
+     * Handles relative paths if necessary.
      */
     fun getCleanImageUrl(): String? {
         if (imageUrl == null) return null
         val markdownRegex = "\\[.*?\\]\\((.*?)\\)".toRegex()
         val match = markdownRegex.find(imageUrl)
-        return match?.groupValues?.get(1) ?: imageUrl
+        val url = match?.groupValues?.get(1) ?: imageUrl
+        
+        return if (url.startsWith("http")) url 
+        else "http://10.0.2.2:8080" + (if (url.startsWith("/")) "" else "/") + url
     }
 
     /**
      * Extracts actual URL if it's in Markdown format like [text](url)
+     * Handles relative paths if necessary.
      */
     fun getCleanAudioUrl(): String? {
         if (audioUrl == null) return null
         val markdownRegex = "\\[.*?\\]\\((.*?)\\)".toRegex()
         val match = markdownRegex.find(audioUrl)
-        return match?.groupValues?.get(1) ?: audioUrl
+        val url = match?.groupValues?.get(1) ?: audioUrl
+        
+        return if (url.startsWith("http")) url 
+        else "http://10.0.2.2:8080" + (if (url.startsWith("/")) "" else "/") + url
     }
 }
 

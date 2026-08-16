@@ -33,6 +33,7 @@ sealed class Screen(
     object MoodInsights : Screen("mood_insights")
     object GoalDetail : Screen("goal_detail")
     object AddGoal : Screen("add_goal")
+    object UpdateGoalProgress : Screen("update_goal_progress")
     object Notifications : Screen("notifications")
     object CreatePost : Screen("create_post")
     object Meditation : Screen("meditation")

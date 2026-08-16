@@ -41,6 +41,7 @@ import com.serenemind.ui.profile.ProfileScreen
 import com.serenemind.ui.profile.ProfileViewModel
 import com.serenemind.ui.profile.ProfileViewModelFactory
 
+import com.serenemind.util.MeditationAlarmScheduler
 import com.serenemind.datastore.ThemeManager
 import com.serenemind.network.MeditationApiService
 
@@ -88,13 +89,14 @@ fun BottomNavGraph(
     val chatRepository = remember { ChatRepository(chatApiService) }
     
     // ViewModels
+    val scheduler: MeditationAlarmScheduler = remember { MeditationAlarmScheduler(context) }
     val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(dashboardRepository, moodRepository, themeManager))
     val communityViewModel: CommunityViewModel = viewModel(factory = CommunityViewModelFactory(communityRepository))
     val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModelFactory(notificationRepository))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(userRepository))
     val moodViewModel: MoodViewModel = viewModel(factory = MoodViewModelFactory(moodRepository))
     val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModelFactory(goalRepository))
-    val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository))
+    val meditationViewModel: MeditationViewModel = viewModel(factory = MeditationViewModelFactory(meditationRepository, scheduler))
     val focusViewModel: FocusViewModel = viewModel(factory = FocusViewModelFactory())
 
     NavHost(
@@ -240,6 +242,17 @@ fun BottomNavGraph(
 
         composable(Screen.GoalDetail.route) {
             GoalDetailScreen(
+                viewModel = goalViewModel,
+                isDarkMode = isDarkMode,
+                onBack = { navController.popBackStack() },
+                onUpdateProgress = {
+                    navController.navigate(Screen.UpdateGoalProgress.route)
+                }
+            )
+        }
+
+        composable(Screen.UpdateGoalProgress.route) {
+            UpdateProgressScreen(
                 viewModel = goalViewModel,
                 isDarkMode = isDarkMode,
                 onBack = { navController.popBackStack() }
