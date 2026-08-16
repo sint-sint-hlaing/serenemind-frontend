@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
@@ -267,13 +268,16 @@ fun GoalDetailScreen(
                         val dateLabel = date.dayOfMonth.toString()
                         
                         val historyEntry = historyList.find { 
-                            try { LocalDate.parse(it.date) == date } catch(e: Exception) { false }
+                            try { 
+                                val entryDateStr = if (it.date.contains("T")) it.date.substringBefore("T") else it.date
+                                LocalDate.parse(entryDateStr) == date 
+                            } catch(e: Exception) { false }
                         }
                         
                         HistoryItem(
                             day = dayName,
                             dateLabel = dateLabel,
-                            isCompleted = historyEntry?.completed ?: false,
+                            completedStatus = historyEntry?.completed,
                             isToday = date == today,
                             isDarkMode = isDarkMode
                         )
@@ -502,7 +506,7 @@ fun InfoCard(
 fun HistoryItem(
     day: String,
     dateLabel: String,
-    isCompleted: Boolean,
+    completedStatus: Boolean?,
     isToday: Boolean,
     isDarkMode: Boolean = false
 ) {
@@ -523,24 +527,31 @@ fun HistoryItem(
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(
-                    when {
-                        isCompleted -> Success.copy(alpha = 0.15f)
-                        isToday -> surfaceColor
-                        else -> Color.Transparent
+                    when (completedStatus) {
+                        true -> Success.copy(alpha = 0.15f)
+                        false -> Color.Red.copy(alpha = 0.1f)
+                        null -> if (isToday) surfaceColor else Color.Transparent
                     }
                 )
                 .then(
-                    if (!isCompleted && !isToday)
+                    if (completedStatus == null && !isToday)
                         Modifier.border(1.dp, borderColor, CircleShape)
                     else Modifier
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (isCompleted) {
+            if (completedStatus == true) {
                 Icon(
                     Icons.Default.Check,
                     contentDescription = null,
                     tint = Success,
+                    modifier = Modifier.size(20.dp)
+                )
+            } else if (completedStatus == false) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = null,
+                    tint = Color.Red,
                     modifier = Modifier.size(20.dp)
                 )
             }
