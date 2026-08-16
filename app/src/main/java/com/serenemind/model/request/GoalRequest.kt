@@ -18,7 +18,9 @@ data class GoalRequest(
 
     @SerializedName("unit")
     val unit: String = "days",
-    val color:String?=null,
+
+    @SerializedName("color")
+    val color: String? = null,
 
     @SerializedName("startDate")
     val startDate: String? = null,

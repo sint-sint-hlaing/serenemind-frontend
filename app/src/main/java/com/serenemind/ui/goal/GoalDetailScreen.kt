@@ -13,8 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,38 +79,7 @@ fun GoalDetailScreen(
                         )
                     }
                 },
-                actions = {
-                    var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = "More",
-                            tint = textPrimary
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                        containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color.White
-                    ) {
-                        goal?.let { g ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "🗑️ Delete Goal",
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                },
-                                onClick = {
-                                    viewModel.deleteGoal(g.id)
-                                    showMenu = false
-                                    onBack()
-                                }
-                            )
-                        }
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = backgroundColor
                 )
@@ -129,13 +97,8 @@ fun GoalDetailScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Progress Circle
-                val themeColor = remember(g.color) {
-                    parseColor(g.color) ?: when {
-                        g.status == GoalStatus.COMPLETED -> Success
-                        g.status == GoalStatus.PAUSED -> Warning
-                        g.status == GoalStatus.EXPIRED -> Color.Red
-                        else -> PrimaryPurple
-                    }
+                val themeColor = remember(g.color, g.icon, g.title) {
+                    parseColor(g.color) ?: getGoalIconColor(g.icon ?: g.title, null)
                 }
 
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
@@ -151,27 +114,19 @@ fun GoalDetailScreen(
                         strokeCap = StrokeCap.Round,
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (g.icon != null) {
-                            Text(g.icon, fontSize = 32.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
+                        if (!g.icon.isNullOrBlank()) {
+                            // Check if it's an emoji or a category name
+                            if (g.icon.length <= 2) {
+                                Text(g.icon, fontSize = 48.sp)
+                            } else {
+                                Icon(
+                                    getGoalIcon(g.icon, g.title),
+                                    contentDescription = null,
+                                    tint = themeColor,
+                                    modifier = Modifier.size(56.dp)
+                                )
+                            }
                         }
-                        Text(
-                            g.progress.toString(),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.width(30.dp).padding(vertical = 4.dp),
-                            thickness = 2.dp,
-                            color = borderColor
-                        )
-                        Text(
-                            g.targetDays.toString(),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textSecondary
-                        )
                     }
                 }
 
@@ -351,9 +306,6 @@ fun GoalDetailScreen(
                                             color = textSecondary,
                                             modifier = Modifier.weight(1f)
                                         )
-                                        IconButton(onClick = { isEditing = true }, modifier = Modifier.size(24.dp)) {
-                                            Icon(Icons.Default.MoreHoriz, contentDescription = "Edit", tint = textSecondary, modifier = Modifier.size(16.dp))
-                                        }
                                         IconButton(onClick = {
                                             note.id?.let {
                                                 viewModel.deleteNote(g.id, it)
@@ -571,7 +523,7 @@ fun parseColor(colorStr: String?): Color? {
         "red" -> Color(0xFFE53935)
         "blue" -> Color(0xFF1E88E5)
         "green" -> Color(0xFF43A047)
-        "yellow" -> Color(0xFFFFEB3B)
+        "yellow" -> Color(0xFFFBC02D)
         "purple" -> Color(0xFF8E24AA)
         "orange" -> Color(0xFFFB8C00)
         "pink" -> Color(0xFFD81B60)

@@ -9,21 +9,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.SelfImprovement
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,8 +59,46 @@ fun AddGoalScreen(
     val displayFormatter = remember { SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH) }
     
     var startDateIso by remember { mutableStateOf(isoFormatter.format(Date())) }
-    var selectedIcon by remember { mutableStateOf("📚") }
-    var selectedColorName by remember { mutableStateOf("purple") }
+    var selectedCategory by remember { mutableStateOf("Meditation") }
+
+    val categories = listOf(
+        "Meditation" to Icons.Outlined.SelfImprovement,
+        "Journal" to Icons.AutoMirrored.Outlined.Assignment,
+        "Water" to Icons.Outlined.LocalDrink,
+        "Sleep" to Icons.Outlined.Nightlight,
+        "Exercise" to Icons.Outlined.DirectionsRun,
+        "Reading" to Icons.Outlined.MenuBook,
+        "Study" to Icons.Outlined.School,
+        "Health" to Icons.Outlined.Favorite,
+        "Other" to Icons.Outlined.CheckCircle
+    )
+
+    val categoryColorMap = remember {
+        mapOf(
+            "Meditation" to "purple",
+            "Journal" to "green",
+            "Water" to "blue",
+            "Sleep" to "orange",
+            "Exercise" to "red",
+            "Reading" to "pink",
+            "Study" to "purple",
+            "Health" to "red",
+            "Other" to "green"
+        )
+    }
+
+    val selectedColorName = categoryColorMap[selectedCategory] ?: "purple"
+
+    val currentColor = when (selectedColorName) {
+        "red" -> Color(0xFFE53935)
+        "blue" -> Color(0xFF1E88E5)
+        "green" -> Color(0xFF43A047)
+        "yellow" -> Color(0xFFFBC02D)
+        "purple" -> Color(0xFF8E24AA)
+        "orange" -> Color(0xFFFB8C00)
+        "pink" -> Color(0xFFD81B60)
+        else -> MaterialTheme.colorScheme.primary
+    }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -82,30 +123,40 @@ fun AddGoalScreen(
                     }
                 },
                 actions = {
-                    TextButton(
-                        onClick = {
-                            if (title.isBlank()) {
-                                android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
-                            } else {
-                                val frequencyEnum = when (frequency) {
-                                    "Daily" -> Frequency.DAILY
-                                    "Weekly" -> Frequency.WEEKLY
-                                    "Monthly" -> Frequency.MONTHLY
-                                    else -> Frequency.DAILY
+                    if (uiState is GoalUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                    } else {
+                        TextButton(
+                            onClick = {
+                                if (title.isBlank()) {
+                                    android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    val frequencyEnum = when (frequency) {
+                                        "Daily" -> Frequency.DAILY
+                                        "Weekly" -> Frequency.WEEKLY
+                                        "Monthly" -> Frequency.MONTHLY
+                                        else -> Frequency.DAILY
+                                    }
+                                    viewModel.createGoal(
+                                        title = title,
+                                        description = description,
+                                        targetDays = target,
+                                        unit = unit.ifBlank { "days" },
+                                        frequency = frequencyEnum,
+                                        color = selectedColorName,
+                                        icon = selectedCategory,
+                                        startDate = startDateIso
+                                    )
                                 }
-                                viewModel.createGoal(
-                                    title = title,
-                                    description = description,
-                                    targetDays = target,
-                                    frequency = frequencyEnum,
-                                    color = selectedColorName,
-                                    icon = selectedIcon,
-                                    startDate = startDateIso
-                                )
                             }
+                        ) {
+                            Text("Save", color = currentColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
-                    ) {
-                        Text("Save", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -119,256 +170,260 @@ fun AddGoalScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.Start
         ) {
-            // Icon Picker
-            val icons = listOf("📚", "🧘", "📖", "💧", "😴", "🏃", "🍎", "🌱")
-            var showIconMenu by remember { mutableStateOf(false) }
-
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .clickable { showIconMenu = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(selectedIcon, fontSize = 40.sp)
+            // Category Picker
+            Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 16.dp)) {
+                Text("Select Category", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
                 
-                DropdownMenu(
-                    expanded = showIconMenu,
-                    onDismissRequest = { showIconMenu = false }
+                LazyRow(
+                    contentPadding = PaddingValues(end = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    icons.chunked(4).forEach { rowIcons ->
-                        Row {
-                            rowIcons.forEach { icon ->
+                    items(categories) { (name, icon) ->
+                        val isSelected = selectedCategory == name
+                        CategoryItem(
+                            name = name,
+                            icon = icon,
+                            isSelected = isSelected,
+                            selectedColor = currentColor,
+                            isDarkMode = isDarkMode,
+                            onClick = { selectedCategory = name }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                // Form Fields
+                GoalInputField(label = "Goal Title", value = title, onValueChange = { title = it }, placeholder = "e.g. Read 20 pages daily", isDarkMode = isDarkMode, focusedColor = currentColor)
+                Spacer(modifier = Modifier.height(20.dp))
+                GoalInputField(label = "Description (optional)", value = description, onValueChange = { description = it }, placeholder = "Why is this goal important to you?", isDarkMode = isDarkMode, focusedColor = currentColor)
+            
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Frequency
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box {
+                        OutlinedCard(
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showFrequencyMenu = true },
+                            colors = CardDefaults.outlinedCardColors(
+                                containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
+                            ),
+                            border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(frequency, fontSize = 15.sp)
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = showFrequencyMenu,
+                            onDismissRequest = { showFrequencyMenu = false }
+                        ) {
+                            frequencies.forEach { f ->
                                 DropdownMenuItem(
-                                    text = { Text(icon, fontSize = 24.sp) },
+                                    text = { Text(f) },
                                     onClick = {
-                                        selectedIcon = icon
-                                        showIconMenu = false
-                                    },
-                                    modifier = Modifier.width(60.dp)
+                                        frequency = f
+                                        showFrequencyMenu = false
+                                    }
                                 )
                             }
                         }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Change Icon", fontSize = 13.sp, color = TextSecondary)
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Form Fields
-            GoalInputField(label = "Goal Title", value = title, onValueChange = { title = it }, placeholder = "e.g. Read 20 pages daily", isDarkMode = isDarkMode)
-            Spacer(modifier = Modifier.height(20.dp))
-            GoalInputField(label = "Description (optional)", value = description, onValueChange = { description = it }, placeholder = "Why is this goal important to you?", isDarkMode = isDarkMode)
-            
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Frequency
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Box {
-                    OutlinedCard(
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showFrequencyMenu = true },
-                        colors = CardDefaults.outlinedCardColors(
-                            containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
-                        ),
-                        border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE))
-                    ) {
+                // Target & Unit
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(100.dp))
+                                .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
+                                .padding(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(frequency, fontSize = 15.sp)
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                            IconButton(
+                                onClick = { if (target > 1) target-- },
+                                modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                            Text(
+                                target.toString(), 
+                                modifier = Modifier.weight(1f), 
+                                textAlign = TextAlign.Center, 
+                                fontWeight = FontWeight.Bold, 
+                                fontSize = 16.sp
+                            )
+                            IconButton(
+                                onClick = { target++ },
+                                modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
-                    DropdownMenu(
-                        expanded = showFrequencyMenu,
-                        onDismissRequest = { showFrequencyMenu = false }
-                    ) {
-                        frequencies.forEach { f ->
-                            DropdownMenuItem(
-                                text = { Text(f) },
-                                onClick = {
-                                    frequency = f
-                                    showFrequencyMenu = false
-                                }
-                            )
-                        }
+                
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Unit", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = unit,
+                            onValueChange = { unit = it },
+                            placeholder = { Text("e.g. pages", fontSize = 14.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
+                                focusedBorderColor = currentColor,
+                                unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
+                                focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
+                            ),
+                            singleLine = true
+                        )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Target & Unit
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
+                // Date
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(100.dp))
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
                             .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
-                            .padding(4.dp),
+                            .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                            .clickable { showDatePicker = true }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
-                            onClick = { if (target > 1) target-- },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
-                        ) {
-                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                        val displayDate = try {
+                            val date = isoFormatter.parse(startDateIso)
+                            displayFormatter.format(date!!)
+                        } catch (e: Exception) {
+                            startDateIso
                         }
-                        Text(
-                            target.toString(), 
-                            modifier = Modifier.weight(1f), 
-                            textAlign = TextAlign.Center, 
-                            fontWeight = FontWeight.Bold, 
-                            fontSize = 16.sp
-                        )
-                        IconButton(
-                            onClick = { target++ },
-                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        }
+                        Text(displayDate, fontSize = 14.sp)
+                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Unit", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = unit,
-                        onValueChange = { unit = it },
-                        placeholder = { Text("e.g. pages", fontSize = 14.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
-                            focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
-                        ),
-                        singleLine = true
+
+                if (showDatePicker) {
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { millis ->
+                                    startDateIso = isoFormatter.format(Date(millis))
+                                }
+                                showDatePicker = false
+                            }) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (uiState is GoalUiState.Error) {
+                    Text(
+                        text = (uiState as GoalUiState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Date
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Start Date", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
-                        .border(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
-                        .clickable { showDatePicker = true }
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val displayDate = try {
-                        val date = isoFormatter.parse(startDateIso)
-                        displayFormatter.format(date!!)
-                    } catch (e: Exception) {
-                        startDateIso
-                    }
-                    Text(displayDate, fontSize = 14.sp)
-                    Icon(Icons.Outlined.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
-                }
-            }
-
-            if (showDatePicker) {
-                DatePickerDialog(
-                    onDismissRequest = { showDatePicker = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            datePickerState.selectedDateMillis?.let { millis ->
-                                startDateIso = isoFormatter.format(Date(millis))
-                            }
-                            showDatePicker = false
-                        }) {
-                            Text("OK")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDatePicker = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                ) {
-                    DatePicker(state = datePickerState)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Choose Color
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Choose Color", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                val colors = listOf(
-                    "red" to Color(0xFFE53935),
-                    "blue" to Color(0xFF1E88E5),
-                    "green" to Color(0xFF43A047),
-                    "yellow" to Color(0xFFFFEB3B),
-                    "purple" to Color(0xFF8E24AA),
-                    "orange" to Color(0xFFFB8C00)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    colors.forEach { (name, color) ->
-                        val isSelected = selectedColorName == name
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .border(
-                                    width = if (isSelected) 3.dp else 0.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                                    shape = CircleShape
-                                )
-                                .clickable { selectedColorName = name },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = if (name == "yellow") Color.Black else Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            } // End of Form Fields Column
         }
     }
 }
 
 @Composable
-fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String, isDarkMode: Boolean = false) {
+fun CategoryItem(
+    name: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    selectedColor: Color,
+    isDarkMode: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(72.dp)
+            .clickable { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (isSelected) selectedColor.copy(alpha = 0.9f)
+                    else if (isDarkMode) Color(0xFF2A2A2A)
+                    else Color(0xFFF5F5F5)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = name,
+                tint = if (isSelected) {
+                    if (name == "Reading" || name == "Water" || name == "Sleep" || name == "Exercise" || name == "Health" || name == "Journal" || name == "Meditation" || name == "Study" || name == "Other") {
+                         // Most colors look good with white, yellow/pink might need black but pink hex is dark enough
+                         Color.White
+                    } else Color.White
+                }
+                else if (isDarkMode) Color.LightGray
+                else Color.DarkGray,
+                modifier = Modifier.size(26.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = name,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) selectedColor else TextSecondary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit, placeholder: String, isDarkMode: Boolean = false, focusedColor: Color = MaterialTheme.colorScheme.primary) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
@@ -380,7 +435,7 @@ fun GoalInputField(label: String, value: String, onValueChange: (String) -> Unit
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedBorderColor = focusedColor,
                 unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
                 focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
             )

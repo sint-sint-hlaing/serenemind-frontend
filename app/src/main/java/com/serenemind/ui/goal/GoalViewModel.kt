@@ -98,6 +98,7 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         title: String,
         description: String,
         targetDays: Int,
+        unit: String = "days",
         frequency: Frequency = Frequency.DAILY,
         color: String? = null,
         icon: String = "📚",
@@ -114,7 +115,7 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
                 frequency = frequency,
                 description = description,
                 targetDays = targetDays,
-                unit = "days",
+                unit = unit,
                 startDate = finalStartDate,
                 icon = icon,
                 color = color,
@@ -247,6 +248,28 @@ class GoalViewModel(private val repository: GoalRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.value = GoalUiState.Loading
             repository.deleteGoal(id).collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> {
+                        _uiState.value = GoalUiState.Loading
+                    }
+                    is NetworkResult.Success -> {
+                        fetchGoals()
+                        if (_selectedGoal.value?.id == id) {
+                            _selectedGoal.value = null
+                        }
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.value = GoalUiState.Error(result.message ?: "Failed to delete goal")
+                    }
+                }
+            }
+        }
+    }
+
+    fun hardDeleteGoal(id: Long) {
+        viewModelScope.launch {
+            _uiState.value = GoalUiState.Loading
+            repository.hardDeleteGoal(id).collect { result ->
                 when (result) {
                     is NetworkResult.Loading -> {
                         _uiState.value = GoalUiState.Loading

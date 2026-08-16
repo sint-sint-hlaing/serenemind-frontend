@@ -11,10 +11,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.DirectionsRun
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.LocalDrink
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Nightlight
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +48,30 @@ fun GoalScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) } // 0: All, 1: Active, 2: Completed
     val context = androidx.compose.ui.platform.LocalContext.current
+    var goalToDelete by remember { mutableStateOf<GoalResponse?>(null) }
+
+    if (goalToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { goalToDelete = null },
+            title = { Text("Delete Goal") },
+            text = { Text("Are you sure you want to permanently delete this goal? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        goalToDelete?.id?.let { viewModel.hardDeleteGoal(it) }
+                        goalToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { goalToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -164,6 +194,9 @@ fun GoalScreen(
                             isDarkMode = isDarkMode,
                             onGoalClick = { goal ->
                                 onGoalClick(goal)
+                            },
+                            onDeleteGoal = { goal ->
+                                goalToDelete = goal
                             }
                         )
                     }
@@ -266,7 +299,8 @@ fun GoalTab(
 fun GoalList(
     goals: List<GoalResponse>,
     isDarkMode: Boolean,
-    onGoalClick: (GoalResponse) -> Unit
+    onGoalClick: (GoalResponse) -> Unit,
+    onDeleteGoal: (GoalResponse) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -275,13 +309,49 @@ fun GoalList(
     ) {
         items(
             items = goals,
-            key = { it.id?:0 } // Add key for better performance
+            key = { it.id ?: 0 } // Add key for better performance
         ) { goal ->
-            GoalItem(
-                goal = goal,
-                isDarkMode = isDarkMode,
-                onClick = onGoalClick
+            val dismissState = rememberSwipeToDismissBoxState(
+                confirmValueChange = {
+                    if (it == SwipeToDismissBoxValue.EndToStart) {
+                        onDeleteGoal(goal)
+                        false // Return false so it snaps back, dialog will handle deletion
+                    } else {
+                        false
+                    }
+                }
             )
+
+            SwipeToDismissBox(
+                state = dismissState,
+                backgroundContent = {
+                    val color = when (dismissState.dismissDirection) {
+                        SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.8f)
+                        else -> Color.Transparent
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(color)
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.White
+                        )
+                    }
+                },
+                enableDismissFromStartToEnd = false
+            ) {
+                GoalItem(
+                    goal = goal,
+                    isDarkMode = isDarkMode,
+                    onClick = onGoalClick
+                )
+            }
         }
     }
 }
@@ -311,13 +381,13 @@ fun GoalItem(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(getGoalIconBgColor(goal.title?:"", isDarkMode)),
+                    .background(getGoalIconBgColor(goal.icon ?: goal.title ?: "", isDarkMode, goal.color)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    getGoalIcon(goal.title?:""),
+                    getGoalIcon(goal.icon, goal.title ?: ""),
                     contentDescription = null,
-                    tint = getGoalIconColor(goal.title?:""),
+                    tint = getGoalIconColor(goal.icon ?: goal.title ?: "", goal.color),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -342,9 +412,6 @@ fun GoalItem(
 
                     // Status badge
                     when (goal.status) {
-                        "COMPLETED" -> {
-                            Text("✅", fontSize = 14.sp)
-                        }
                         "PAUSED" -> {
                             Text("⏸️", fontSize = 14.sp)
                         }
@@ -372,7 +439,7 @@ fun GoalItem(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(CircleShape),
-                    color = getGoalIconColor(goal.title ?:""),
+                    color = getGoalIconColor(goal.title ?: "", goal.color),
                     trackColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
                 )
             }
@@ -382,42 +449,66 @@ fun GoalItem(
 
 // ===== Icon Helper Functions =====
 
-fun getGoalIcon(title: String): ImageVector {
+fun getGoalIcon(iconName: String?, title: String): ImageVector {
+    val name = iconName?.lowercase() ?: title.lowercase()
     return when {
-        title.contains("meditate", ignoreCase = true) -> Icons.Outlined.SelfImprovement
-        title.contains("journal", ignoreCase = true) -> Icons.AutoMirrored.Outlined.Assignment
-        title.contains("water", ignoreCase = true) -> Icons.Outlined.LocalDrink
-        title.contains("sleep", ignoreCase = true) -> Icons.Outlined.Nightlight
-        title.contains("exercise", ignoreCase = true) -> Icons.Outlined.CheckCircle
-        title.contains("read", ignoreCase = true) -> Icons.Outlined.CheckCircle
-        title.contains("study", ignoreCase = true) -> Icons.Outlined.CheckCircle
+        name.contains("meditation") -> Icons.Outlined.SelfImprovement
+        name.contains("journal") -> Icons.AutoMirrored.Outlined.Assignment
+        name.contains("water") -> Icons.Outlined.LocalDrink
+        name.contains("sleep") -> Icons.Outlined.Nightlight
+        name.contains("exercise") -> Icons.Outlined.DirectionsRun
+        name.contains("run") -> Icons.Outlined.DirectionsRun
+        name.contains("read") -> Icons.Outlined.MenuBook
+        name.contains("study") -> Icons.Outlined.School
+        name.contains("health") -> Icons.Outlined.Favorite
+        name.contains("favorite") -> Icons.Outlined.Favorite
+        name.contains("ai") -> Icons.Outlined.AutoAwesome
+        name.contains("chat") -> Icons.Outlined.AutoAwesome
+        name.contains("awesome") -> Icons.Outlined.AutoAwesome
         else -> Icons.Outlined.CheckCircle
     }
 }
 
-fun getGoalIconBgColor(title: String, isDarkMode: Boolean): Color {
+fun getGoalIconBgColor(name: String, isDarkMode: Boolean, colorName: String? = null): Color {
+    if (colorName != null) {
+        val color = getGoalIconColor("", colorName)
+        return if (isDarkMode) color.copy(alpha = 0.2f) else color.copy(alpha = 0.15f)
+    }
+    val n = name.lowercase()
     val baseColor = when {
-        title.contains("meditate", ignoreCase = true) -> Color(0xFFE8EAF6)
-        title.contains("journal", ignoreCase = true) -> Color(0xFFE8F5E9)
-        title.contains("water", ignoreCase = true) -> Color(0xFFE1F5FE)
-        title.contains("sleep", ignoreCase = true) -> Color(0xFFFFF3E0)
-        title.contains("exercise", ignoreCase = true) -> Color(0xFFFFEBEE)
-        title.contains("read", ignoreCase = true) -> Color(0xFFFCE4EC)
-        title.contains("study", ignoreCase = true) -> Color(0xFFE8EAF6)
+        n.contains("meditation") -> Color(0xFFE8EAF6)
+        n.contains("journal") -> Color(0xFFE8F5E9)
+        n.contains("water") -> Color(0xFFE1F5FE)
+        n.contains("sleep") -> Color(0xFFFFF3E0)
+        n.contains("exercise") -> Color(0xFFFFEBEE)
+        n.contains("read") -> Color(0xFFFCE4EC)
+        n.contains("study") -> Color(0xFFE8EAF6)
         else -> Color(0xFFF5F5F5)
     }
     return if (isDarkMode) baseColor.copy(alpha = 0.2f) else baseColor
 }
 
-fun getGoalIconColor(title: String): Color {
+fun getGoalIconColor(name: String, colorName: String? = null): Color {
+    if (colorName != null) {
+        return when (colorName.lowercase()) {
+            "red" -> Color(0xFFE53935)
+            "blue" -> Color(0xFF1E88E5)
+            "green" -> Color(0xFF43A047)
+            "yellow" -> Color(0xFFFBC02D) // Darker yellow for better visibility
+            "purple" -> Color(0xFF8E24AA)
+            "orange" -> Color(0xFFFB8C00)
+            else -> MoodHappy
+        }
+    }
+    val n = name.lowercase()
     return when {
-        title.contains("meditate", ignoreCase = true) -> Color(0xFF7C4DFF)
-        title.contains("journal", ignoreCase = true) -> Color(0xFF4CAF50)
-        title.contains("water", ignoreCase = true) -> Color(0xFF03A9F4)
-        title.contains("sleep", ignoreCase = true) -> Color(0xFFFF9800)
-        title.contains("exercise", ignoreCase = true) -> Color(0xFFE53935)
-        title.contains("read", ignoreCase = true) -> Color(0xFFE91E63)
-        title.contains("study", ignoreCase = true) -> Color(0xFF3F51B5)
+        n.contains("meditation") -> Color(0xFF7C4DFF)
+        n.contains("journal") -> Color(0xFF4CAF50)
+        n.contains("water") -> Color(0xFF03A9F4)
+        n.contains("sleep") -> Color(0xFFFF9800)
+        n.contains("exercise") -> Color(0xFFE53935)
+        n.contains("read") -> Color(0xFFE91E63)
+        n.contains("study") -> Color(0xFF3F51B5)
         else -> MoodHappy
     }
 }
