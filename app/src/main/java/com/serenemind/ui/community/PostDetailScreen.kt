@@ -94,9 +94,6 @@ fun PostDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
-                    }
                 }
             )
         },

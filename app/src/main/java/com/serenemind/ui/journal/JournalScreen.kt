@@ -72,8 +72,6 @@ fun JournalScreen(
                 JournalFilterTab("All", true, isDarkMode)
                 Spacer(modifier = Modifier.width(12.dp))
                 JournalFilterTab("Favorites", false, isDarkMode)
-                Spacer(modifier = Modifier.width(12.dp))
-                JournalFilterTab("Tagged", false, isDarkMode)
             }
 
             LazyColumn(
