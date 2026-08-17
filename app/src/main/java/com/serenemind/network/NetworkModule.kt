@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 object NetworkModule {
 
     // Use 10.0.2.2 for Android Emulator, or your computer's LAN IP for physical devices
-    const val BASE_URL = "http://192.168.95.231:8080/"
+    const val BASE_URL = "https://serenemind-server.onrender.com/"
 
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
