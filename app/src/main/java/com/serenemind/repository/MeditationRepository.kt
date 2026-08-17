@@ -15,8 +15,8 @@ class MeditationRepository(private val apiService: MeditationApiService) : SafeA
     }
 
     // ===== ALL MEDITATIONS =====
-    fun getAllMeditations(): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.getAllMeditations()
+    fun getAllMeditations(category: String? = null): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
+        apiService.searchMeditations(null, category, null)
     }
 
     // ===== GET BY ID =====
@@ -26,12 +26,12 @@ class MeditationRepository(private val apiService: MeditationApiService) : SafeA
 
     // ===== GET BY CATEGORY =====
     fun getByCategory(category: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.getByCategory(category)
+        apiService.searchMeditations(null, category, null)
     }
 
     // ===== GET BY TIME =====
     fun getByTime(time: String): Flow<NetworkResult<List<MeditationResponse>>> = safeApiCall {
-        apiService.getByTime(time)
+        apiService.searchMeditations(null, null, time)
     }
 
     // ===== SEARCH =====

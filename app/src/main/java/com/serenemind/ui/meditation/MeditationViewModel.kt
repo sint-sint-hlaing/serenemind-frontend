@@ -81,6 +81,7 @@ class MeditationViewModel(
         fetchRecommendations()
         fetchContinueListening()
         fetchHistory()
+        searchMeditations(null, null, null)
     }
 
     // ===== DASHBOARD =====
@@ -566,10 +567,10 @@ class MeditationViewModel(
         }
     }
 
-    // ===== GET BY CATEGORY =====
-    fun getByCategory(category: String) {
+    // ===== ALL MEDITATIONS =====
+    fun fetchAllMeditations(category: String? = null) {
         viewModelScope.launch {
-            repository.getByCategory(category).collect { result ->
+            repository.getAllMeditations(category).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
                         _searchResults.value = result.data

@@ -216,7 +216,7 @@ fun MeditationScreen(
                                 viewModel.searchMeditations(null, null, timeCode.uppercase())
                             },
                             onViewAllClick = {
-                                viewModel.fetchMeditationDashboard()
+                                viewModel.searchMeditations(null, null, null)
                             }
                         )
                     }
@@ -261,111 +261,10 @@ fun MeditationContent(
                     onClick = { 
                         selectedCategory = category
                         if (category != "All") onCategoryClick(category) 
+                        else onViewAllClick()
                     }
                 )
             }
-        }
-
-        // Featured Card
-        data.featured?.let { featured ->
-            if (featured.isNotEmpty()) {
-                FeaturedMeditationCard(
-                    meditation = featured.first(),
-                    onClick = { onMeditationClick(featured.first()) }
-                )
-            }
-        }
-
-        // Continue Listening
-        if (continueListening.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(
-                "Continue Listening",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(continueListening) { meditation ->
-                    ContinueListeningItem(
-                        meditation = meditation,
-                        isDarkMode = isDarkMode,
-                        onClick = { onMeditationClick(meditation) }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Categories
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Popular Categories",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            TextButton(onClick = { onViewAllClick() }) {
-                Text(
-                    text = "View all",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        data.categories?.let { categories ->
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(
-                        category = category,
-                        isDarkMode = isDarkMode,
-                        onClick = {
-                            category.name?.let { onCategoryClick(it) }
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Times Section
-        data.times?.let { times ->
-            Text(
-                "Find the Right Time",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(times) { time ->
-                    TimeItem(
-                        time = time,
-                        isDarkMode = isDarkMode,
-                        onClick = {
-                            time.name?.let { onTimeClick(it) }
-                        }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
         }
 
         // Recommended
