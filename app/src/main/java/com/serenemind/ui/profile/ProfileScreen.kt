@@ -177,31 +177,57 @@ fun ProfileScreen(
                                     border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFF0F0F0))
                                 ) {
                                     val activity = state.activity
-                                    Row(
-                                        modifier = Modifier.padding(vertical = 20.dp).fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceAround
-                                    ) {
-                                        ActivityItem(
-                                            icon = Icons.AutoMirrored.Filled.Assignment, 
-                                            label = "Journals", 
-                                            value = activity?.totalJournals?.toString() ?: "0", 
-                                            subValue = "entries", 
-                                            color = Color(0xFF9C27B0)
-                                        )
-                                        ActivityItem(
-                                            icon = Icons.Default.Flag, 
-                                            label = "Goals Completed", 
-                                            value = activity?.goalsCompleted?.toString() ?: "0", 
-                                            subValue = "goals", 
-                                            color = Color(0xFF4CAF50)
-                                        )
-                                        ActivityItem(
-                                            icon = Icons.Default.Create, 
-                                            label = "Posts", 
-                                            value = activity?.totalPosts?.toString() ?: "0", 
-                                            subValue = "posts", 
-                                            color = Color(0xFFFF9800)
-                                        )
+                                    Column(modifier = Modifier.padding(vertical = 16.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceAround
+                                        ) {
+                                            ActivityItem(
+                                                icon = Icons.AutoMirrored.Filled.Assignment, 
+                                                label = "Journals", 
+                                                value = activity?.totalJournals?.toString() ?: "0", 
+                                                subValue = "entries", 
+                                                color = Color(0xFF9C27B0)
+                                            )
+                                            ActivityItem(
+                                                icon = Icons.Default.Flag, 
+                                                label = "Goals Completed", 
+                                                value = activity?.goalsCompleted?.toString() ?: "0", 
+                                                subValue = "goals", 
+                                                color = Color(0xFF4CAF50)
+                                            )
+                                            ActivityItem(
+                                                icon = Icons.Default.Create, 
+                                                label = "Posts", 
+                                                value = activity?.totalPosts?.toString() ?: "0", 
+                                                subValue = "posts", 
+                                                color = Color(0xFFFF9800)
+                                            )
+                                        }
+                                        
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceAround
+                                        ) {
+                                            ActivityItem(
+                                                icon = Icons.Default.SelfImprovement, 
+                                                label = "Meditations", 
+                                                value = activity?.completedMeditationsCount?.toString() ?: "0", 
+                                                subValue = "sessions", 
+                                                color = Color(0xFF00BCD4)
+                                            )
+                                            ActivityItem(
+                                                icon = Icons.Default.Favorite, 
+                                                label = "Favorites", 
+                                                value = activity?.favoriteMeditationsCount?.toString() ?: "0", 
+                                                subValue = "meditations", 
+                                                color = Color(0xFFE91E63)
+                                            )
+                                            // Empty item for alignment
+                                            Spacer(modifier = Modifier.width(80.dp))
+                                        }
                                     }
                                 }
                             }

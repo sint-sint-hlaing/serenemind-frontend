@@ -18,8 +18,6 @@ interface MeditationApiService {
     @GET("api/meditations/dashboard")
     suspend fun getDashboard(): Response<MeditationDashboardResponse>
 
-    @GET("api/meditations")
-    suspend fun getAllMeditations(): Response<List<MeditationResponse>>
 
     @GET("api/meditations/{id}")
     suspend fun getMeditationById(
@@ -50,17 +48,8 @@ interface MeditationApiService {
         @Path("id") id: Long
     ): Response<ShareResponse>
 
-    @GET("api/meditations/category/{category}")
-    suspend fun getByCategory(
-        @Path("category") category: String
-    ): Response<List<MeditationResponse>>
 
-    @GET("api/meditations/time/{time}")
-    suspend fun getByTime(
-        @Path("time") time: String
-    ): Response<List<MeditationResponse>>
-
-    @GET("api/meditations/search")
+    @GET("api/meditations")
     suspend fun searchMeditations(
         @Query("query") query: String? = null,
         @Query("category") category: String? = null,

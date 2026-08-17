@@ -51,6 +51,7 @@ fun MeditationScreen(
     val continueListening by viewModel.continueListening.collectAsState()
     val recommendations by viewModel.recommendations.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
+    val selectedCategoryName by viewModel.selectedCategoryName.collectAsState()
     val context = LocalContext.current
 
     var searchQuery by remember { mutableStateOf("") }
@@ -204,10 +205,12 @@ fun MeditationScreen(
                         MeditationContent(
                             data = state.data,
                             continueListening = continueListening,
-                            recommendations = if (searchResults.isNotEmpty()) searchResults else recommendations,
+                            results = if (searchResults.isNotEmpty() || selectedCategoryName != "All") searchResults else recommendations,
+                            selectedCategoryName = selectedCategoryName,
                             isDarkMode = isDarkMode,
                             onMeditationClick = onMeditationClick,
                             onCategoryClick = { categoryName ->
+                                viewModel.setSelectedCategory(categoryName)
                                 val categoryCode = state.data.categories?.find { it.displayName == categoryName }?.name ?: categoryName
                                 viewModel.searchMeditations(null, categoryCode.uppercase(), null)
                             },
@@ -216,7 +219,8 @@ fun MeditationScreen(
                                 viewModel.searchMeditations(null, null, timeCode.uppercase())
                             },
                             onViewAllClick = {
-                                viewModel.fetchMeditationDashboard()
+                                viewModel.setSelectedCategory("All")
+                                viewModel.searchMeditations(null, null, null)
                             }
                         )
                     }
@@ -230,7 +234,8 @@ fun MeditationScreen(
 fun MeditationContent(
     data: MeditationDashboardResponse,
     continueListening: List<MeditationResponse>,
-    recommendations: List<MeditationResponse>,
+    results: List<MeditationResponse>,
+    selectedCategoryName: String,
     isDarkMode: Boolean,
     onMeditationClick: (MeditationResponse) -> Unit,
     onCategoryClick: (String) -> Unit = {},
@@ -239,7 +244,6 @@ fun MeditationContent(
 ) {
     val textColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onBackground
     val textSecondary = if (isDarkMode) Color.LightGray else TextSecondary
-    var selectedCategory by remember { mutableStateOf("All") }
 
     Column(
         modifier = Modifier
@@ -247,6 +251,7 @@ fun MeditationContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // ... (rest of the code)
         // Categories Tabs
         val categories = listOf("All") + (data.categories?.mapNotNull { it.displayName } ?: emptyList())
         LazyRow(
@@ -256,128 +261,26 @@ fun MeditationContent(
             items(categories) { category ->
                 FilterTab(
                     title = category,
-                    isSelected = selectedCategory == category,
+                    isSelected = selectedCategoryName == category,
                     isDarkMode = isDarkMode,
                     onClick = { 
-                        selectedCategory = category
                         if (category != "All") onCategoryClick(category) 
+                        else onViewAllClick()
                     }
                 )
             }
         }
 
-        // Featured Card
-        data.featured?.let { featured ->
-            if (featured.isNotEmpty()) {
-                FeaturedMeditationCard(
-                    meditation = featured.first(),
-                    onClick = { onMeditationClick(featured.first()) }
-                )
-            }
-        }
-
-        // Continue Listening
-        if (continueListening.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(
-                "Continue Listening",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(continueListening) { meditation ->
-                    ContinueListeningItem(
-                        meditation = meditation,
-                        isDarkMode = isDarkMode,
-                        onClick = { onMeditationClick(meditation) }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Categories
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Popular Categories",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            TextButton(onClick = { onViewAllClick() }) {
-                Text(
-                    text = "View all",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        data.categories?.let { categories ->
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(
-                        category = category,
-                        isDarkMode = isDarkMode,
-                        onClick = {
-                            category.name?.let { onCategoryClick(it) }
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Times Section
-        data.times?.let { times ->
-            Text(
-                "Find the Right Time",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(times) { time ->
-                    TimeItem(
-                        time = time,
-                        isDarkMode = isDarkMode,
-                        onClick = {
-                            time.name?.let { onTimeClick(it) }
-                        }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-
         // Recommended
-        Text(
-            "Recommended for you",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = textColor
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+//        Text(
+//            "Recommended for you",
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 18.sp,
+//            color = textColor
+//        )
+//        Spacer(modifier = Modifier.height(16.dp))
 
-        val displayList = if (recommendations.isNotEmpty()) recommendations else data.popular ?: emptyList()
+        val displayList = if (selectedCategoryName != "All") results else (if (results.isNotEmpty()) results else data.popular ?: emptyList())
         
         if (displayList.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
