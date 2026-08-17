@@ -198,15 +198,6 @@ fun JournalListScreen(
                     },
                     label = { Text("Favorites") }
                 )
-                FilterChip(
-                    selected = currentFilter == "tagged",
-                    onClick = { 
-                        isSearchActive = false
-                        searchQuery = ""
-                        viewModel.setFilter("tagged") 
-                    },
-                    label = { Text("Tagged") }
-                )
             }
 
             // Subtle background progress bar for updates (The "Line Animation")
