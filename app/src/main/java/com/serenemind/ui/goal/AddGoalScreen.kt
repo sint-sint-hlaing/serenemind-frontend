@@ -52,8 +52,6 @@ fun AddGoalScreen(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var target by remember { mutableIntStateOf(10) }
-    var unit by remember { mutableStateOf("") }
-    var frequency by remember { mutableStateOf("Daily") }
     
     val isoFormatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val displayFormatter = remember { SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH) }
@@ -76,35 +74,34 @@ fun AddGoalScreen(
     val categoryColorMap = remember {
         mapOf(
             "Meditation" to "purple",
-            "Journal" to "green",
-            "Water" to "blue",
-            "Sleep" to "orange",
-            "Exercise" to "red",
-            "Reading" to "pink",
-            "Study" to "purple",
-            "Health" to "red",
-            "Other" to "green"
+            "Journal"    to "green",
+            "Water"      to "blue",
+            "Sleep"      to "orange",
+            "Exercise"   to "red",
+            "Reading"    to "pink",
+            "Study"      to "indigo",
+            "Health"     to "cyan",
+            "Other"      to "grey"
         )
     }
 
     val selectedColorName = categoryColorMap[selectedCategory] ?: "purple"
 
     val currentColor = when (selectedColorName) {
-        "red" -> Color(0xFFE53935)
-        "blue" -> Color(0xFF1E88E5)
-        "green" -> Color(0xFF43A047)
-        "yellow" -> Color(0xFFFBC02D)
-        "purple" -> Color(0xFF8E24AA)
-        "orange" -> Color(0xFFFB8C00)
-        "pink" -> Color(0xFFD81B60)
-        else -> MaterialTheme.colorScheme.primary
+        "red"      -> Color(0xFFE53935)
+        "blue"     -> Color(0xFF1E88E5)
+        "green"    -> Color(0xFF43A047)
+        "orange"   -> Color(0xFFFB8C00)
+        "pink"     -> Color(0xFFD81B60)
+        "purple"   -> Color(0xFF8E24AA)
+        "indigo"   -> Color(0xFF3949AB)
+        "cyan"     -> Color(0xFF00ACC1)
+        "grey"     -> Color(0xFF757575)
+        else       -> MaterialTheme.colorScheme.primary
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
-
-    var showFrequencyMenu by remember { mutableStateOf(false) }
-    val frequencies = listOf("Daily", "Weekly", "Monthly")
 
     LaunchedEffect(createGoalSuccess) {
         if (createGoalSuccess) {
@@ -136,18 +133,12 @@ fun AddGoalScreen(
                                 if (title.isBlank()) {
                                     android.widget.Toast.makeText(context, "Please enter a title", android.widget.Toast.LENGTH_SHORT).show()
                                 } else {
-                                    val frequencyEnum = when (frequency) {
-                                        "Daily" -> Frequency.DAILY
-                                        "Weekly" -> Frequency.WEEKLY
-                                        "Monthly" -> Frequency.MONTHLY
-                                        else -> Frequency.DAILY
-                                    }
                                     viewModel.createGoal(
                                         title = title,
                                         description = description,
                                         targetDays = target,
-                                        unit = unit.ifBlank { "days" },
-                                        frequency = frequencyEnum,
+                                        unit = "days",
+                                        frequency = Frequency.DAILY,
                                         color = selectedColorName,
                                         icon = selectedCategory,
                                         startDate = startDateIso
@@ -207,100 +198,37 @@ fun AddGoalScreen(
             
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Frequency
+                // Target Days
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("Frequency", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box {
-                        OutlinedCard(
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showFrequencyMenu = true },
-                            colors = CardDefaults.outlinedCardColors(
-                                containerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
-                            ),
-                            border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE))
+                    Text("Target Days", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { if (target > 1) target-- },
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(frequency, fontSize = 15.sp)
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
-                            }
+                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
                         }
-                        DropdownMenu(
-                            expanded = showFrequencyMenu,
-                            onDismissRequest = { showFrequencyMenu = false }
-                        ) {
-                            frequencies.forEach { f ->
-                                DropdownMenuItem(
-                                    text = { Text(f) },
-                                    onClick = {
-                                        frequency = f
-                                        showFrequencyMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Target & Unit
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Target", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9))
-                                .padding(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { if (target > 1) target-- },
-                                modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
-                            ) {
-                                Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
-                            }
-                            Text(
-                                target.toString(), 
-                                modifier = Modifier.weight(1f), 
-                                textAlign = TextAlign.Center, 
-                                fontWeight = FontWeight.Bold, 
-                                fontSize = 16.sp
-                            )
-                            IconButton(
-                                onClick = { target++ },
-                                modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Unit", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = unit,
-                            onValueChange = { unit = it },
-                            placeholder = { Text("e.g. pages", fontSize = 14.sp) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE),
-                                focusedBorderColor = currentColor,
-                                unfocusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9),
-                                focusedContainerColor = if (isDarkMode) Color(0xFF2A2A2A) else Color(0xFFF9F9F9)
-                            ),
-                            singleLine = true
+                        Text(
+                            target.toString(), 
+                            modifier = Modifier.weight(1f), 
+                            textAlign = TextAlign.Center, 
+                            fontWeight = FontWeight.Bold, 
+                            fontSize = 16.sp
                         )
+                        IconButton(
+                            onClick = { target++ },
+                            modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
 
