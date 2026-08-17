@@ -52,6 +52,7 @@ fun MeditationPlayerScreen(
     val timerSeconds by viewModel.timerSeconds.collectAsState()
     val isTimerRunning by viewModel.isTimerRunning.collectAsState()
     val isTimerCompleted by viewModel.isTimerCompleted.collectAsState()
+    val timerUiState by viewModel.timerUiState.collectAsState()
     val downloadState by viewModel.downloadState.collectAsState()
 
     var progress by remember { mutableFloatStateOf(0.0f) }
@@ -261,7 +262,27 @@ fun MeditationPlayerScreen(
                         ) {
                             Text("Meditation Timer", fontSize = 14.sp, color = textSecondaryColor, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(timeStr, fontSize = 48.sp, fontWeight = FontWeight.ExtraBold, color = if (isTimerCompleted) Success else MaterialTheme.colorScheme.primary, letterSpacing = 2.sp)
+                            
+                            if (isTimerCompleted) {
+                                Text(
+                                    text = "SESSION\nCOMPLETE", 
+                                    fontSize = 32.sp, 
+                                    lineHeight = 36.sp,
+                                    fontWeight = FontWeight.ExtraBold, 
+                                    color = Success, 
+                                    letterSpacing = 1.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            } else {
+                                Text(
+                                    text = timeStr, 
+                                    fontSize = 48.sp, 
+                                    fontWeight = FontWeight.ExtraBold, 
+                                    color = MaterialTheme.colorScheme.primary, 
+                                    letterSpacing = 2.sp
+                                )
+                            }
+
                             Spacer(modifier = Modifier.height(24.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 if (!isTimerCompleted) {
@@ -276,12 +297,23 @@ fun MeditationPlayerScreen(
                                     }
                                 }
                                 Button(
-                                    onClick = { viewModel.resetTimer() },
+                                    onClick = { 
+                                        if (isTimerCompleted) {
+                                            m.id?.let { id ->
+                                                viewModel.completeSession(id, timerUiState.selectedMinutes) { msg ->
+                                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                                    viewModel.resetTimer()
+                                                }
+                                            }
+                                        } else {
+                                            viewModel.resetTimer() 
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f).height(48.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = if (isTimerCompleted) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.2f))
                                 ) {
-                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.rotate(90f))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(if (isTimerCompleted) "FINISH" else "CANCEL")
                                 }

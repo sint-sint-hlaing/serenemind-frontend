@@ -268,13 +268,13 @@ fun MeditationContent(
         }
 
         // Recommended
-        Text(
-            "Recommended for you",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = textColor
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+//        Text(
+//            "Recommended for you",
+//            fontWeight = FontWeight.Bold,
+//            fontSize = 18.sp,
+//            color = textColor
+//        )
+//        Spacer(modifier = Modifier.height(16.dp))
 
         val displayList = if (recommendations.isNotEmpty()) recommendations else data.popular ?: emptyList()
         

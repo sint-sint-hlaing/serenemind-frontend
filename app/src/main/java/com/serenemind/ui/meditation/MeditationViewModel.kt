@@ -146,13 +146,29 @@ class MeditationViewModel(
     // ===== SEARCH WITH FILTERS =====
     fun searchMeditations(query: String?, category: String?, time: String?) {
         viewModelScope.launch {
+            _uiState.value = MeditationUiState.Loading
             repository.searchMeditations(query, category, time).collect { result ->
                 when (result) {
                     is NetworkResult.Success -> {
                         _searchResults.value = result.data
+                        // After search results are loaded, restore Success state with existing dashboard data
+                        val currentState = _uiState.value
+                        if (currentState is MeditationUiState.Loading) {
+                            // If we were in Success state before, we should try to restore it
+                            // Or keep searchResults and mark as Success
+                            repository.getDashboard().collect { dashResult ->
+                                if (dashResult is NetworkResult.Success) {
+                                    _uiState.value = MeditationUiState.Success(dashResult.data)
+                                } else {
+                                    // Fallback if dashboard fetch fails, though search results are still there
+                                    _uiState.value = MeditationUiState.Idle
+                                }
+                            }
+                        }
                     }
                     is NetworkResult.Error -> {
                         _errorMessage.value = result.message
+                        _uiState.value = MeditationUiState.Error(result.message)
                     }
                     else -> {}
                 }
@@ -360,15 +376,6 @@ class MeditationViewModel(
         _isPlaying.value = false // Stop meditation
         
         _timerUiState.update { it.copy(isRunning = false, remainingMillis = 0) }
-
-        // Call complete session API if a meditation is selected
-        val id = _selectedMeditation.value?.id
-        val minutes = _timerUiState.value.selectedMinutes
-        if (id != null) {
-            completeSession(id, minutes, {
-                fetchHistory()
-            })
-        }
     }
 
     fun togglePlayback() {
