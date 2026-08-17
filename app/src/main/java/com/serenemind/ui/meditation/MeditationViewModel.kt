@@ -56,6 +56,9 @@ class MeditationViewModel(
     private val _downloadState = MutableStateFlow<DownloadUiState>(DownloadUiState.Idle)
     val downloadState = _downloadState.asStateFlow()
 
+    private val _selectedCategoryName = MutableStateFlow("All")
+    val selectedCategoryName = _selectedCategoryName.asStateFlow()
+
     // ===== TIMER STATE =====
     private val _timerUiState = MutableStateFlow(TimerUiState())
     val timerUiState = _timerUiState.asStateFlow()
@@ -613,6 +616,10 @@ class MeditationViewModel(
         _selectedMeditation.value = meditation
         resetTimer() // Reset timer for new selection
         meditation.id?.let { getMeditationById(it) }
+    }
+
+    fun setSelectedCategory(name: String) {
+        _selectedCategoryName.value = name
     }
 
     // ===== CLEAR SEARCH =====
