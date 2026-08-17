@@ -312,9 +312,7 @@ class MeditationViewModel(
                 val remaining = endTimeMillis - now
                 
                 if (remaining <= 0) {
-                    _timerUiState.update { it.copy(isRunning = false, remainingMillis = 0L) }
-                    _timerSeconds.value = 0
-                    onTimerFinished()
+                    onMeditationFinished()
                     break
                 }
                 
@@ -373,10 +371,13 @@ class MeditationViewModel(
         _isPlaying.value = false
     }
 
-    private fun onTimerFinished() {
+    fun onMeditationFinished() {
+        timerJob?.cancel()
+        _selectedMeditation.value?.id?.let { scheduler.cancel(it) }
         _isTimerRunning.value = false
         _isTimerCompleted.value = true
         _isPlaying.value = false // Stop meditation
+        _timerSeconds.value = 0
         
         _timerUiState.update { it.copy(isRunning = false, remainingMillis = 0) }
     }

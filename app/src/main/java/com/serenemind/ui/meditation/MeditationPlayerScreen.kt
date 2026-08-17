@@ -81,7 +81,7 @@ fun MeditationPlayerScreen(
                             }
                         }
                         Player.STATE_ENDED -> {
-                            viewModel.resetTimer()
+                            viewModel.onMeditationFinished()
                         }
                         else -> {}
                     }
@@ -300,7 +300,13 @@ fun MeditationPlayerScreen(
                                     onClick = { 
                                         if (isTimerCompleted) {
                                             m.id?.let { id ->
-                                                viewModel.completeSession(id, timerUiState.selectedMinutes) { msg ->
+                                                val completedMinutes = if (timerUiState.selectedMinutes > 0) {
+                                                    timerUiState.selectedMinutes
+                                                } else {
+                                                    m.duration?.toIntOrNull() ?: 10
+                                                }
+                                                
+                                                viewModel.completeSession(id, completedMinutes) { msg ->
                                                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                                     viewModel.resetTimer()
                                                 }
