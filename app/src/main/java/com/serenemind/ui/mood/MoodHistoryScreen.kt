@@ -305,7 +305,7 @@ fun MoodHistoryScreen(
 
                 // Mood Summary
                 Text(
-                    "Mood Summary (This Week)",
+                    "Mood Summary",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = textColor
