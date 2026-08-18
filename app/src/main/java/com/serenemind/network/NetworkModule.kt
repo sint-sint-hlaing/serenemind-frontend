@@ -17,6 +17,10 @@ object NetworkModule {
     // Use 10.0.2.2 for Android Emulator, or your computer's LAN IP for physical devices
     const val BASE_URL = "https://serenemind-server.onrender.com/"
 
+    //const val BASE_URL = "http:// 10.215.79.239:8080/"
+
+
+
     fun provideOkHttpClient(context: Context, tokenManager: TokenManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
